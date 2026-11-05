@@ -21,7 +21,7 @@ enum DemoCloset {
     /// Replaces whatever is in the closet with the demo items.
     @MainActor
     static func load(into context: ModelContext) throws {
-        try context.delete(model: ItemRecord.self)
+        try removeAllItems(from: context)
         for item in try items() {
             context.insert(ItemRecord(item: item))
         }
@@ -30,8 +30,16 @@ enum DemoCloset {
 
     @MainActor
     static func clear(_ context: ModelContext) throws {
-        try context.delete(model: ItemRecord.self)
+        try removeAllItems(from: context)
         try context.save()
+    }
+
+    /// Deletes record by record: `delete(model:)` is a store-level batch delete that misses unsaved inserts.
+    @MainActor
+    private static func removeAllItems(from context: ModelContext) throws {
+        for record in try context.fetch(FetchDescriptor<ItemRecord>()) {
+            context.delete(record)
+        }
     }
 }
 

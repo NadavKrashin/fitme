@@ -24,6 +24,9 @@ settings:
     # Fill in your 10-character Apple Developer Team ID (see docs/RELEASE_PROCESS.md, one-time setup).
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
+    # Simulator builds are ad-hoc signed so tests get Keychain entitlements and a writable sandbox
+    # without an Apple team.
+    "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     DEAD_CODE_STRIPPING: YES
 

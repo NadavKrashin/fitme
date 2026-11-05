@@ -41,7 +41,7 @@ test-engine: ## FitEngine package tests (fast, no simulator)
 	cd Packages/FitEngine && swift test
 
 test-app: project ## App tests on the iOS Simulator
-	$(PIPEFAIL) $(XCODEBUILD) -scheme $(SCHEME) -destination '$(DESTINATION)' test CODE_SIGNING_ALLOWED=NO | xcbeautify
+	$(PIPEFAIL) $(XCODEBUILD) -scheme $(SCHEME) -destination '$(DESTINATION)' test | xcbeautify
 
 verify-release: project ## Build Release and fail if any demo data made it into the app
 	$(PIPEFAIL) $(XCODEBUILD) -scheme $(SCHEME) -configuration Release -destination 'generic/platform=iOS Simulator' \
