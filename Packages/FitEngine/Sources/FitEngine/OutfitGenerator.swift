@@ -1,7 +1,7 @@
 import Foundation
 
 /// Builds outfits slot by slot (base → shoes → mid layer → outerwear), keeping the best partial outfits at each step.
-public struct OutfitGenerator {
+public struct OutfitGenerator: Sendable {
     public var scorer: OutfitScorer
     /// How many partial outfits survive each step. Larger is slower but explores more.
     public var beamWidth: Int
@@ -12,13 +12,23 @@ public struct OutfitGenerator {
     }
 
     /// The best few outfits for a context, picked to be different from each other.
-    public func suggest(from closet: [Item], context: OutfitContext, limit: Int = 5, mustInclude: Item? = nil) -> [ScoredOutfit] {
+    public func suggest(
+        from closet: [Item],
+        context: OutfitContext,
+        limit: Int = 5,
+        mustInclude: Item? = nil
+    ) -> [ScoredOutfit] {
         let candidates = build(from: closet, context: context, mustInclude: mustInclude, beam: beamWidth)
         return Self.diversified(candidates, limit: limit)
     }
 
     /// Every valid outfit from a small pool (e.g. a packed capsule), best first. No beam pruning.
-    public func allOutfits(from pool: [Item], context: OutfitContext, mustInclude: Item? = nil, minScore: Double = 0) -> [ScoredOutfit] {
+    public func allOutfits(
+        from pool: [Item],
+        context: OutfitContext,
+        mustInclude: Item? = nil,
+        minScore: Double = 0
+    ) -> [ScoredOutfit] {
         build(from: pool, context: context, mustInclude: mustInclude, beam: nil).filter { $0.score >= minScore }
     }
 
@@ -30,11 +40,14 @@ public struct OutfitGenerator {
             eligible.append(must)
         }
         var byCategory = Dictionary(grouping: eligible, by: \.category)
-        for key in byCategory.keys { byCategory[key]?.sort { $0.id < $1.id } }
+        for key in byCategory.keys {
+            byCategory[key]?.sort { $0.id < $1.id }
+        }
         if let must = mustInclude {
             switch must.category {
             case .top, .bottom: byCategory[.onePiece] = []
-            case .onePiece: byCategory[.top] = []; byCategory[.bottom] = []
+            case .onePiece: byCategory[.top] = []
+                byCategory[.bottom] = []
             default: break
             }
         }
@@ -42,11 +55,17 @@ public struct OutfitGenerator {
 
         var partials: [[Item]] = pool(.onePiece).map { [$0] }
         for top in pool(.top) {
-            for bottom in pool(.bottom) { partials.append([top, bottom]) }
+            for bottom in pool(.bottom) {
+                partials.append([top, bottom])
+            }
         }
         partials = prune(partials, context: context, beam: beam)
         partials = prune(extend(partials, with: pool(.shoes), optional: false), context: context, beam: beam)
-        partials = prune(extend(partials, with: pool(.midLayer), optional: mustInclude?.category != .midLayer), context: context, beam: beam)
+        partials = prune(
+            extend(partials, with: pool(.midLayer), optional: mustInclude?.category != .midLayer),
+            context: context,
+            beam: beam
+        )
         let finished = extend(partials, with: pool(.outerwear), optional: mustInclude?.category != .outerwear)
 
         return finished
@@ -59,7 +78,9 @@ public struct OutfitGenerator {
     private func extend(_ partials: [[Item]], with options: [Item], optional: Bool) -> [[Item]] {
         var result: [[Item]] = optional ? partials : []
         for partial in partials {
-            for option in options { result.append(partial + [option]) }
+            for option in options {
+                result.append(partial + [option])
+            }
         }
         return result
     }
@@ -80,7 +101,12 @@ public struct OutfitGenerator {
 
     /// Greedy max-marginal-relevance: trade a little score for outfits that don't repeat the same pieces,
     /// and especially not the same top.
-    static func diversified(_ ranked: [ScoredOutfit], limit: Int, overlapPenalty: Double = 12, sameBasePenalty: Double = 15) -> [ScoredOutfit] {
+    static func diversified(
+        _ ranked: [ScoredOutfit],
+        limit: Int,
+        overlapPenalty: Double = 12,
+        sameBasePenalty: Double = 15
+    ) -> [ScoredOutfit] {
         var chosen: [ScoredOutfit] = []
         var remaining = ranked
         while chosen.count < limit, !remaining.isEmpty {

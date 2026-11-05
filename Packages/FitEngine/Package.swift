@@ -1,9 +1,9 @@
-// swift-tools-version:5.7
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(
     name: "FitEngine",
-    platforms: [.iOS(.v16), .macOS(.v12)],
+    platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(name: "FitEngine", targets: ["FitEngine"]),
     ],

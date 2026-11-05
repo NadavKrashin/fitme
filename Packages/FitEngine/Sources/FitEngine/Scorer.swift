@@ -1,6 +1,6 @@
 import Foundation
 
-public struct ScoreWeights: Equatable {
+public struct ScoreWeights: Equatable, Sendable {
     public var color = 0.28
     public var pattern = 0.12
     public var formality = 0.15
@@ -15,7 +15,7 @@ public struct ScoreWeights: Equatable {
 }
 
 /// Each component is 0...1; `total` is the weighted blend on a 0...100 scale.
-public struct ScoreBreakdown: Equatable {
+public struct ScoreBreakdown: Equatable, Sendable {
     public var color: Double
     public var pattern: Double
     public var formality: Double
@@ -29,7 +29,7 @@ public struct ScoreBreakdown: Equatable {
 }
 
 /// Soft styling judgement: how good an outfit looks, assuming it already passed `Rules`.
-public struct OutfitScorer {
+public struct OutfitScorer: Sendable {
     public var weights: ScoreWeights
 
     public init(weights: ScoreWeights = ScoreWeights()) {
@@ -84,8 +84,8 @@ public struct OutfitScorer {
             score = 0.95
         default:
             var pairs: [Double] = []
-            for i in 0..<families.count {
-                for j in (i + 1)..<families.count {
+            for i in 0 ..< families.count {
+                for j in (i + 1) ..< families.count {
                     pairs.append(huePairScore(families[i], families[j]))
                 }
             }
@@ -106,10 +106,16 @@ public struct OutfitScorer {
     static func huePairScore(_ a: OKLCH, _ b: OKLCH) -> Double {
         let d = OKLCH.hueDistance(a.h, b.h)
         let loud = a.C > 0.13 && b.C > 0.13
-        if d < 30 { return 0.9 }
-        if d < 60 { return 0.75 }         // analogous
-        if d < 135 { return loud ? 0.3 : 0.5 } // discordant
-        return loud ? 0.5 : 0.8           // complementary: great when at least one side is muted
+        if d < 30 {
+            return 0.9
+        }
+        if d < 60 {
+            return 0.75
+        } // analogous
+        if d < 135 {
+            return loud ? 0.3 : 0.5
+        } // discordant
+        return loud ? 0.5 : 0.8 // complementary: great when at least one side is muted
     }
 
     /// One bold pattern is plenty; two can work only if they share a color.
@@ -155,7 +161,9 @@ public struct OutfitScorer {
         var score = distance == 0 ? 1 : (distance == 1 ? 0.6 : 0.2)
         if weather.isRainy {
             let covered = [outfit.shoes, outfit.outerwear].contains { $0?.waterResistant == true }
-            if !covered { score *= 0.75 }
+            if !covered {
+                score *= 0.75
+            }
         }
         return score
     }
@@ -163,15 +171,19 @@ public struct OutfitScorer {
     /// Balanced silhouettes (one loose piece, one fitted) read as intentional.
     public static func fitBalance(_ outfit: Outfit) -> Double {
         guard let top = outfit.top, let bottom = outfit.bottom else { return 1 }
-        if top.fit.isLoose && bottom.fit.isLoose {
-            if top.fit == .oversized && bottom.fit == .oversized {
+        if top.fit.isLoose, bottom.fit.isLoose {
+            if top.fit == .oversized, bottom.fit == .oversized {
                 let bothStreet = top.styleTags.contains(.street) && bottom.styleTags.contains(.street)
                 return bothStreet ? 0.85 : 0.4
             }
             return 0.55
         }
-        if top.fit == .slim && bottom.fit == .slim { return 0.85 }
-        if top.fit == .regular && bottom.fit == .regular { return 0.95 }
+        if top.fit == .slim, bottom.fit == .slim {
+            return 0.85
+        }
+        if top.fit == .regular, bottom.fit == .regular {
+            return 0.95
+        }
         return 1
     }
 
@@ -189,9 +201,13 @@ public struct OutfitScorer {
         guard !core.isEmpty else { return 1 }
         let values = core.map { item -> Double in
             guard let worn = item.lastWorn else { return 1 }
-            let days = date.timeIntervalSince(worn) / 86_400
-            if days < 2 { return 0.2 }
-            if days < 7 { return 0.6 }
+            let days = date.timeIntervalSince(worn) / 86400
+            if days < 2 {
+                return 0.2
+            }
+            if days < 7 {
+                return 0.6
+            }
             return 1
         }
         return values.reduce(0, +) / Double(values.count)

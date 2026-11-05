@@ -1,0 +1,4 @@
+disabled_rules:
+  # Tests may unwrap fixtures they just created; a crash is a clear, immediate failure.
+  - force_unwrapping
+  - force_try

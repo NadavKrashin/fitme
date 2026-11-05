@@ -1,7 +1,7 @@
 import Foundation
 
 /// An sRGB color with components in 0...1.
-public struct RGB: Hashable {
+public struct RGB: Hashable, Sendable {
     public var r: Double
     public var g: Double
     public var b: Double
@@ -15,7 +15,9 @@ public struct RGB: Hashable {
     /// Parses `#RRGGBB` or `RRGGBB`.
     public init?(hex: String) {
         var s = hex.trimmingCharacters(in: .whitespaces)
-        if s.hasPrefix("#") { s.removeFirst() }
+        if s.hasPrefix("#") {
+            s.removeFirst()
+        }
         guard s.count == 6, let value = UInt32(s, radix: 16) else { return nil }
         r = Double((value >> 16) & 0xFF) / 255
         g = Double((value >> 8) & 0xFF) / 255
@@ -23,13 +25,15 @@ public struct RGB: Hashable {
     }
 
     public var hex: String {
-        func byte(_ c: Double) -> Int { Int((min(max(c, 0), 1) * 255).rounded()) }
+        func byte(_ c: Double) -> Int {
+            Int((min(max(c, 0), 1) * 255).rounded())
+        }
         return String(format: "#%02X%02X%02X", byte(r), byte(g), byte(b))
     }
 }
 
 /// Perceptual color space (Björn Ottosson's OKLab). Distances here track how different colors look.
-public struct OKLab: Hashable {
+public struct OKLab: Hashable, Sendable {
     public var L: Double
     public var a: Double
     public var b: Double
@@ -57,7 +61,9 @@ public struct OKLab: Hashable {
 
     public var lch: OKLCH {
         var h = atan2(b, a) * 180 / .pi
-        if h < 0 { h += 360 }
+        if h < 0 {
+            h += 360
+        }
         return OKLCH(L: L, C: (a * a + b * b).squareRoot(), h: h)
     }
 
@@ -67,7 +73,7 @@ public struct OKLab: Hashable {
 }
 
 /// How a color behaves when styling an outfit.
-public enum Neutrality: Equatable {
+public enum Neutrality: Equatable, Sendable {
     /// Black, white, greys, near-greys: go with anything.
     case neutral
     /// Navy, denim, camel, khaki, olive, chocolate: muted colors that style like neutrals.
@@ -77,17 +83,25 @@ public enum Neutrality: Equatable {
 }
 
 /// OKLab in polar form: lightness, chroma (colorfulness), hue in degrees.
-public struct OKLCH: Hashable {
+public struct OKLCH: Hashable, Sendable {
     public var L: Double
     public var C: Double
     public var h: Double
 
     public var neutrality: Neutrality {
-        if C < 0.035 { return .neutral }
+        if C < 0.035 {
+            return .neutral
+        }
         guard C < 0.10 else { return .chromatic }
-        if L < 0.40 { return .softNeutral }                     // navy, chocolate, dark olive
-        if (40...135).contains(h) { return .softNeutral }       // camel, khaki, tan, olive
-        if (215...275).contains(h) && C < 0.09 { return .softNeutral } // denim, chambray, light blue
+        if L < 0.40 {
+            return .softNeutral
+        } // navy, chocolate, dark olive
+        if (40 ... 135).contains(h) {
+            return .softNeutral
+        } // camel, khaki, tan, olive
+        if (215 ... 275).contains(h), C < 0.09 {
+            return .softNeutral
+        } // denim, chambray, light blue
         return .chromatic
     }
 

@@ -1,30 +1,50 @@
 import Foundation
 
-public enum ItemCategory: String, Codable, CaseIterable {
+public enum ItemCategory: String, Codable, CaseIterable, Sendable {
     case outerwear, midLayer, top, onePiece, bottom, shoes, bag, accessory
 
     /// Items that make up the outfit itself (bags and accessories are styled separately).
-    public var isCore: Bool { self != .bag && self != .accessory }
+    public var isCore: Bool {
+        self != .bag && self != .accessory
+    }
+
+    /// Outermost first: the order a flat-lay collage stacks pieces from top to bottom.
+    public var layerOrder: Int {
+        switch self {
+        case .outerwear: 0
+        case .midLayer: 1
+        case .top: 2
+        case .onePiece: 3
+        case .bottom: 4
+        case .shoes: 5
+        case .bag: 6
+        case .accessory: 7
+        }
+    }
 }
 
-public enum ItemPattern: String, Codable, CaseIterable {
+public enum ItemPattern: String, Codable, CaseIterable, Sendable {
     case solid, textured, stripe, check, floral, graphic, print, other
 
-    public var isBold: Bool { self != .solid && self != .textured }
+    public var isBold: Bool {
+        self != .solid && self != .textured
+    }
 }
 
-public enum Fit: String, Codable, CaseIterable {
+public enum Fit: String, Codable, CaseIterable, Sendable {
     case slim, regular, relaxed, oversized
 
-    public var isLoose: Bool { self == .relaxed || self == .oversized }
+    public var isLoose: Bool {
+        self == .relaxed || self == .oversized
+    }
 }
 
-public enum StyleTag: String, Codable, CaseIterable {
+public enum StyleTag: String, Codable, CaseIterable, Sendable {
     case minimal, classic, street, sporty, preppy, boho, edgy, romantic, outdoor, swim
 }
 
 /// One color of an item, as measured from its photo.
-public struct ItemColor: Codable, Hashable {
+public struct ItemColor: Codable, Hashable, Sendable {
     public let hex: String
     /// Share of the item's visible area, 0...1.
     public let proportion: Double
@@ -42,9 +62,9 @@ public struct ItemColor: Codable, Hashable {
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            hex: try c.decode(String.self, forKey: .hex),
-            proportion: try c.decodeIfPresent(Double.self, forKey: .proportion) ?? 1
+        try self.init(
+            hex: c.decode(String.self, forKey: .hex),
+            proportion: c.decodeIfPresent(Double.self, forKey: .proportion) ?? 1
         )
     }
 
@@ -56,7 +76,7 @@ public struct ItemColor: Codable, Hashable {
 }
 
 /// A piece of clothing in the closet.
-public struct Item: Identifiable, Codable, Hashable {
+public struct Item: Identifiable, Codable, Hashable, Sendable {
     public var id: String
     public var name: String
     public var category: ItemCategory
@@ -119,29 +139,36 @@ public struct Item: Identifiable, Codable, Hashable {
     /// Optional fields fall back to defaults so hand-written fixtures and AI tagging output stay short.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            id: try c.decode(String.self, forKey: .id),
-            name: try c.decode(String.self, forKey: .name),
-            category: try c.decode(ItemCategory.self, forKey: .category),
-            subcategory: try c.decodeIfPresent(String.self, forKey: .subcategory),
-            colors: try c.decode([ItemColor].self, forKey: .colors),
-            pattern: try c.decodeIfPresent(ItemPattern.self, forKey: .pattern) ?? .solid,
-            formality: try c.decode(Int.self, forKey: .formality),
-            warmth: try c.decode(Int.self, forKey: .warmth),
-            fit: try c.decodeIfPresent(Fit.self, forKey: .fit) ?? .regular,
-            isStatement: try c.decodeIfPresent(Bool.self, forKey: .isStatement) ?? false,
-            styleTags: try c.decodeIfPresent(Set<StyleTag>.self, forKey: .styleTags) ?? [],
-            waterResistant: try c.decodeIfPresent(Bool.self, forKey: .waterResistant) ?? false,
-            isAvailable: try c.decodeIfPresent(Bool.self, forKey: .isAvailable) ?? true,
-            wearCount: try c.decodeIfPresent(Int.self, forKey: .wearCount) ?? 0,
-            lastWorn: try c.decodeIfPresent(Date.self, forKey: .lastWorn)
+        try self.init(
+            id: c.decode(String.self, forKey: .id),
+            name: c.decode(String.self, forKey: .name),
+            category: c.decode(ItemCategory.self, forKey: .category),
+            subcategory: c.decodeIfPresent(String.self, forKey: .subcategory),
+            colors: c.decode([ItemColor].self, forKey: .colors),
+            pattern: c.decodeIfPresent(ItemPattern.self, forKey: .pattern) ?? .solid,
+            formality: c.decode(Int.self, forKey: .formality),
+            warmth: c.decode(Int.self, forKey: .warmth),
+            fit: c.decodeIfPresent(Fit.self, forKey: .fit) ?? .regular,
+            isStatement: c.decodeIfPresent(Bool.self, forKey: .isStatement) ?? false,
+            styleTags: c.decodeIfPresent(Set<StyleTag>.self, forKey: .styleTags) ?? [],
+            waterResistant: c.decodeIfPresent(Bool.self, forKey: .waterResistant) ?? false,
+            isAvailable: c.decodeIfPresent(Bool.self, forKey: .isAvailable) ?? true,
+            wearCount: c.decodeIfPresent(Int.self, forKey: .wearCount) ?? 0,
+            lastWorn: c.decodeIfPresent(Date.self, forKey: .lastWorn)
         )
     }
 
-    public static func == (lhs: Item, rhs: Item) -> Bool { lhs.id == rhs.id }
-    public func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    public static func == (lhs: Item, rhs: Item) -> Bool {
+        lhs.id == rhs.id
+    }
 
-    public var primaryColor: ItemColor? { colors.first }
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    public var primaryColor: ItemColor? {
+        colors.first
+    }
 
     /// Colors large enough to read at a glance: the primary color plus any taking a quarter of the item or more.
     public var significantColors: [ItemColor] {

@@ -1,7 +1,7 @@
 import Foundation
 
 /// A hard reason an outfit can't be suggested at all.
-public enum Violation: Equatable {
+public enum Violation: Equatable, Sendable {
     case structure(String)
     /// Pieces from very different dress codes, e.g. a blazer with gym shorts.
     case formalityClash
@@ -32,7 +32,9 @@ public enum Rules {
         case .midLayer:
             return weather.allowsLayers && t < 22
         case .outerwear:
-            if t >= 22 { return weather.isRainy && item.waterResistant && item.warmth <= 2 }
+            if t >= 22 {
+                return weather.isRainy && item.waterResistant && item.warmth <= 2
+            }
             return !(item.warmth >= 4 && t >= 16)
         case .bottom:
             return !(item.warmth <= 1 && t < 16)
@@ -52,9 +54,15 @@ public enum Rules {
 
         let separates = count(.top) == 1 && count(.bottom) == 1 && count(.onePiece) == 0
         let dress = count(.onePiece) == 1 && count(.top) == 0 && count(.bottom) == 0
-        if !(separates || dress) { result.append(.structure("needs a top and bottom, or a one-piece")) }
-        if count(.midLayer) > 1 || count(.outerwear) > 1 { result.append(.structure("too many layers")) }
-        if !partial && count(.shoes) != 1 { result.append(.structure("needs one pair of shoes")) }
+        if !(separates || dress) {
+            result.append(.structure("needs a top and bottom, or a one-piece"))
+        }
+        if count(.midLayer) > 1 || count(.outerwear) > 1 {
+            result.append(.structure("too many layers"))
+        }
+        if !partial, count(.shoes) != 1 {
+            result.append(.structure("needs one pair of shoes"))
+        }
 
         let core = outfit.coreItems
         let formalities = core.map(\.formality)
@@ -81,8 +89,12 @@ public enum Rules {
         if !partial {
             let target = context.weather.upperWarmthTarget
             let warmth = upperWarmth(of: outfit)
-            if warmth < target.lowerBound - 1 { result.append(.tooCold) }
-            if warmth > target.upperBound + 1 { result.append(.tooWarm) }
+            if warmth < target.lowerBound - 1 {
+                result.append(.tooCold)
+            }
+            if warmth > target.upperBound + 1 {
+                result.append(.tooWarm)
+            }
         }
         return result
     }

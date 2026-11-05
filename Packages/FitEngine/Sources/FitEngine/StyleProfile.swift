@@ -1,11 +1,11 @@
 import Foundation
 
-public enum OutfitFeedback: String, Codable {
+public enum OutfitFeedback: String, Codable, Sendable {
     case liked, disliked, wore
 }
 
 /// What the engine has learned from your reactions: which item pairings you like.
-public struct StyleProfile: Codable, Equatable {
+public struct StyleProfile: Codable, Equatable, Sendable {
     /// Pair key → affinity in -1...1.
     public var pairAffinity: [String: Double]
 
@@ -14,11 +14,10 @@ public struct StyleProfile: Codable, Equatable {
     }
 
     public mutating func record(_ feedback: OutfitFeedback, for outfit: Outfit) {
-        let delta: Double
-        switch feedback {
-        case .liked: delta = 0.2
-        case .disliked: delta = -0.25
-        case .wore: delta = 0.1
+        let delta: Double = switch feedback {
+        case .liked: 0.2
+        case .disliked: -0.25
+        case .wore: 0.1
         }
         for (a, b) in Self.pairs(outfit.coreItems) {
             let key = Self.key(a, b)
@@ -44,8 +43,10 @@ public struct StyleProfile: Codable, Equatable {
 
     static func pairs(_ items: [Item]) -> [(Item, Item)] {
         var result: [(Item, Item)] = []
-        for i in 0..<items.count {
-            for j in (i + 1)..<items.count { result.append((items[i], items[j])) }
+        for i in 0 ..< items.count {
+            for j in (i + 1) ..< items.count {
+                result.append((items[i], items[j]))
+            }
         }
         return result
     }

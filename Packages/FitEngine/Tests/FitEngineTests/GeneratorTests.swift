@@ -1,51 +1,52 @@
-import XCTest
+import Testing
 @testable import FitEngine
 
-final class GeneratorTests: XCTestCase {
+struct GeneratorTests {
     let generator = OutfitGenerator()
 
-    func testCasualSuggestionsAreValidAndVaried() {
-        let context = OutfitContext(occasion: .casual, weather: .mild, date: Fixtures.startDate)
+    @Test func casualSuggestionsAreValidGoodAndVaried() {
+        let context = Fixtures.context(.casual)
         let outfits = generator.suggest(from: Fixtures.closet, context: context, limit: 5)
-        XCTAssertEqual(outfits.count, 5)
-        for o in outfits {
-            XCTAssertTrue(Rules.isValid(o.outfit, context: context), o.id)
-            XCTAssertGreaterThan(o.score, 70, o.id)
+
+        #expect(outfits.count == 5)
+        for outfit in outfits {
+            #expect(Rules.isValid(outfit.outfit, context: context), "\(outfit.id)")
+            #expect(outfit.score > 70, "\(outfit.id)")
         }
-        XCTAssertEqual(Set(outfits.map(\.outfit.baseKey)).count, 5, "each suggestion should have a different top")
+        #expect(Set(outfits.map(\.outfit.baseKey)).count == 5, "each suggestion should have a different top")
     }
 
-    func testFormalOccasionUsesFormalPieces() {
-        let context = OutfitContext(occasion: .formal, weather: .mild, date: Fixtures.startDate)
+    @Test func formalOccasionUsesFormalPieces() {
+        let outfits = generator.suggest(from: Fixtures.closet, context: Fixtures.context(.formal), limit: 3)
+        #expect(!outfits.isEmpty)
+        for outfit in outfits {
+            #expect((outfit.outfit.shoes?.formality ?? 0) >= 4, "\(outfit.id)")
+            #expect(!outfit.outfit.items.contains { $0.formality <= 1 }, "\(outfit.id)")
+        }
+    }
+
+    @Test func sportOnlyUsesSportswear() {
+        let context = Fixtures.context(.sport, Weather(feelsLikeC: 24))
         let outfits = generator.suggest(from: Fixtures.closet, context: context, limit: 3)
-        XCTAssertFalse(outfits.isEmpty)
-        for o in outfits {
-            XCTAssertGreaterThanOrEqual(o.outfit.shoes!.formality, 4, o.id)
-            XCTAssertFalse(o.outfit.items.contains { $0.formality <= 1 }, o.id)
+        #expect(!outfits.isEmpty)
+        for outfit in outfits {
+            let worn = outfit.outfit.coreItems.filter { $0.category != .outerwear }
+            #expect(worn.allSatisfy { $0.styleTags.contains(.sporty) }, "\(outfit.id)")
         }
     }
 
-    func testSportOnlyUsesSportswear() {
-        let context = OutfitContext(occasion: .sport, weather: Weather(feelsLikeC: 24), date: Fixtures.startDate)
-        let outfits = generator.suggest(from: Fixtures.closet, context: context, limit: 3)
-        XCTAssertFalse(outfits.isEmpty)
-        for o in outfits {
-            XCTAssertTrue(o.outfit.coreItems.filter { $0.category != .outerwear }.allSatisfy { $0.styleTags.contains(.sporty) }, o.id)
-        }
+    @Test func coldRainyDayGetsAWaterResistantLayer() throws {
+        let context = Fixtures.context(.casual, Weather(feelsLikeC: 6, precipitationChance: 0.8))
+        let best = try #require(generator.suggest(from: Fixtures.closet, context: context, limit: 1).first)
+        #expect(best.outfit.outerwear != nil)
+        #expect([best.outfit.outerwear, best.outfit.shoes].contains { $0?.waterResistant == true }, "\(best.id)")
     }
 
-    func testColdRainyDayGetsAWaterResistantLayer() {
-        let context = OutfitContext(occasion: .casual, weather: Weather(feelsLikeC: 6, precipitationChance: 0.8), date: Fixtures.startDate)
-        let best = generator.suggest(from: Fixtures.closet, context: context, limit: 1).first!
-        XCTAssertNotNil(best.outfit.outerwear)
-        XCTAssertTrue([best.outfit.outerwear, best.outfit.shoes].contains { $0?.waterResistant == true }, best.id)
-    }
-
-    func testBuildAroundAnItem() {
+    @Test func buildsAroundAChosenItem() {
         let mustard = Fixtures.item("t21")
-        let context = OutfitContext(occasion: .casual, weather: Weather(feelsLikeC: 14), date: Fixtures.startDate)
+        let context = Fixtures.context(.casual, Weather(feelsLikeC: 14))
         let outfits = generator.suggest(from: Fixtures.closet, context: context, limit: 3, mustInclude: mustard)
-        XCTAssertFalse(outfits.isEmpty)
-        XCTAssertTrue(outfits.allSatisfy { $0.outfit.contains(mustard) })
+        #expect(!outfits.isEmpty)
+        #expect(outfits.allSatisfy { $0.outfit.contains(mustard) })
     }
 }
