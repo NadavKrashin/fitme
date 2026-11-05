@@ -4,7 +4,7 @@ import Testing
 @testable import FitMe
 
 struct ItemRecordTests {
-    @Test func roundTripsEveryField() throws {
+    @Test func roundTripsEveryField() {
         let item = Item(
             id: "x1",
             name: "Breton tee",
@@ -23,10 +23,24 @@ struct ItemRecordTests {
             lastWorn: Date(timeIntervalSince1970: 1_790_000_000)
         )
 
-        // Item's == compares ids only, so compare the full encoded form.
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
         let roundTripped = ItemRecord(item: item).item
-        #expect(try encoder.encode(roundTripped) == encoder.encode(item))
+
+        // Item's == compares ids only, so check every field. (Comparing JSON encodings is flaky: `styleTags` is a
+        // Set, which encodes in arbitrary order.)
+        #expect(roundTripped.id == item.id)
+        #expect(roundTripped.name == item.name)
+        #expect(roundTripped.category == item.category)
+        #expect(roundTripped.subcategory == item.subcategory)
+        #expect(roundTripped.colors == item.colors)
+        #expect(roundTripped.pattern == item.pattern)
+        #expect(roundTripped.formality == item.formality)
+        #expect(roundTripped.warmth == item.warmth)
+        #expect(roundTripped.fit == item.fit)
+        #expect(roundTripped.isStatement == item.isStatement)
+        #expect(roundTripped.styleTags == item.styleTags)
+        #expect(roundTripped.waterResistant == item.waterResistant)
+        #expect(roundTripped.isAvailable == item.isAvailable)
+        #expect(roundTripped.wearCount == item.wearCount)
+        #expect(roundTripped.lastWorn == item.lastWorn)
     }
 }
