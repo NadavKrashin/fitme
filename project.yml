@@ -1,0 +1,116 @@
+# XcodeGen spec. The .xcodeproj is generated from this file (`make project`) and is not committed.
+name: FitMe
+
+options:
+  bundleIdPrefix: io.github.nadavkrashin
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+  groupSortPosition: top
+
+configs:
+  Debug: debug
+  Staging: release
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "0.1.0"
+    # CI overrides this with the GitHub Actions run number.
+    CURRENT_PROJECT_VERSION: "1"
+    # Fill in your 10-character Apple Developer Team ID (see docs/RELEASE_PROCESS.md, one-time setup).
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+
+packages:
+  FitEngine:
+    path: Packages/FitEngine
+
+targets:
+  FitMe:
+    type: application
+    platform: iOS
+    sources:
+      - path: FitMe
+        excludes:
+          - Info.plist
+    dependencies:
+      - package: FitEngine
+    settings:
+      base:
+        PRODUCT_NAME: FitMe
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        # Keys that have no INFOPLIST_KEY_ build setting; merged with the generated plist.
+        INFOPLIST_FILE: FitMe/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: $(APP_DISPLAY_NAME)
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.lifestyle
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+      configs:
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.staging
+          APP_DISPLAY_NAME: FitMe β
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG STAGING
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-Staging
+        Staging:
+          PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.staging
+          APP_DISPLAY_NAME: FitMe β
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: STAGING
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-Staging
+        Release:
+          PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme
+          APP_DISPLAY_NAME: FitMe
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
+          ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+          # Demo data never ships to production; CI verifies this (make verify-release).
+          EXCLUDED_SOURCE_FILE_NAMES: DemoCloset.json
+
+  FitMeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: FitMeTests
+    dependencies:
+      - target: FitMe
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.tests
+
+schemes:
+  FitMe:
+    build:
+      targets:
+        FitMe: all
+        FitMeTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - FitMeTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+  FitMe-Staging:
+    build:
+      targets:
+        FitMe: all
+    run:
+      config: Staging
+    profile:
+      config: Staging
+    archive:
+      config: Staging

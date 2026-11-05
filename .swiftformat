@@ -13,5 +13,6 @@
 --stripunusedargs closure-only
 --header strip
 --importgrouping testable-last
+--ifdef no-indent
 
 --disable redundantReturn,wrapMultilineStatementBraces,preferKeyPath
