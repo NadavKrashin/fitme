@@ -1,0 +1,92 @@
+# One pipeline for everything (see docs/RELEASE_PROCESS.md):
+#   pull request  → checks
+#   push to main  → checks → deploy Staging to TestFlight
+#   tag vX.Y.Z    → checks → (manual approval) → deploy Production to TestFlight
+name: Pipeline
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint & test
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install tools
+        run: brew bundle --file=Brewfile
+
+      - name: Tag matches MARKETING_VERSION
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: scripts/check-version.sh "${GITHUB_REF_NAME#v}"
+
+      - name: Lint
+        run: make lint
+
+      - name: Engine tests
+        run: make test-engine
+
+      - name: App tests
+        run: make test-app
+
+      - name: Release build contains no demo data
+        run: make verify-release
+
+  deploy:
+    name: Deploy ${{ startsWith(github.ref, 'refs/tags/v') && 'Production' || 'Staging' }}
+    needs: checks
+    if: github.event_name == 'push'
+    runs-on: macos-26
+    timeout-minutes: 45
+    # The production environment requires a reviewer's approval before this job starts.
+    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging' }}
+    env:
+      CONFIGURATION: ${{ startsWith(github.ref, 'refs/tags/v') && 'Release' || 'Staging' }}
+      BUILD_NUMBER: ${{ github.run_number }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+    steps:
+      - name: Signing configured?
+        id: signing
+        run: |
+          if [[ -n "$ASC_KEY_ID" && -n "$ASC_ISSUER_ID" && -n "$ASC_PRIVATE_KEY" && -n "$APPLE_TEAM_ID" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=Deploy skipped::App Store Connect secrets are not set yet. See docs/RELEASE_PROCESS.md → One-time setup."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.signing.outputs.ready == 'true'
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        if: steps.signing.outputs.ready == 'true'
+        with:
+          xcode-version: latest-stable
+
+      - name: Install tools
+        if: steps.signing.outputs.ready == 'true'
+        run: brew bundle --file=Brewfile
+
+      - name: Archive and upload to TestFlight
+        if: steps.signing.outputs.ready == 'true'
+        run: scripts/deploy.sh "$CONFIGURATION"
