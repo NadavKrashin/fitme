@@ -30,9 +30,12 @@ _Last updated: 2026-11-05._
 
 ## Not verified yet
 
-- **App unit tests have not run locally.** This Mac has no iOS Simulator runtime: `xcodebuild -downloadPlatform iOS`
-  failed twice with a MobileAsset catalog timeout. They compile (`build-for-testing` succeeded), and CI runs them on
-  GitHub's macOS runner. Check the latest pipeline run with `gh run list`.
+- **App unit tests run only in CI so far.** They passed on GitHub's runner (iPhone 17 Pro Max, iOS 26.5; pipeline run
+  42122288461). This Mac has no iOS Simulator runtime: `xcodebuild -downloadPlatform iOS` failed twice with a
+  MobileAsset catalog timeout. The first CI run caught two real bugs (unsigned test builds, and the demo closet reset
+  missing unsaved items); both are fixed.
+- **The app has never been launched or looked at** in a simulator or on a device. Only its tests and builds are
+  verified.
 - **The deploy job has never run for real.** It's blocked on the one-time Apple setup below. Expect to debug the
   first archive and upload (signing and App Store Connect app records).
 - **The CI runner image** is `macos-26` with `latest-stable` Xcode. If GitHub's image lacks Swift 6.2 or later
