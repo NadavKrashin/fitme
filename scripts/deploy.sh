@@ -16,6 +16,13 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 key_path="$work/AuthKey_$ASC_KEY_ID.p8"
 printf '%s\n' "$ASC_PRIVATE_KEY" > "$key_path"
+# Fail with a readable message (never the key itself) if the secret isn't the whole .p8 file.
+if [[ "$(head -1 "$key_path")" != "-----BEGIN PRIVATE KEY-----" ]] \
+    || ! grep -q -- "-----END PRIVATE KEY-----" "$key_path"; then
+    echo "error: ASC_PRIVATE_KEY is not a full .p8 file ($(wc -l < "$key_path" | tr -d ' ') lines; expected a" \
+        "BEGIN/END PRIVATE KEY block). Re-set it with: gh secret set ASC_PRIVATE_KEY < AuthKey_<KEYID>.p8" >&2
+    exit 1
+fi
 auth=(
     -allowProvisioningUpdates
     -authenticationKeyPath "$key_path"
