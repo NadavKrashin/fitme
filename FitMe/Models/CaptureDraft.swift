@@ -24,11 +24,14 @@ final class CaptureDraft {
     @Attribute(.externalStorage) var cutout: Data?
     var colors: [StoredColor]
     var tags: ItemTags?
+    /// SHA-256 of the original image, to skip photos that were already added.
+    var fingerprint: String?
 
-    init(originalImage: Data, createdAt: Date = .now) {
+    init(originalImage: Data, fingerprint: String? = nil, createdAt: Date = .now) {
         draftID = UUID().uuidString
         status = .processing
         self.originalImage = originalImage
+        self.fingerprint = fingerprint
         self.createdAt = createdAt
         colors = []
     }

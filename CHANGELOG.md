@@ -11,3 +11,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
   Inbox for you to review.
 - Edit or delete any closet item. Filter the closet by category, or search by name.
 - Closet and outfit suggestions show your real item photos.
+- Photos of clothes you're wearing are cropped to the item, so your face and legs no longer end up in the cutout.
+- The Inbox shows photos while they import, and skips photos you already added.

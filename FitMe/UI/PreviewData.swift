@@ -87,11 +87,11 @@ enum PreviewData {
 
 /// Answers instantly with plausible tags, so previews never call the network.
 struct PreviewTaggingService: TaggingService {
-    func tags(forJPEG _: Data) async throws -> ItemTags {
+    func tag(jpeg _: Data) async throws -> TaggedPhoto {
         var tags = ItemTags.blank
         tags.name = "Preview item"
         tags.subcategory = "t-shirt"
-        return tags
+        return TaggedPhoto(tags: tags, itemBox: nil)
     }
 }
 #endif

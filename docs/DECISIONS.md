@@ -5,6 +5,18 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-06: Crop worn-item cutouts with a box from the tagging call
+
+- **Context:** Vision's subject lift treats a person and the clothes they wear as one subject, so worn photos kept
+  the face and legs (from Nadav's first real trial).
+- **Decision:** the tagging schema also asks for `itemBox`, the item's tight bounding box in thousandths of the
+  tagging image. `ImagePipeline.crop` cuts the cutout to it, with a 3% margin, and re-measures colors. An invalid box
+  is dropped without losing the tags.
+- **Why:**
+  - It costs nothing extra, because it rides the tagging call that already happens.
+  - On-device person or garment segmentation can't separate clothes from the wearer.
+  - Remaining limit: arms or hands inside a worn top's box stay. The Inbox tip recommends flat or hanging shots.
+
 ### 2026-11-06: Tagging with Claude Opus 5.5 at low effort, colors measured locally
 
 - **Decision:**

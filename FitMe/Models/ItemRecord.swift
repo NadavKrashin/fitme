@@ -25,6 +25,8 @@ final class ItemRecord {
     /// Original photo (JPEG) and the item cut out on a transparent square (PNG). Stored outside the database file.
     @Attribute(.externalStorage) var photo: Data?
     @Attribute(.externalStorage) var cutout: Data?
+    /// SHA-256 of the photo this item was created from, so adding the same photo again is skipped.
+    var sourceFingerprint: String?
 
     init(item: Item, photo: Data? = nil, cutout: Data? = nil, addedAt: Date = .now) {
         itemID = item.id

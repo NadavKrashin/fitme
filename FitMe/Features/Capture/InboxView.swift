@@ -4,6 +4,8 @@ import SwiftUI
 
 /// New photos waiting to become closet items: shows processing progress, failures, and leads into review.
 struct InboxView: View {
+    static let photoTip = "For the cleanest cutouts, lay each item flat or hang it against a plain background."
+
     @Environment(CaptureModel.self) private var capture
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \CaptureDraft.createdAt) private var drafts: [CaptureDraft]
@@ -13,6 +15,15 @@ struct InboxView: View {
     var body: some View {
         NavigationStack(path: $path) {
             List {
+                if capture.importing > 0 {
+                    HStack(spacing: 12) {
+                        ProgressView().frame(width: 56, height: 56)
+                        Text("Importing \(capture.importing) photo\(capture.importing == 1 ? "" : "s")…")
+                    }
+                }
+                if let note = capture.lastImportNote {
+                    Text(note).font(.footnote).foregroundStyle(.secondary)
+                }
                 ForEach(drafts) { draft in
                     if draft.status == .processing {
                         DraftRow(draft: draft)
@@ -21,9 +32,11 @@ struct InboxView: View {
                     }
                 }
                 .onDelete { offsets in offsets.map { drafts[$0] }.forEach(capture.discard) }
+
+                Section {} footer: { Text(Self.photoTip) }
             }
             .overlay {
-                if drafts.isEmpty {
+                if drafts.isEmpty, capture.importing == 0 {
                     ContentUnavailableView(
                         "All caught up",
                         systemImage: "tray",

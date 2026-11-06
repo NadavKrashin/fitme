@@ -46,12 +46,24 @@ struct FakePhotoProcessor: PhotoProcessing {
             hasCutout: true
         )
     }
+
+    /// Marks the cutout so tests can tell the crop ran.
+    func crop(_ photo: ProcessedPhoto, to _: ItemBox) async throws -> ProcessedPhoto {
+        ProcessedPhoto(
+            photoJPEG: photo.photoJPEG,
+            cutoutPNG: Data("cropped".utf8) + photo.cutoutPNG,
+            taggingJPEG: photo.taggingJPEG,
+            colors: photo.colors,
+            hasCutout: photo.hasCutout
+        )
+    }
 }
 
 struct FakeTagger: TaggingService {
     var error: Error?
+    var itemBox: ItemBox?
 
-    func tags(forJPEG _: Data) async throws -> ItemTags {
+    func tag(jpeg _: Data) async throws -> TaggedPhoto {
         if let error {
             throw error
         }
@@ -60,6 +72,11 @@ struct FakeTagger: TaggingService {
         tags.subcategory = "sweater"
         tags.formality = 3
         tags.warmth = 3
-        return tags
+        return TaggedPhoto(tags: tags, itemBox: itemBox)
     }
+}
+
+/// Photo-library loaders that hand back fixed bytes (nil = a photo that fails to load).
+func loaders(_ images: [Data?]) -> [@Sendable () async -> Data?] {
+    images.map { image in { image } }
 }

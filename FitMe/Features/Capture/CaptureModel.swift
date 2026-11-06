@@ -1,3 +1,4 @@
+import CryptoKit
 import FitEngine
 import Foundation
 import Observation
@@ -14,6 +15,10 @@ final class CaptureModel {
     private static let concurrency = 3
 
     private(set) var inFlight = 0
+    /// Photos picked but not loaded yet: shown so the inbox never looks empty right after adding.
+    private(set) var importing = 0
+    /// What the last import skipped, if anything (duplicates, unreadable photos).
+    private(set) var lastImportNote: String?
 
     private let processor: any PhotoProcessing
     private let tagger: any TaggingService
@@ -25,11 +30,35 @@ final class CaptureModel {
         self.context = context
     }
 
-    /// Creates a draft per photo right away (so nothing is lost if the app quits), then processes them.
-    func importPhotos(_ images: [Data]) async {
-        let drafts = images.map { CaptureDraft(originalImage: $0) }
-        drafts.forEach(context.insert)
-        save()
+    /// Each loader fetches one photo (e.g. from the photo library). A draft is saved as soon as its photo loads,
+    /// so nothing is lost if the app quits; photos already in the inbox or closet are skipped.
+    func importPhotos(_ loaders: [@Sendable () async -> Data?]) async {
+        importing += loaders.count
+        lastImportNote = nil
+        var known = knownFingerprints()
+        var drafts: [CaptureDraft] = []
+        var duplicates = 0
+        var unreadable = 0
+
+        for load in loaders {
+            let image = await load()
+            importing -= 1
+            guard let image else {
+                unreadable += 1
+                continue
+            }
+            let fingerprint = Self.fingerprint(of: image)
+            guard known.insert(fingerprint).inserted else {
+                duplicates += 1
+                continue
+            }
+            let draft = CaptureDraft(originalImage: image, fingerprint: fingerprint)
+            context.insert(draft)
+            save()
+            drafts.append(draft)
+        }
+
+        lastImportNote = Self.note(duplicates: duplicates, unreadable: unreadable)
         await process(drafts)
     }
 
@@ -50,7 +79,9 @@ final class CaptureModel {
 
     /// Adds the reviewed item to the closet and removes the draft.
     func confirm(_ draft: CaptureDraft, as item: Item) {
-        context.insert(ItemRecord(item: item, photo: draft.photo, cutout: draft.cutout))
+        let record = ItemRecord(item: item, photo: draft.photo, cutout: draft.cutout)
+        record.sourceFingerprint = draft.fingerprint
+        context.insert(record)
         context.delete(draft)
         save()
     }
@@ -102,18 +133,22 @@ final class CaptureModel {
         processor: any PhotoProcessing,
         tagger: any TaggingService
     ) async -> Outcome {
-        let photo: ProcessedPhoto
+        var photo: ProcessedPhoto
         do {
             photo = try await processor.process(job.image)
         } catch {
             return Outcome(draftID: job.draftID, photo: nil, tags: nil, errorMessage: "Couldn't read this photo.")
         }
+        let tagged: TaggedPhoto
         do {
-            let tags = try await tagger.tags(forJPEG: photo.taggingJPEG)
-            return Outcome(draftID: job.draftID, photo: photo, tags: tags, errorMessage: nil)
+            tagged = try await tagger.tag(jpeg: photo.taggingJPEG)
         } catch {
             return Outcome(draftID: job.draftID, photo: photo, tags: nil, errorMessage: message(for: error))
         }
+        if let box = tagged.itemBox, let cropped = try? await processor.crop(photo, to: box) {
+            photo = cropped
+        }
+        return Outcome(draftID: job.draftID, photo: photo, tags: tagged.tags, errorMessage: nil)
     }
 
     private func apply(_ outcome: Outcome) {
@@ -138,6 +173,26 @@ final class CaptureModel {
         case TaggingError.invalidTags: "Claude returned an unusable answer. Try again or tag it by hand."
         default: "Tagging failed. Try again or tag it by hand."
         }
+    }
+
+    // MARK: Duplicates
+
+    static func fingerprint(of image: Data) -> String {
+        SHA256.hash(data: image).map { String(format: "%02x", $0) }.joined()
+    }
+
+    private func knownFingerprints() -> Set<String> {
+        let drafts = (try? context.fetch(FetchDescriptor<CaptureDraft>())) ?? []
+        let records = (try? context.fetch(FetchDescriptor<ItemRecord>())) ?? []
+        return Set(drafts.compactMap(\.fingerprint) + records.compactMap(\.sourceFingerprint))
+    }
+
+    static func note(duplicates: Int, unreadable: Int) -> String? {
+        let parts = [
+            duplicates > 0 ? "Skipped \(duplicates) photo\(duplicates == 1 ? "" : "s") already added." : nil,
+            unreadable > 0 ? "Couldn't load \(unreadable) photo\(unreadable == 1 ? "" : "s")." : nil,
+        ].compactMap(\.self)
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     private func save() {

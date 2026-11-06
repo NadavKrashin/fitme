@@ -18,7 +18,7 @@ struct CaptureModelTests {
 
     @Test func importedPhotosBecomeTaggedDrafts() async throws {
         let capture = model()
-        await capture.importPhotos([Data([1]), Data([2]), Data([3]), Data([4])])
+        await capture.importPhotos(loaders([Data([1]), Data([2]), Data([3]), Data([4])]))
 
         let all = try drafts()
         #expect(all.count == 4)
@@ -28,7 +28,7 @@ struct CaptureModelTests {
     }
 
     @Test func taggingFailureKeepsThePhotoAndExplains() async throws {
-        await model(tagger: FakeTagger(error: ClaudeError.missingAPIKey)).importPhotos([Data([1])])
+        await model(tagger: FakeTagger(error: ClaudeError.missingAPIKey)).importPhotos(loaders([Data([1])]))
 
         let draft = try #require(try drafts().first)
         #expect(draft.status == .failed)
@@ -38,7 +38,7 @@ struct CaptureModelTests {
     }
 
     @Test func unreadablePhotoFails() async throws {
-        await model(processor: FakePhotoProcessor(fails: true)).importPhotos([Data([1])])
+        await model(processor: FakePhotoProcessor(fails: true)).importPhotos(loaders([Data([1])]))
         let draft = try #require(try drafts().first)
         #expect(draft.status == .failed)
         #expect(draft.cutout == nil)
@@ -46,7 +46,7 @@ struct CaptureModelTests {
 
     @Test func confirmMovesTheDraftIntoTheCloset() async throws {
         let capture = model()
-        await capture.importPhotos([Data([7])])
+        await capture.importPhotos(loaders([Data([7])]))
         let draft = try #require(try drafts().first)
         var item = draft.proposedItem
         item.name = "Edited name"
@@ -62,7 +62,7 @@ struct CaptureModelTests {
 
     @Test func discardRemovesTheDraft() async throws {
         let capture = model()
-        await capture.importPhotos([Data([1])])
+        await capture.importPhotos(loaders([Data([1])]))
         try capture.discard(#require(try drafts().first))
         #expect(try drafts().isEmpty)
     }
@@ -77,12 +77,46 @@ struct CaptureModelTests {
     }
 
     @Test func retryRecoversAFailedDraft() async throws {
-        await model(tagger: FakeTagger(error: ClaudeError.missingAPIKey)).importPhotos([Data([1])])
+        await model(tagger: FakeTagger(error: ClaudeError.missingAPIKey)).importPhotos(loaders([Data([1])]))
         let draft = try #require(try drafts().first)
 
         await model().retry(draft)
 
         #expect(draft.status == .ready)
         #expect(draft.errorMessage == nil)
+    }
+
+    @Test func duplicatePhotosAreSkippedWithANote() async throws {
+        let capture = model()
+        await capture.importPhotos(loaders([Data([1]), Data([2]), Data([1])]))
+        #expect(try drafts().count == 2)
+        #expect(capture.lastImportNote == "Skipped 1 photo already added.")
+
+        // Again later, after one became a closet item.
+        let draft = try #require(try drafts().first)
+        capture.confirm(draft, as: draft.proposedItem)
+        await capture.importPhotos(loaders([Data([1]), Data([2]), Data([3])]))
+        #expect(try drafts().count == 2)
+        #expect(capture.lastImportNote == "Skipped 2 photos already added.")
+    }
+
+    @Test func unreadablePhotosAreCountedNotDrafted() async throws {
+        let capture = model()
+        await capture.importPhotos(loaders([nil, Data([5])]))
+        #expect(try drafts().count == 1)
+        #expect(capture.lastImportNote == "Couldn't load 1 photo.")
+        #expect(capture.importing == 0)
+    }
+
+    @Test func itemBoxCropsTheCutout() async throws {
+        let box = ItemBox(x0: 100, y0: 200, x1: 600, y1: 900)
+        await model(tagger: FakeTagger(itemBox: box)).importPhotos(loaders([Data([3])]))
+        let draft = try #require(try drafts().first)
+        #expect(draft.cutout == Data("cropped".utf8) + Data("cutout".utf8) + Data([3]))
+    }
+
+    @Test func noBoxKeepsTheUncroppedCutout() async throws {
+        await model().importPhotos(loaders([Data([3])]))
+        #expect(try drafts().first?.cutout == Data("cutout".utf8) + Data([3]))
     }
 }

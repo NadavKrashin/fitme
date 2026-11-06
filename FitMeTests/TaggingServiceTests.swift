@@ -6,7 +6,8 @@ import Testing
 struct TaggingServiceTests {
     private static let validJSON = """
     {"name":"Navy chinos","category":"bottom","subcategory":"chinos","pattern":"solid","formality":3,"warmth":2,
-     "fit":"regular","isStatement":false,"styleTags":["classic"],"waterResistant":false}
+     "fit":"regular","isStatement":false,"styleTags":["classic"],"waterResistant":false,
+     "itemBox":{"x0":120,"y0":80,"x1":880,"y1":960}}
     """
 
     @Test func schemaCoversEveryEngineCaseAndRequiresAllFields() throws {
@@ -23,7 +24,9 @@ struct TaggingServiceTests {
     }
 
     @Test func decodesValidTags() throws {
-        let tags = try ClaudeTaggingService.decode(Self.validJSON)
+        let tagged = try ClaudeTaggingService.decode(Self.validJSON)
+        #expect(tagged.itemBox == ItemBox(x0: 120, y0: 80, x1: 880, y1: 960))
+        let tags = tagged.tags
         #expect(tags.category == .bottom)
         #expect(tags.styleTags == [.classic])
         let item = tags.item(id: "x", colors: [ItemColor(hex: "#27324A")])
@@ -45,12 +48,23 @@ struct TaggingServiceTests {
         let transport = RecordingTransport(body: messagesResponse(text: Self.validJSON))
         let service = ClaudeTaggingService(client: ClaudeClient(apiKey: { "sk-test" }, transport: transport))
 
-        let tags = try await service.tags(forJPEG: Data([0xFF, 0xD8]))
+        let tagged = try await service.tag(jpeg: Data([0xFF, 0xD8]))
 
-        #expect(tags.name == "Navy chinos")
+        #expect(tagged.tags.name == "Navy chinos")
         let body = try #require(await transport.requests.first?.httpBody)
         let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
         #expect(json["model"] as? String == ClaudeTaggingService.model)
+    }
+
+    @Test(arguments: [
+        #""itemBox":{"x0":900,"y0":80,"x1":100,"y1":960}"#, // inverted
+        #""itemBox":{"x0":120,"y0":80,"x1":1400,"y1":960}"#, // out of range
+    ])
+    func invalidBoxIsDroppedButTagsAreKept(box: String) throws {
+        let validBox = #""itemBox":{"x0":120,"y0":80,"x1":880,"y1":960}"#
+        let tagged = try ClaudeTaggingService.decode(Self.validJSON.replacingOccurrences(of: validBox, with: box))
+        #expect(tagged.itemBox == nil)
+        #expect(tagged.tags.name == "Navy chinos")
     }
 
     @Test func blankNameFallsBackToSubcategory() {

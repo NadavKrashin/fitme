@@ -65,10 +65,12 @@ Goal: catalog about 100 items in **under 60–90 minutes**, with at least 85% of
 - [ ] **In-app batch camera.** Not built. Today's flow is to shoot items in the Camera app, then multi-select them in
   FitMe.
 - [ ] Closet filters by color and formality (only category and search exist).
-- [ ] **Verify on the iPhone with real clothes:**
-  - subject-lift quality
-  - tag accuracy (target at least 85%)
-  - the time to catalog 100 items (target under 90 minutes)
+- [x] First real trial (Nadav, about 10 photos, 2026-11-06): tags fine and flow fast. Fixed:
+  - worn photos kept the face and legs → crop to Claude's item box
+  - the inbox looked empty during import → importing row and banner
+  - re-adding created duplicates → SHA-256 fingerprints skip them
+- [ ] Re-check worn-photo cutouts after the crop fix, and time a full closet (target under 90 minutes for 100
+  items).
 
 ## Phase 2: Outfit engine in daily use
 

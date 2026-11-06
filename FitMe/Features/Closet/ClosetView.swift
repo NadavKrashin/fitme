@@ -19,7 +19,7 @@ struct ClosetView: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 20) {
-                    if !drafts.isEmpty {
+                    if !drafts.isEmpty || capture.importing > 0 {
                         inboxBanner
                     }
                     if records.isEmpty {
@@ -55,7 +55,7 @@ struct ClosetView: View {
                 guard !selection.isEmpty else { return }
                 pickerSelection = []
                 isShowingInbox = true
-                Task { await importPhotos(selection) }
+                Task { await capture.importPhotos(selection.map(Self.loader)) }
             }
             .sheet(isPresented: $isShowingInbox) { InboxView() }
         }
@@ -67,6 +67,7 @@ struct ClosetView: View {
         let processing = drafts.count(where: { $0.status == .processing })
         let toReview = drafts.count - processing
         let summary = [
+            capture.importing > 0 ? "importing \(capture.importing)" : nil,
             toReview > 0 ? "\(toReview) to review" : nil,
             processing > 0 ? "\(processing) processing" : nil,
         ].compactMap(\.self).joined(separator: " · ")
@@ -112,8 +113,9 @@ struct ClosetView: View {
 
     private var emptyHint: String {
         switch AppEnvironment.current {
-        case .staging: "Tap + to add photos of your clothes, or load the demo closet from Settings."
-        case .production: "Tap + to add photos of your clothes. Photograph them one by one in the Camera app first."
+        case .staging:
+            "Tap + to add photos of your clothes, or load the demo closet from Settings. \(InboxView.photoTip)"
+        case .production: "Tap + to add photos of your clothes. \(InboxView.photoTip)"
         }
     }
 
@@ -140,18 +142,15 @@ struct ClosetView: View {
 
     // MARK: Import
 
-    private func importPhotos(_ selection: [PhotosPickerItem]) async {
-        var images: [Data] = []
-        for item in selection {
+    private static func loader(for item: PhotosPickerItem) -> @Sendable () async -> Data? {
+        {
             do {
-                if let data = try await item.loadTransferable(type: Data.self) {
-                    images.append(data)
-                }
+                return try await item.loadTransferable(type: Data.self)
             } catch {
                 Logger.capture.error("Couldn't load a picked photo: \(String(describing: error))")
+                return nil
             }
         }
-        await capture.importPhotos(images)
     }
 }
 

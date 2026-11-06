@@ -101,6 +101,15 @@ xcrun devicectl device install app --device 00008140-000129522413C01C DerivedDat
   - The full capture UI flow on a device.
   - The Phase 1 goals: 100 items in under 90 minutes, and at least 85% of tags right.
 
+## First real-closet trial (2026-11-06) and fixes
+
+- **Nadav's feedback:** tags fine, flow fast. Two problems, both fixed:
+  - Worn photos kept face and legs in the cutout. Now cropped to the `itemBox` that Claude returns with the tags.
+  - The inbox looked empty while photos loaded, which led to adding them twice. Now there's an "Importing N
+    photos…" row, and fingerprinting skips duplicates.
+- **Not re-verified on the phone yet:** the crop fix on real worn photos (arms and hands inside a top's box are
+  expected to stay).
+
 ## Next steps, in order
 
 1. **Confirm CI is green** on the latest `main` (`gh run list --limit 3`, then `gh run view <id> --log-failed`).

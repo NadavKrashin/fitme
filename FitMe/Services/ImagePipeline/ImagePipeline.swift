@@ -21,6 +21,8 @@ struct ProcessedPhoto: Sendable {
 
 protocol PhotoProcessing: Sendable {
     func process(_ imageData: Data) async throws -> ProcessedPhoto
+    /// Crops the cutout to the item's box and re-measures its colors. `box` is relative to `taggingJPEG`.
+    func crop(_ photo: ProcessedPhoto, to box: ItemBox) async throws -> ProcessedPhoto
 }
 
 enum ImagePipelineError: Error {
@@ -36,6 +38,8 @@ struct ImagePipeline: PhotoProcessing {
     private static let colorSampleSide = 64
     /// Share of each side left empty around the item.
     private static let padding = 0.06
+    /// Extra room around the model's box, as a share of the side, so a slightly tight box never clips the item.
+    private static let boxMargin = 0.03
 
     /// Vision and image encoding are slow and synchronous: keep them off the main actor.
     @concurrent
@@ -51,6 +55,42 @@ struct ImagePipeline: PhotoProcessing {
             colors: ColorExtractor.dominantColors(in: Self.samplePixels(of: subject, onlyOpaque: cutout != nil)),
             hasCutout: cutout != nil
         )
+    }
+
+    /// The cutout and the tagging image share one square layout, so the box maps straight onto the cutout.
+    @concurrent
+    func crop(_ photo: ProcessedPhoto, to box: ItemBox) async throws -> ProcessedPhoto {
+        let cutout = try Self.decode(photo.cutoutPNG)
+        guard let cropped = cutout.cropping(to: Self.pixelRect(for: box, side: cutout.width)) else {
+            throw ImagePipelineError.encodingFailed
+        }
+        let pixels = Self.samplePixels(of: cropped, onlyOpaque: photo.hasCutout)
+        // A box that misses the item entirely would leave nothing; keep the uncropped result instead.
+        guard !pixels.isEmpty else { return photo }
+        return try ProcessedPhoto(
+            photoJPEG: photo.photoJPEG,
+            cutoutPNG: Self.encode(Self.squared(cropped, side: Self.cutoutSide, background: nil), as: .png),
+            taggingJPEG: photo.taggingJPEG,
+            colors: ColorExtractor.dominantColors(in: pixels),
+            hasCutout: photo.hasCutout
+        )
+    }
+
+    static func pixelRect(for box: ItemBox, side: Int) -> CGRect {
+        let scale = Double(side) / Double(ItemBox.scale)
+        let margin = boxMargin * Double(side)
+        let x0 = max(0, Double(box.x0) * scale - margin)
+        let y0 = max(0, Double(box.y0) * scale - margin)
+        let x1 = min(Double(side), Double(box.x1) * scale + margin)
+        let y1 = min(Double(side), Double(box.y1) * scale + margin)
+        return CGRect(x: x0, y: y0, width: x1 - x0, height: y1 - y0).integral
+    }
+
+    static func decode(_ data: Data) throws -> CGImage {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        else { throw ImagePipelineError.unreadableImage }
+        return image
     }
 
     /// Decodes with EXIF orientation applied, downscaled so the long edge is at most `maxPixels`.
