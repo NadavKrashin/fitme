@@ -8,7 +8,9 @@ import UIKit
 struct ImagePipelineTests {
     /// A red square filling the middle of a white photo.
     private func redSquarePhoto() -> Data {
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 400, height: 300))
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1 // pixels, not points: the default uses the screen scale
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 400, height: 300), format: format)
         return renderer.jpegData(withCompressionQuality: 0.9) { context in
             UIColor.white.setFill()
             context.fill(CGRect(x: 0, y: 0, width: 400, height: 300))

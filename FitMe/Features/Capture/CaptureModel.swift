@@ -35,12 +35,10 @@ final class CaptureModel {
 
     /// Picks up drafts left mid-processing by a previous session.
     func resumePending() async {
-        let processing = CaptureDraft.Status.processing
-        let pending = (try? context.fetch(FetchDescriptor<CaptureDraft>(
-            predicate: #Predicate { $0.status == processing },
-            sortBy: [SortDescriptor(\.createdAt)]
-        ))) ?? []
-        await process(pending)
+        // Filtered in Swift: a #Predicate on the Codable `status` enum silently matches nothing in SwiftData.
+        // There are only ever a handful of drafts.
+        let drafts = (try? context.fetch(FetchDescriptor<CaptureDraft>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
+        await process(drafts.filter { $0.status == .processing })
     }
 
     func retry(_ draft: CaptureDraft) async {

@@ -64,6 +64,8 @@ not done. CI enforces the mechanical rules (format, lint, tests); the rest are c
 - **Persistence:**
   - SwiftData `@Model` types live in `Models/` and map to and from `FitEngine` value types (`ItemRecord` ↔ `Item`).
   - The engine never imports SwiftData.
+  - Never `#Predicate` on a Codable enum property: SwiftData stores it as a composite value, and the predicate
+    silently matches nothing. Filter in Swift, or store the raw value in its own `String` property.
 - **Networking:** use `async`/`await` with `URLSession`. Clients are protocols with a fake for tests and previews.
   Never block the main actor.
 - **Secrets:**
