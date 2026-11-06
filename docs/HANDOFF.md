@@ -89,9 +89,12 @@ xcrun devicectl device install app --device 00008140-000129522413C01C DerivedDat
 - **Verified locally:**
   - 32 engine tests pass, including `ColorExtractor`.
   - The app and tests build with no warnings, lint is clean, and `verify-release` passes.
-- **Verified only by CI:** the app tests below (this Mac still has no simulator runtime).
+- **Verified only by CI** (this Mac still has no simulator runtime): the app tests, green in run 42164034673, which
+  also uploaded **Staging build 11**.
   - `ClaudeClientTests`, `TaggingServiceTests`, `CaptureModelTests`, `ImagePipelineTests`.
   - They use fake transports and processors, so no real API call has been made yet.
+  - The first CI run caught a real bug: resume-after-relaunch never found its drafts, because of the SwiftData enum
+    predicate pitfall now noted in the standards. It's fixed.
 - **Not verified at all:**
   - A real Claude call. Needs Nadav's API key in Settings on the phone.
   - Vision subject lift on real photos. The CI simulator may fall back to the full photo.
