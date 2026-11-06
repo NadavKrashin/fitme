@@ -23,8 +23,27 @@ public struct PackingOptions: Hashable, Sendable {
     public var laundryEveryNDays: Int?
     /// Tops and one-pieces are worn once per laundry cycle; bottoms can repeat up to this many times.
     public var maxWearsPerBottom = 3
+    /// How many past trips each item was packed for and never worn (item id → count). Each such trip makes the
+    /// item costlier to pack, so habitual "just in case" pieces stay home unless they're really needed.
+    public var packedUnworn: [String: Int] = [:]
 
     public init() {}
+
+    /// A carry-on: two pairs of shoes and one coat.
+    public static var carryOn: PackingOptions {
+        var options = PackingOptions()
+        options.maxShoes = 2
+        options.maxOuterwear = 1
+        return options
+    }
+
+    /// The suitcase cost of packing `item`, after its history of coming home unworn.
+    public func cost(of item: Item) -> Double {
+        item.packingCost * (1 + Self.unwornPenalty * Double(packedUnworn[item.id, default: 0]))
+    }
+
+    /// Extra cost per trip an item came home unworn: three such trips double it.
+    static let unwornPenalty = 1.0 / 3
 }
 
 /// One outfit slot on one day of the trip.

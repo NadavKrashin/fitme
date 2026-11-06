@@ -50,3 +50,19 @@ struct GeneratorTests {
         #expect(outfits.allSatisfy { $0.outfit.contains(mustard) })
     }
 }
+
+struct AlternativesTests {
+    /// A swap should offer a different look first, not the same top and bottom with other shoes.
+    @Test func alternativesLeadWithADifferentTop() throws {
+        let trip = Fixtures.days(5, weather: Weather(feelsLikeC: 18), occasions: [.casual])
+        let packed = PackingOptimizer().pack(closet: Fixtures.closet, trip: trip)
+        let current = try #require(packed.assignments.first?.outfit).outfit
+        let context = Fixtures.context(.casual, Weather(feelsLikeC: 18))
+
+        let alternatives = OutfitGenerator().alternatives(to: current, from: packed.items, context: context)
+
+        #expect(!alternatives.isEmpty)
+        #expect(alternatives.allSatisfy { $0.id != current.id && $0.outfit.items.allSatisfy(packed.items.contains) })
+        #expect(alternatives.first?.outfit.baseKey != current.baseKey)
+    }
+}

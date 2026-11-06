@@ -81,3 +81,59 @@ struct StatementRotationTests {
         #expect(statementWears.count == Set(statementWears).count, "repeated statement pieces: \(statementWears)")
     }
 }
+
+struct PackingHistoryTests {
+    private let trip: [TripDay] = {
+        var trip = Fixtures.days(5, weather: Weather(feelsLikeC: 21), occasions: [.casual])
+        trip[3].occasions.append(.date)
+        return trip
+    }()
+
+    /// A shirt that came home unworn from three trips stays home when the closet has an equal alternative.
+    @Test func itemsThatCameHomeUnwornStayHome() {
+        let before = PackingOptimizer().pack(closet: Fixtures.closet, trip: trip)
+        #expect(before.items.contains(Fixtures.item("t16")))
+
+        var options = PackingOptions()
+        options.packedUnworn = ["t16": 3]
+        let after = PackingOptimizer(options: options).pack(closet: Fixtures.closet, trip: trip)
+
+        #expect(!after.items.contains(Fixtures.item("t16")))
+        #expect(after.uncovered.isEmpty, "\(after.summary)")
+    }
+
+    @Test func unwornHistoryRaisesCost() {
+        var options = PackingOptions()
+        options.packedUnworn = ["t16": 3]
+        let shirt = Fixtures.item("t16")
+        #expect(isClose(options.cost(of: shirt), 2 * shirt.packingCost))
+        #expect(isClose(options.cost(of: Fixtures.item("t15")), Fixtures.item("t15").packingCost))
+    }
+
+    @Test func planForTheOptimizersOwnCapsuleMatchesPacking() {
+        let packed = PackingOptimizer().pack(closet: Fixtures.closet, trip: trip)
+        let replanned = PackingOptimizer().plan(packed: packed.items, trip: trip)
+        #expect(replanned.assignments.map(\.outfit?.id) == packed.assignments.map(\.outfit?.id))
+        #expect(replanned.outfitCount == packed.outfitCount)
+    }
+
+    /// After the user removes a piece, every day is replanned from what's left.
+    @Test func planForAnEditedCapsuleOnlyUsesPackedItems() {
+        let packed = PackingOptimizer().pack(closet: Fixtures.closet, trip: trip).items
+        let edited = packed.filter { $0.id != "t16" }
+        let result = PackingOptimizer().plan(packed: edited, trip: trip)
+
+        #expect(result.assignments.count == 6)
+        for outfit in result.assignments.compactMap(\.outfit) {
+            #expect(outfit.outfit.items.allSatisfy(edited.contains))
+        }
+    }
+
+    @Test func carryOnPacksFewerShoesAndCoats() {
+        let trip = Fixtures.days(5, weather: Weather(feelsLikeC: 12), occasions: [.casual])
+            + Fixtures.days(2, weather: Weather(feelsLikeC: 12), occasions: [.formal], from: 5)
+        let result = PackingOptimizer(options: .carryOn).pack(closet: Fixtures.closet, trip: trip)
+        #expect(result.items.count(where: { $0.category == .shoes }) <= 2)
+        #expect(result.items.count(where: { $0.category == .outerwear }) <= 1)
+    }
+}

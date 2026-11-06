@@ -32,6 +32,18 @@ public struct OutfitGenerator: Sendable {
         build(from: pool, context: context, mustInclude: mustInclude, beam: nil).filter { $0.score >= minScore }
     }
 
+    /// Other outfits from a small pool to replace `current`, picked to differ from it (and each other), not just
+    /// swap its shoes.
+    public func alternatives(
+        to current: Outfit,
+        from pool: [Item],
+        context: OutfitContext,
+        limit: Int = 6
+    ) -> [ScoredOutfit] {
+        let others = allOutfits(from: pool, context: context).filter { $0.id != current.id }
+        return Self.diversified(others, limit: limit, avoiding: [current])
+    }
+
     func build(from pool: [Item], context: OutfitContext, mustInclude: Item?, beam: Int?) -> [ScoredOutfit] {
         var eligible = pool.filter { Rules.isEligible($0, for: context) }
         if let must = mustInclude {
@@ -100,28 +112,32 @@ public struct OutfitGenerator: Sendable {
     }
 
     /// Greedy max-marginal-relevance: trade a little score for outfits that don't repeat the same pieces,
-    /// and especially not the same top.
+    /// and especially not the same top. Outfits in `avoiding` count as already chosen but aren't returned.
     static func diversified(
         _ ranked: [ScoredOutfit],
         limit: Int,
+        avoiding: [Outfit] = [],
         overlapPenalty: Double = 12,
         sameBasePenalty: Double = 15
     ) -> [ScoredOutfit] {
         var chosen: [ScoredOutfit] = []
+        var taken = avoiding
         var remaining = ranked
         while chosen.count < limit, !remaining.isEmpty {
             var bestIndex = 0
             var bestValue = -Double.infinity
             for (i, candidate) in remaining.enumerated() {
-                let overlap = chosen.map { jaccard(candidate.outfit, $0.outfit) }.max() ?? 0
-                let repeatsBase = chosen.contains { $0.outfit.baseKey == candidate.outfit.baseKey }
+                let overlap = taken.map { jaccard(candidate.outfit, $0) }.max() ?? 0
+                let repeatsBase = taken.contains { $0.baseKey == candidate.outfit.baseKey }
                 let value = candidate.score - overlapPenalty * overlap - (repeatsBase ? sameBasePenalty : 0)
                 if value > bestValue {
                     bestValue = value
                     bestIndex = i
                 }
             }
-            chosen.append(remaining.remove(at: bestIndex))
+            let pick = remaining.remove(at: bestIndex)
+            chosen.append(pick)
+            taken.append(pick.outfit)
         }
         return chosen
     }

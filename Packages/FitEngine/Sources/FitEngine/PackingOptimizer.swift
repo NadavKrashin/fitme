@@ -68,6 +68,12 @@ public struct PackingOptimizer: Sendable {
         return assemble(capsule: capsule, trip: trip, plan: plan)
     }
 
+    /// The day-by-day plan for a capsule chosen elsewhere, e.g. after the user added or removed items by hand.
+    public func plan(packed: [Item], trip: [TripDay], profile: StyleProfile? = nil) -> PackingResult {
+        let plan = TripPlan(trip: trip, laundryEveryNDays: options.laundryEveryNDays, profile: profile)
+        return assemble(capsule: packed, trip: trip, plan: plan)
+    }
+
     // MARK: Greedy step
 
     /// Per group: the best good outfit for each distinct base (top / one-piece).
@@ -95,7 +101,7 @@ public struct PackingOptimizer: Sendable {
                 newStates[g] = merged(states[g], with: unlocked)
             }
             let gain = match(newStates, plan: plan).value - currentValue
-            let ratio = gain / item.packingCost
+            let ratio = gain / options.cost(of: item)
             if gain > Self.gainEpsilon, ratio > bestRatio {
                 best = (item, newStates)
                 bestRatio = ratio
@@ -192,7 +198,7 @@ public struct PackingOptimizer: Sendable {
     private func pruned(_ capsule: [Item], plan: TripPlan) -> [Item] {
         var current = capsule
         var currentValue = match(recompute(capsule: current, groups: plan.groups), plan: plan).value
-        for item in capsule.sorted(by: { ($0.packingCost, $1.id) > ($1.packingCost, $0.id) }) {
+        for item in capsule.sorted(by: { (options.cost(of: $0), $1.id) > (options.cost(of: $1), $0.id) }) {
             let without = current.filter { $0 != item }
             let value = match(recompute(capsule: without, groups: plan.groups), plan: plan).value
             if value >= currentValue - Self.gainEpsilon {
