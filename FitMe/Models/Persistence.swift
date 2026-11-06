@@ -7,6 +7,7 @@ enum Persistence {
         CaptureDraft.self,
         StyleProfileRecord.self,
         SavedOutfit.self,
+        TripRecord.self,
     ]
 
     /// The on-device closet store. Creates Application Support first: on a fresh install it doesn't exist yet,

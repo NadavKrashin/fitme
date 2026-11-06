@@ -9,4 +9,5 @@ extension Logger {
     static let capture = Logger(subsystem: subsystem, category: "capture")
     static let imagePipeline = Logger(subsystem: subsystem, category: "image-pipeline")
     static let today = Logger(subsystem: subsystem, category: "today")
+    static let trips = Logger(subsystem: subsystem, category: "trips")
 }

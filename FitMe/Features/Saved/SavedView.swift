@@ -54,13 +54,7 @@ struct SavedView: View {
         )
         return VStack(alignment: .leading, spacing: 8) {
             if let occasion = entry.occasion {
-                let tint = Theme.tint(for: occasion)
-                Text(occasion.title)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(tint.ink)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(tint.fill, in: .capsule)
+                Badge(text: occasion.title, tint: Theme.tint(for: occasion))
             }
             OutfitCard(
                 outfit: scored,

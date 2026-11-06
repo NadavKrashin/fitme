@@ -29,7 +29,7 @@ enum ClaudeError: Error, Equatable {
     var userMessage: String {
         switch self {
         case .missingAPIKey:
-            "Add your Claude API key in Settings to tag items automatically."
+            "Add your Claude API key in Settings to use Claude."
         case let .api(status, _, _) where status == 401:
             "Claude rejected the API key. Check it in Settings."
         case .api where isRetryable:

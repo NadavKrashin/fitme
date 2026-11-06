@@ -108,4 +108,35 @@ struct PreviewStylist: OutfitStylist {
         candidates.prefix(1).map { StylistPick(outfit: $0, reason: "Calm neutrals with one warm accent.") }
     }
 }
+
+struct PreviewTripWeather: PlaceSearching, TripWeatherProviding {
+    func places(matching query: String) async throws -> [Place] {
+        [
+            Place(name: "Lisbon", detail: "Portugal", latitude: 38.72, longitude: -9.14),
+            Place(name: "Porto", detail: "Portugal", latitude: 41.15, longitude: -8.61),
+        ].filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }
+    }
+
+    func dailyWeather(at _: Place, days: [Date]) async throws -> [DailyWeather] {
+        days.indices.map { index in
+            DailyWeather(
+                feelsLikeMinC: 12 + Double(index % 3),
+                feelsLikeMaxC: 20 + Double(index % 3),
+                precipitationChance: index == 2 ? 0.6 : 0.1,
+                source: .forecast
+            )
+        }
+    }
+}
+
+struct PreviewCapsuleReviewer: CapsuleReviewing {
+    func review(_ details: TripDetails, closet _: [Item]) async throws -> CapsuleReview {
+        CapsuleReview(
+            verdict: "A tight, neutral bag: every top works with both bottoms.",
+            changes: details.packedItemIDs.prefix(1).map {
+                CapsuleReview.Change(leaveOut: $0, bring: nil, why: "It only makes one outfit.")
+            }
+        )
+    }
+}
 #endif

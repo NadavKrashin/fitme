@@ -10,7 +10,7 @@ struct TodayView: View {
         NavigationStack {
             Group {
                 if let model {
-                    OutfitPlanner(model: model)
+                    OutfitPlanner(model: model, showsTrip: true)
                 } else {
                     ProgressView()
                 }
@@ -56,7 +56,10 @@ struct OutfitsWithItemView: View {
 private struct OutfitPlanner: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var model: TodayModel
+    /// Today's screen points to the trip in progress, whose outfits come from the bag.
+    var showsTrip = false
     @Query(sort: \ItemRecord.addedAt) private var records: [ItemRecord]
+    @Query(sort: \TripRecord.startDate) private var trips: [TripRecord]
     @Query private var profiles: [StyleProfileRecord]
     @Query private var savedOutfits: [SavedOutfit]
 
@@ -79,6 +82,9 @@ private struct OutfitPlanner: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.inkMuted)
 
+                if showsTrip, let trip = trips.first(where: { $0.details.phase() == .ongoing }) {
+                    TripInProgressCard(trip: trip)
+                }
                 WeatherCard(state: model.weather) { Task { await model.loadWeather() } }
                 occasionChips
                 conditionsCard
@@ -251,6 +257,42 @@ private struct OutfitPlanner: View {
             isRainy = model.isRainy
             itemIDs = closet.map(\.id)
         }
+    }
+}
+
+/// While traveling: a way into today's planned outfit from the bag.
+private struct TripInProgressCard: View {
+    let trip: TripRecord
+
+    var body: some View {
+        let details = trip.details
+        let day = details.dayIndex() ?? 0
+        let place = details.stop(forDay: day)?.place.name ?? details.name
+        NavigationLink {
+            TripDetailView(trip: trip)
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "suitcase.rolling")
+                    .font(.title2)
+                    .foregroundStyle(Theme.onTerracotta)
+                    .frame(width: 48, height: 48)
+                    .background(Theme.terracotta, in: .circle)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Day \(day + 1) of \(details.days.count) in \(place)")
+                        .font(Theme.title(17))
+                        .foregroundStyle(Theme.ink)
+                    Text("Today's outfit is planned from your bag")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.inkMuted)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.inkMuted)
+            }
+            .card()
+        }
+        .buttonStyle(.plain)
     }
 }
 

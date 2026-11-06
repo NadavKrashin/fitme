@@ -5,6 +5,23 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-06: Trip weather, edits and learning
+
+- **Decision:**
+  - Per-day trip weather comes from Open-Meteo: the forecast up to 16 days ahead, and beyond that the same dates
+    averaged over the last 3 years from its archive. Cities come from Open-Meteo's geocoding.
+  - Each day dresses for the middle of its feels-like range; layers cover the cool morning.
+  - Trips are stored as one JSON blob per `TripRecord`. Fields added later must decode from old trips (see the
+    standards).
+  - The bag is the optimizer's first answer, and every edit afterwards (leave out, bring, stylist change) only
+    replans the days for the edited bag. It never repacks behind the user's back.
+  - An item that came home unworn costs a third more to pack per such trip.
+- **Why:** no API keys, the same provider as daily weather, and typical weather means a trip two months out still
+  gets a sensible plan. Replanning instead of repacking keeps the user in control. The unworn penalty is the
+  feedback loop the Phase 3 goal (wear 90% of what's packed) needs, without a separate model.
+
+---
+
 ### 2026-11-06: Warm editorial design system
 
 - **Decision:**

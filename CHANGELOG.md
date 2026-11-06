@@ -21,3 +21,11 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - ♥ saves an outfit to the new Saved tab; ✕ hides it with Undo; every reaction confirms with a toast.
 - Liking an outfit no longer resets "Wear this".
 - The demo closet is now menswear, with real product photos.
+- New Trips tab: add cities and nights, laundry and luggage, then what each day holds. FitMe packs the fewest pieces
+  that dress every plan, with a day-by-day outfit plan and the real forecast (or typical weather for later trips).
+- Packing list with tick-off, counted essentials, "Leave at home", and "Add from closet". The plan updates after
+  every change, with Undo.
+- Swap any planned outfit for another from the bag, and see when a plan repeats a top before the next wash.
+- "Check my bag": Claude reviews the whole bag against your days and suggests changes you apply with one tap.
+- Trip mode: Today links to the trip in progress, and "Wear this" logs the outfit.
+- After a trip, tell FitMe what you wore. Pieces that came home unworn are less likely to be packed next time.

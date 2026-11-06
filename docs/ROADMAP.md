@@ -103,11 +103,17 @@ Goal: at least 70% of top-5 suggestions rated "I'd wear that" over two weeks.
 
 Goal: on a real trip, wear at least 90% of what's packed, while packing noticeably less than usual.
 
-- [ ] Trip wizard: legs and cities, dates, per-day activities, laundry, luggage size.
-- [ ] Open-Meteo forecast or climate normals per day.
-- [ ] Packing result: "N items → M outfits", day-by-day collages, checklist with `Essentials`.
-- [ ] Claude capsule review (missing or redundant items, weak days) as one-tap swaps.
-- [ ] Trip mode: today's outfit, swap, mark worn. Post-trip debrief: what did you actually wear?
+- [x] Trip wizard: cities (Open-Meteo search) with nights, start date, per-day occasions, laundry, luggage
+  (carry-on: 2 pairs of shoes, 1 coat).
+- [x] Open-Meteo forecast per day up to 16 days out, and typical weather (last 3 years) beyond it.
+- [x] Packing result: "N pieces → M outfits", day-by-day collages, a packing list with tick-off and `Essentials`.
+- [x] Edit the bag: leave out, add from the closet, swap a planned outfit. Each change replans the days, with Undo.
+  Repeated tops within a laundry cycle are flagged.
+- [x] Claude capsule review ("Check my bag"): verdict plus up to 4 label-constrained changes, applied with one tap.
+- [x] Trip mode: "Today in…" with wear and swap; a Today card links to the trip in progress.
+- [x] Post-trip debrief: what you actually wore. Unworn pieces cost more to pack next time.
+- [ ] A real stylist check with Nadav's API key (only fakes so far).
+- [ ] Nadav packs a real trip with FitMe and does the debrief (the goal).
 
 ## Phase 4: Learning and insights
 

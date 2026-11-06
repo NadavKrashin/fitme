@@ -66,6 +66,9 @@ not done. CI enforces the mechanical rules (format, lint, tests); the rest are c
   - The engine never imports SwiftData.
   - Never `#Predicate` on a Codable enum property: SwiftData stores it as a composite value, and the predicate
     silently matches nothing. Filter in Swift, or store the raw value in its own `String` property.
+  - Records that store a value type as JSON (`StyleProfileRecord`, `TripRecord`) must keep decoding old data. A
+    field added later is optional, or decoded with `decodeIfPresent` and a default (see `PlannedOutfit`), with a
+    test that decodes the old shape. A decode failure silently resets the user's data.
 - **Networking:** use `async`/`await` with `URLSession`. Clients are protocols with a fake for tests and previews.
   Never block the main actor.
 - **Secrets:**

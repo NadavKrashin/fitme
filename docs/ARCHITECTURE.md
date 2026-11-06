@@ -101,13 +101,39 @@ PhotosPicker ─► CaptureModel.importPhotos ─► CaptureDraft(.processing) s
   - `TodayModel` keeps hidden and worn as separate sets.
   - Every reaction publishes a `Toast`; ✕ includes an undo.
 - **Look:** every color, font and shape comes from `UI/Theme.swift`, and screens compose `UI/Components.swift`.
-  Tabs: Today, Saved, Closet, Settings.
+  Tabs: Today, Trips, Saved, Closet, Settings.
 - **Stylist:** `ClaudeStylist.pick` gets 12 diversified engine candidates as labeled text and returns up to 3
   label-constrained picks with reasons.
 
-## Planned additions
+## Trip packer (Phase 3)
 
-Each lands in its own folder, following the same pattern. Details are in [ROADMAP.md](ROADMAP.md).
-
-- `Services/WeatherService` (Open-Meteo)
-- `Features/Trips`
+- **Data:** `TripRecord` stores a `TripDetails` value as JSON, with its dates mirrored as columns for sorting.
+  - `TripDetails` holds the plan the user made (stops with nights, start date, laundry, luggage, one `TripDayPlan`
+    per day with occasions and `DailyWeather`).
+  - It also holds what FitMe made from it: packed item ids, one `PlannedOutfit` per occasion per day, the
+    packing-list ticks, and the `TripDebrief`.
+  - `laidOut()` turns stops and nights into days (one per night plus the day home). Days point at their stop by id,
+    and keep their occasions and weather when an edit doesn't change them.
+- **Weather:** `OpenMeteoTripWeather` searches cities (Open-Meteo geocoding) and returns per-day weather.
+  - Days within 16 days use the forecast.
+  - Later or past days use "typical" weather: the same dates averaged over the last 3 years from the archive API,
+    with rain chance as the share of those years it rained.
+  - The engine dresses each day for the middle of its feels-like range (`DailyWeather.dressFor`).
+- **Packing:** `TripPlanner` wraps the engine off the main actor.
+  - `pack` runs `PackingOptimizer.pack` with the luggage limits (carry-on: 2 shoes, 1 coat), laundry, the style
+    profile, and `packedUnworn` from finished trips.
+  - `replan` runs `PackingOptimizer.plan(packed:)` after the user leaves an item out, brings one, or applies a
+    stylist change. Worn outfits are kept.
+  - `alternatives` powers Swap via `OutfitGenerator.alternatives(to:)`, which leads with a different top.
+  - `markingRepeats` flags outfits that repeat a top or statement piece within a laundry cycle.
+- **Screens:**
+  - `TripsView`: the list.
+  - `TripWizardView` with `TripWizardModel`: stops, dates, laundry and luggage, then each day's occasions, then pack.
+  - `TripDetailView` with `TripModel`: headline, trip mode ("Today in…", wear, swap), days, packing list,
+    stylist check, debrief.
+  - Today shows a card linking to a trip in progress.
+- **Stylist check:** `ClaudeCapsuleReviewer` sends the day plan, the packed pieces (`P1…`) and the rest of the
+  closet (`C1…`) as text. The schema only allows those labels (or `none`), so every suggested change maps to a real
+  item and applies with one tap through `TripModel.apply`.
+- **Learning:** a finished trip's debrief records what was worn. Each trip an item came home unworn adds a third to
+  its packing cost (`PackingOptions.packedUnworn`).

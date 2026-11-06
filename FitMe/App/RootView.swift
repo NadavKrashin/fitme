@@ -5,6 +5,8 @@ struct RootView: View {
         TabView {
             TodayView()
                 .tabItem { Label("Today", systemImage: "sun.max") }
+            TripsView()
+                .tabItem { Label("Trips", systemImage: "suitcase") }
             SavedView()
                 .tabItem { Label("Saved", systemImage: "heart") }
             ClosetView()

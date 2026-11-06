@@ -118,3 +118,84 @@ func makeTodayModel(
 ) -> TodayModel {
     TodayModel(generator: OutfitGenerator(), weatherService: weather, stylist: stylist, anchor: anchor)
 }
+
+/// Answers each request with the body for its host (status 500 for unknown hosts), and records requests.
+actor RoutingTransport: HTTPTransport {
+    private(set) var requests: [URLRequest] = []
+    private let bodies: [String: String]
+
+    init(_ bodies: [String: String]) {
+        self.bodies = bodies
+    }
+
+    func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        requests.append(request)
+        let body = request.url?.host.flatMap { bodies[$0] }
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: body == nil ? 500 : 200,
+            httpVersion: nil,
+            headerFields: nil
+        )!
+        return (Data((body ?? "{}").utf8), response)
+    }
+}
+
+/// The same mild day everywhere, or a failure for the listed places.
+struct FakeTripWeather: TripWeatherProviding {
+    var failing: Set<String> = []
+    var day = DailyWeather(feelsLikeMinC: 14, feelsLikeMaxC: 22, precipitationChance: 0.1, source: .forecast)
+
+    func dailyWeather(at place: Place, days: [Date]) async throws -> [DailyWeather] {
+        if failing.contains(place.name) {
+            throw WeatherError.unavailable
+        }
+        return days.map { _ in day }
+    }
+}
+
+/// Suggests leaving out the first packed item, so tests can apply it.
+struct FakeCapsuleReviewer: CapsuleReviewing {
+    var error: Error?
+
+    func review(_ details: TripDetails, closet _: [Item]) async throws -> CapsuleReview {
+        if let error {
+            throw error
+        }
+        return CapsuleReview(
+            verdict: "Solid.",
+            changes: details.packedItemIDs.prefix(1)
+                .map { CapsuleReview.Change(leaveOut: $0, bring: nil, why: "Spare.") }
+        )
+    }
+}
+
+enum TripFixtures {
+    static let calendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }()
+
+    static let lisbon = Place(name: "Lisbon", detail: "Portugal", latitude: 38.72, longitude: -9.14)
+    static let porto = Place(name: "Porto", detail: "Portugal", latitude: 41.15, longitude: -8.61)
+
+    /// 6 November 2026, noon UTC.
+    static let now = Date(timeIntervalSince1970: 1_793_966_400)
+
+    static func day(_ offset: Int) -> Date {
+        calendar.date(byAdding: .day, value: offset, to: calendar.startOfDay(for: now))!
+    }
+
+    /// Lisbon for `nights` nights from tomorrow, laid out with mild weather on every day.
+    static func trip(nights: Int = 4, stops: [Place] = [lisbon]) -> TripDetails {
+        var details = TripDetails(
+            startDate: day(1),
+            stops: stops.map { TripStop(place: $0, nights: nights) }
+        ).laidOut(calendar: calendar)
+        for index in details.days.indices {
+            details.days[index].weather = FakeTripWeather().day
+        }
+        return details
+    }
+}

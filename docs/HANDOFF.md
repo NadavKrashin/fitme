@@ -3,12 +3,13 @@
 **Read this first.** It's the single source of truth for "where are we and what's next". Whoever ends a work
 session (person or agent) updates it before the final commit.
 
-_Last updated: 2026-11-05._
+_Last updated: 2026-11-06._
 
 ## Current state
 
-- **Phases 0 and 1 are done, and Phase 2 (daily outfits) is built:** collages, weather, feedback, stylist, and
-  "Outfits with this". Details are in [ROADMAP.md](ROADMAP.md).
+- **Phases 0 to 2 are done, and Phase 3 (the trip packer) is built:** Trips tab, wizard, per-day weather, packing
+  list, bag edits, swap, Claude's bag check, trip mode and debrief. Details are in [ROADMAP.md](ROADMAP.md) and
+  [ARCHITECTURE.md](ARCHITECTURE.md#trip-packer-phase-3).
 - **Redesign after Nadav's second trial (2026-11-06):**
   - Warm editorial design system (`UI/Theme.swift`, `UI/Components.swift`), applied to every screen.
   - Saved tab: ♥ saves.
@@ -23,12 +24,14 @@ _Last updated: 2026-11-05._
   4. The draft lands in the **Inbox** for review.
   5. **Add to closet** turns it into an `ItemRecord` with its photo and cutout.
 - **`FitEngine`**:
-  - Complete for daily suggestions and trip packing; 25 tests pass (`make test-engine`, about 1 s).
+  - Complete for daily suggestions and trip packing; 42 tests pass (`make test-engine`, about 2 s).
   - Swift 6 strict concurrency, no force unwraps.
 - **App:**
-  - Three tabs:
-    - Today: occasion, feels-like temperature and rain → top 5 varied outfits.
-    - Closet: grid by category, with color-swatch thumbnails until photos exist.
+  - Five tabs:
+    - Today: weather, occasion and feels-like → top 5 varied outfits, plus the stylist; links to a trip in progress.
+    - Trips: plan, pack, edit the bag, trip mode, debrief.
+    - Saved: outfits saved with ♥.
+    - Closet: grid by category with item photos, the capture Inbox, item detail.
     - Settings: Claude API key in the Keychain, plus "Load demo closet" / "Clear closet" in staging.
   - Builds cleanly in Debug, Staging and Release.
   - `make verify-release` proves Release has no demo data. It was also checked against a Staging build, which it
@@ -36,7 +39,8 @@ _Last updated: 2026-11-05._
 - **CI/CD:**
   - `.github/workflows/pipeline.yml` covers lint, engine tests, app tests, the Release guard, and deploy (staging on
     `main`, production on `v*` tags with approval).
-  - Deploys skip with a notice until the App Store Connect secrets exist.
+  - Every push to `main` uploads a Staging build to TestFlight. The production path (tag → approval → upload) has
+    not run yet.
 - **Docs:**
   - [ENGINEERING_STANDARDS.md](ENGINEERING_STANDARDS.md): the rules for all code.
   - [RELEASE_PROCESS.md](RELEASE_PROCESS.md): branching, environments, the pipeline, one-time setup.
@@ -154,30 +158,54 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
   - System alerts don't receive simulated taps.
   - Screenshots can lag about one action, so wait about a second.
 
+## Phase 3: what's verified and what isn't
+
+- **Verified locally:** 42 engine tests and every app suite pass, including 7 new trip suites (weather, layout,
+  planner, both screen models, the reviewer, storage compatibility). Lint is clean.
+- **Verified in the simulator** (Staging Debug build, demo closet, live Open-Meteo):
+  - city search
+  - real forecasts for the next days, and "typical" weather for past dates
+  - packing a 7-day Lisbon & Porto trip (13 pieces → 64 outfits; carry-on with laundry every 3 days: 9 → 32)
+  - tick-off persists across a repack
+  - "Leave at home" with Undo, swap, edit and repack (plans kept)
+  - trip mode wear, the Today card, the debrief ("You wore 6 of 9")
+  - the stylist check's missing-key message
+- **Found and fixed while testing:**
+  - "Pack my bag" only popped back a step (pushed view's `dismiss`); the sheet now closes.
+  - City search wasn't focused.
+  - Swap offered near-copies (same shirt, other shoes); `OutfitGenerator.alternatives` now leads with another top.
+  - Leaving a top out hid that a plan now repeats a top; repeats are flagged.
+  - The debrief didn't pre-tick worn pieces (`onAppear` in a sheet); it now initializes its state.
+- **Not verified:**
+  - a real "Check my bag" call (needs the API key) and the quality of its suggestions
+  - multi-stop trips more than 16 days out (archive path only tested on past dates and in unit tests)
+  - dark mode on the trip screens
+  - packing speed on a phone with a full 150-item closet (about 1.5 s for the fixture in Debug on a Mac)
+
 ## Next steps, in order
 
-1. **Confirm CI is green** for anything newer than build 15 (`gh run list --limit 3`).
-2. **Nadav tries Phase 2 on FitMe β:**
-   - allow location; check the weather line is right
-   - react to suggestions for a few days
-   - tap "Ask the stylist" and judge the reasons
-   - open an item → "Outfits with this"
+1. **Confirm CI is green** and TestFlight got the build (`gh run list --limit 3`).
+2. **Nadav tries trips on FitMe β:**
+   - load the demo closet, plan a real upcoming trip, and judge the bag and the day plans
+   - add the Claude API key and tap "Check my bag"; judge the suggestions
+   - on the trip: wear from "Today in…", then do the debrief at home
 3. **Fix what that finds.** Likely candidates:
-   - collage proportions for one-pieces and shoes
-   - stylist prompt tone
-   - whether 👎 should hide outfits for longer than the session
-4. **Phase 2 leftover:** "swap one item" on a card (regenerate with all but one piece fixed; the engine can do it
-   via `mustInclude` plus filtering).
-5. **Phase 3, the trip packer** ([ROADMAP.md](ROADMAP.md#phase-3-trip-packer-the-differentiator)):
-   - trip wizard, with an Open-Meteo forecast per day (add a date range to the weather service)
-   - `PackingOptimizer` result screen
-   - essentials checklist, trip mode, and post-trip debrief
+   - the day planner's 8 occasion chips per day make long trips a long scroll; consider presets ("same as
+     yesterday", "all casual")
+   - per-day manual weather edits (today a failed fetch falls back to mild days with a warning)
+   - the statement floral shirt still leads many casual and travel plans; it may need a gentler share of the plan
+4. **Leftovers from earlier phases:** "swap one item" on a Today card (the engine's `alternatives` is a start), closet
+   filters by color and formality, the in-app batch camera, and a dark-mode pass.
+5. **Phase 4** ([ROADMAP.md](ROADMAP.md#phase-4-learning-and-insights)): never-worn items, orphans, gap suggestions.
 
 ## Known engine issues (taste, not correctness)
 
 - **Fixed in Phase 2 (2026-11-06), each with a test:**
   - Statement pieces now rotate like tops in packing (`StatementRotationTests`).
   - Light dresses are excluded below 15°C (`LegCoverageTests`).
+- **Open:** in the menswear demo closet the statement floral shirt is often the first pick for casual and travel
+  plans. One statement piece per outfit is allowed and scored as neutral; whether it should appear less often is a
+  taste call for Nadav.
 - **Open:** the fixture closet mixes menswear and womenswear, so packing results mix polos and sundresses. A real
   closet won't. Don't tune weights to the fixture's quirks.
 
