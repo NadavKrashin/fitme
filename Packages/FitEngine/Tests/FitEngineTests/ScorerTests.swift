@@ -69,3 +69,30 @@ struct ScorerTests {
         #expect(profile.affinityScore(outfit.coreItems) < 0.5)
     }
 }
+
+struct StatementNeutralityTests {
+    /// A lone statement piece is fine but shouldn't win on its own; otherwise one loud shirt tops every list.
+    @Test func oneStatementPieceIsNeitherRewardedNorPenalized() {
+        let loud = makeItem("loud", .top, ["#C2463E"], statement: true)
+        let plain = makeItem("plain", .bottom, ["#1C1C1C"])
+        #expect(OutfitScorer.statementBudget([plain]) == OutfitScorer.statementBudget([loud, plain]))
+    }
+}
+
+struct ProfileRevertTests {
+    @Test func revertUndoesAReaction() {
+        var profile = StyleProfile()
+        let outfit = Fixtures.outfit("t05", "b04", "s01")
+        profile.record(.liked, for: outfit)
+        profile.record(.disliked, for: outfit)
+
+        profile.revert(.disliked, for: outfit)
+
+        let likedOnly = { () -> StyleProfile in
+            var p = StyleProfile()
+            p.record(.liked, for: outfit)
+            return p
+        }()
+        #expect(profile == likedOnly)
+    }
+}

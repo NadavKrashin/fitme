@@ -14,14 +14,28 @@ public struct StyleProfile: Codable, Equatable, Sendable {
     }
 
     public mutating func record(_ feedback: OutfitFeedback, for outfit: Outfit) {
-        let delta: Double = switch feedback {
+        adjust(outfit, by: Self.delta(for: feedback))
+    }
+
+    /// Takes back a reaction (e.g. "undo" on a dislike). Exact unless the affinity had hit its ±1 limit.
+    public mutating func revert(_ feedback: OutfitFeedback, for outfit: Outfit) {
+        adjust(outfit, by: -Self.delta(for: feedback))
+    }
+
+    private mutating func adjust(_ outfit: Outfit, by delta: Double) {
+        for (a, b) in Self.pairs(outfit.coreItems) {
+            let key = Self.key(a, b)
+            let value = min(1, max(-1, (pairAffinity[key] ?? 0) + delta))
+            // Drop pairs back at neutral so an undone reaction leaves no trace.
+            pairAffinity[key] = abs(value) < 1e-9 ? nil : value
+        }
+    }
+
+    private static func delta(for feedback: OutfitFeedback) -> Double {
+        switch feedback {
         case .liked: 0.2
         case .disliked: -0.25
         case .wore: 0.1
-        }
-        for (a, b) in Self.pairs(outfit.coreItems) {
-            let key = Self.key(a, b)
-            pairAffinity[key] = min(1, max(-1, (pairAffinity[key] ?? 0) + delta))
         }
     }
 

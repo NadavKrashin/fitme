@@ -188,9 +188,9 @@ public struct OutfitScorer: Sendable {
     }
 
     public static func statementBudget(_ core: [Item]) -> Double {
+        // One statement piece is fine; it just isn't a reason to prefer an outfit.
         switch core.filter(\.isStatement).count {
-        case 0: return 0.9
-        case 1: return 1
+        case 0, 1: return 1
         case 2: return 0.4
         default: return 0.1
         }
