@@ -41,26 +41,38 @@ _Last updated: 2026-11-05._
   `production` doesn't exist yet; create it with a required reviewer before adding any secrets.
 - **CI quirk:** one deploy job failed with "Unable to fetch the information for the environment" during a GitHub
   macOS capacity incident, and passed on rerun. If it recurs, rerun with `gh run rerun <id> --failed`.
-- **The app has never been launched or looked at** in a simulator or on a device. Only its tests and builds are
-  verified.
+- **The app has been launched only once,** on Nadav's iPhone (Staging, installed from a local signed build on
+  2026-11-06). No UI tests exist yet.
 - **The deploy job has never run for real.** It's blocked on the one-time Apple setup below. Expect to debug the
   first archive and upload (signing and App Store Connect app records).
 - **The CI runner image** is `macos-26` with `latest-stable` Xcode. If GitHub's image lacks Swift 6.2 or later
   (`@concurrent` needs it), pin a newer image or Xcode version in `pipeline.yml`.
 
-## Blocked on Nadav (one-time setup)
+## Account setup (done 2026-11-06)
 
-From [RELEASE_PROCESS.md → One-time setup](RELEASE_PROCESS.md#one-time-setup-owner-nadav), in this order:
+All done except TestFlight testers. Details are in
+[RELEASE_PROCESS.md → One-time setup](RELEASE_PROCESS.md#one-time-setup-owner-nadav).
+- Team `4ARX779852` is in `project.yml` and the GitHub variable `APPLE_TEAM_ID`.
+- Nadav's iPhone 16 Pro (UDID `00008140-000129522413C01C`) is registered.
+- Both bundle IDs are registered.
+- App records: **FitForMe** (production) and **FitMe Staging**.
+- GitHub `production` environment: requires Nadav's approval, `v*` tags only.
+- Secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` are set (key "FitMe CI", Admin).
 
-1. Install the iOS Simulator runtime: Xcode → Settings → Components → iOS 27.x → Get. Then run `make test-app`.
-2. Sign in to Xcode with the Apple ID and get the **Team ID**. Put it in `project.yml` (`DEVELOPMENT_TEAM`), or hand
-   it to the agent.
-3. Create the App Store Connect app records for both bundle IDs.
-4. Create the GitHub environments `production` (with yourself as required reviewer) and `staging`. Do this **before**
-   step 5.
-5. Create an App Store Connect API key (Admin) and add the GitHub secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`,
-   `ASC_PRIVATE_KEY` and the variable `APPLE_TEAM_ID`.
-6. Add yourself as an internal TestFlight tester for both apps.
+Still open for Nadav:
+1. Install the iOS Simulator runtime if the agent's download didn't finish: Xcode → Settings → Components → iOS →
+   Get. Then run `make test-app`.
+2. After the first TestFlight upload, add yourself as an internal tester in each app's TestFlight tab and install
+   TestFlight on the iPhone.
+
+To run a local build on the phone (with the phone connected):
+
+```bash
+xcodebuild -project FitMe.xcodeproj -scheme FitMe-Staging -configuration Staging -destination 'id=00008140-000129522413C01C' -allowProvisioningUpdates -allowProvisioningDeviceRegistration -derivedDataPath DerivedData build
+```
+```bash
+xcrun devicectl device install app --device 00008140-000129522413C01C DerivedData/Build/Products/Staging-iphoneos/FitMe.app
+```
 
 ## Next steps, in order
 

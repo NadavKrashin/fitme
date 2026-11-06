@@ -80,23 +80,34 @@ Public repo: GitHub-hosted macOS runners are free for public repositories.
 
 ## One-time setup (owner: Nadav)
 
+**Status as of 2026-11-06:** everything is done except the TestFlight testers.
+- Team `4ARX779852` ("Nadav Krashin", Individual).
+- iPhone 16 Pro registered.
+- App Store Connect records:
+  - **FitForMe** (production; "FitMe" was taken as an App Store name, and the home screen still shows "FitMe")
+  - **FitMe Staging**
+- The `production` environment requires Nadav's approval and only accepts `v*` tags.
+- API key "FitMe CI" (Admin).
+- A Program License Agreement update had to be accepted first. Apple blocks all signing until the account holder
+  accepts new agreements, so if signing suddenly fails, check developer.apple.com for a banner.
+
 These steps need your Apple and GitHub accounts, so an agent can't do them. Tick them off here as they're done.
 
-- [ ] **Sign in to Xcode** with your Apple ID (Xcode → Settings → Accounts). Put your **Team ID** (10 characters,
+- [x] **Sign in to Xcode** with your Apple ID (Xcode → Settings → Accounts). Put your **Team ID** (10 characters,
   shown in the Apple Developer portal under Membership) into `project.yml` → `settings.base.DEVELOPMENT_TEAM`, or
   give it to the agent.
-- [ ] **Create two app records** in [App Store Connect](https://appstoreconnect.apple.com) → Apps → "+":
+- [x] **Create two app records** in [App Store Connect](https://appstoreconnect.apple.com) → Apps → "+":
   - "FitMe" with bundle ID `io.github.nadavkrashin.fitme`.
   - "FitMe Staging" with bundle ID `io.github.nadavkrashin.fitme.staging`.
   - If the bundle IDs aren't offered, register them first under Certificates, IDs & Profiles → Identifiers.
-- [ ] **Create an App Store Connect API key:** Users and Access → Integrations → App Store Connect API → "+". Role:
+- [x] **Create an App Store Connect API key:** Users and Access → Integrations → App Store Connect API → "+". Role:
   **Admin** (cloud signing needs it). Download the `.p8` file; you can only download it once.
-- [ ] **Create the GitHub environments _before_ adding secrets** (repo → Settings → Environments):
+- [x] **Create the GitHub environments _before_ adding secrets** (repo → Settings → Environments):
   - `production`, with yourself as **required reviewer**.
   - `staging`, with no rules.
 
   If you skip this, the first tag push creates `production` without the approval gate.
-- [ ] **Add GitHub secrets and variables** (repo → Settings → Secrets and variables → Actions), or run the commands
+- [x] **Add GitHub secrets and variables** (repo → Settings → Secrets and variables → Actions), or run the commands
   below:
   ```bash
   gh secret set ASC_KEY_ID --body "<key id>"
