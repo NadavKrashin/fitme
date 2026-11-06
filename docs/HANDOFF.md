@@ -30,10 +30,17 @@ _Last updated: 2026-11-05._
 
 ## Not verified yet
 
-- **App unit tests run only in CI so far.** They passed on GitHub's runner (iPhone 17 Pro Max, iOS 26.5; pipeline run
-  42122288461). This Mac has no iOS Simulator runtime: `xcodebuild -downloadPlatform iOS` failed twice with a
-  MobileAsset catalog timeout. The first CI run caught two real bugs (unsigned test builds, and the demo closet reset
-  missing unsaved items); both are fixed.
+- **App unit tests run only in CI so far.** The pipeline is green on `main` (run 42128248879: lint, engine tests,
+  app tests on an iPhone 17 Pro Max with iOS 26.5, the Release guard, and the deploy skip notice). This Mac has no
+  iOS Simulator runtime: `xcodebuild -downloadPlatform iOS` failed twice with a MobileAsset catalog timeout.
+- **What CI caught along the way, all fixed:**
+  - unsigned simulator test builds (no Keychain entitlement, read-only store)
+  - the demo closet reset missing unsaved items
+  - a flaky test comparing JSON encodings of a `Set`
+- **GitHub environments:** the workflow auto-created `staging`, which has no rules and that's intended.
+  `production` doesn't exist yet; create it with a required reviewer before adding any secrets.
+- **CI quirk:** one deploy job failed with "Unable to fetch the information for the environment" during a GitHub
+  macOS capacity incident, and passed on rerun. If it recurs, rerun with `gh run rerun <id> --failed`.
 - **The app has never been launched or looked at** in a simulator or on a device. Only its tests and builds are
   verified.
 - **The deploy job has never run for real.** It's blocked on the one-time Apple setup below. Expect to debug the
