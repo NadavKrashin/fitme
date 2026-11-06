@@ -18,12 +18,17 @@ enum DemoCloset {
         return try JSONDecoder().decode([Item].self, from: Data(contentsOf: url))
     }
 
-    /// Replaces whatever is in the closet with the demo items.
+    /// The item's product-photo cutout (`demo-<id>.png`), when bundled.
+    static func cutout(for itemID: String, bundle: Bundle = .main) -> Data? {
+        bundle.url(forResource: "demo-\(itemID)", withExtension: "png").flatMap { try? Data(contentsOf: $0) }
+    }
+
+    /// Replaces whatever is in the closet with the demo items and their photos.
     @MainActor
     static func load(into context: ModelContext) throws {
         try removeAllItems(from: context)
         for item in try items() {
-            context.insert(ItemRecord(item: item))
+            context.insert(ItemRecord(item: item, cutout: cutout(for: item.id)))
         }
         try context.save()
     }

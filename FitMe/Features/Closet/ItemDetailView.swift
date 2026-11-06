@@ -19,26 +19,33 @@ struct ItemDetailView: View {
     var body: some View {
         Form {
             Section {
-                ItemThumbnail(item: item, image: record.cutout, size: 220)
-                    .frame(maxWidth: .infinity)
-            }
-            .listRowBackground(Color.clear)
-
-            Section {
-                NavigationLink {
-                    OutfitsWithItemView(item: item)
-                } label: {
-                    Label("Outfits with this", systemImage: "sparkles")
+                VStack(spacing: 16) {
+                    ItemThumbnail(item: item, image: record.cutout, size: 240, isFramed: record.cutout == nil)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Theme.card, in: .rect(cornerRadius: Theme.cardRadius, style: .continuous))
+                    NavigationLink {
+                        OutfitsWithItemView(item: item)
+                    } label: {
+                        Label("Outfits with this", systemImage: "sparkles")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.pill(.accent))
                 }
             }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
 
             ItemEditorSections(item: $item)
 
             Section {
                 Toggle("Available (not in the laundry)", isOn: $item.isAvailable)
+                    .tint(Theme.terracotta)
                 Button("Delete item", role: .destructive) { isConfirmingDelete = true }
             }
+            .editorialRow()
         }
+        .editorialCanvas()
         .navigationTitle(item.name)
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Delete \(item.name)?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {

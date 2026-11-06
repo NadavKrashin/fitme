@@ -5,6 +5,45 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-06: Warm editorial design system
+
+- **Decision:**
+  - Nadav picked direction A (warm editorial) from three mockups.
+  - All colors, type and shapes live in `UI/Theme.swift`: cream canvas, ink, terracotta, sage, butter, and a muted
+    tint per occasion, each with a dark-mode value.
+  - Serif (New York) headlines, including navigation titles via `Theme.applyNavigationBarAppearance()`.
+  - Shared pieces in `UI/Components.swift`: `card()`, `PillButtonStyle`, `CircleIconButton`, toasts.
+- **Why:** the stock look read as "an app from 2012, one color". One token file keeps every screen consistent.
+  Views never hard-code colors.
+
+### 2026-11-06: Demo closet is menswear with AI-generated product photos
+
+- **Decision:**
+  - The 50-item demo closet is menswear only.
+  - Each item has a flat-lay product photo generated with Higgsfield `gpt_image_2_6`: 52 images, 13 credits, two
+    white shirts re-shot on grey.
+  - The photos were cut out with the app's own Vision subject lift and bundled as `DemoData/Images/demo-<id>.png`,
+    excluded from Release.
+- **Why:**
+  - Nadav is the user (male), and color-swatch icons made it impossible to judge whether outfits look good.
+  - The engine test fixture stays separate and frozen.
+
+### 2026-11-06: ♥ means "save"; reactions are separate states
+
+- **Decision:**
+  - ♥ saves the outfit (`SavedOutfit`, Saved tab) and records a like. Tapping it again unsaves and reverts the like.
+  - ✕ hides the outfit for the session and records a dislike, with an Undo toast that reverts it
+    (`StyleProfile.revert`).
+  - "Wear this" is tracked separately (`TodayModel.worn`).
+- **Why:**
+  - Feedback that only tinted an icon felt like it did nothing.
+  - A single reaction per outfit let a like overwrite "worn" (Nadav's bug report).
+
+### 2026-11-06: A lone statement piece is neutral in scoring
+
+- **Decision:** `statementBudget` gives 1.0 for zero or one statement piece, down from 0.9 / 1.0.
+- **Why:** the small bonus put the floral shirt at the top of every casual, travel and beach list.
+
 ### 2026-11-06: Stylist on demand, from text descriptions
 
 - **Decision:**

@@ -29,10 +29,10 @@ FitMe is a local-first iOS app with two layers:
 | `project.yml` | XcodeGen spec: targets, the three build configurations, bundle IDs. `FitMe.xcodeproj` is generated and git-ignored. |
 | `FitMe/App/` | `FitMeApp` (entry), `RootView` (tabs), `AppDependencies` (service container), `AppEnvironment` (staging/prod switch). |
 | `FitMe/Features/<Feature>/` | One folder per screen: the SwiftUI view plus its `@Observable` model. |
-| `FitMe/Models/` | SwiftData `@Model` types: `ItemRecord` (closet item, photo and cutout), `CaptureDraft` (unreviewed photo), `StyleProfileRecord` (learned taste), and `Persistence` (store setup). |
+| `FitMe/Models/` | SwiftData `@Model` types: `ItemRecord` (closet item, photo and cutout), `CaptureDraft` (unreviewed photo), `StyleProfileRecord` (learned taste), `SavedOutfit` (♥ outfits), and `Persistence` (store setup). |
 | `FitMe/Services/` | Side-effecting services behind protocols: `SecretStore` (Keychain), `Claude/ClaudeClient` (Messages API over an `HTTPTransport`), `Tagging/ClaudeTaggingService`, `ImagePipeline` (Vision cutout, box crop, colors), `Weather/OpenMeteoWeatherService` + `CoreLocationLocator`, `Stylist/ClaudeStylist`. |
-| `FitMe/UI/` | Shared views (`ItemThumbnail`, `OutfitRow`), display helpers, `PreviewData` (Debug only). |
-| `FitMe/DemoData/` | Staging-only demo closet. Compiled out of Release. |
+| `FitMe/UI/` | Design system (`Theme` tokens, `Components`: cards, pills, toasts, `ChipButton`), shared views (`ItemThumbnail`, `OutfitCollage`/`OutfitCard`, `ItemEditorSections`), display helpers, `PreviewData` (Debug only). |
+| `FitMe/DemoData/` | Staging-only menswear demo closet (`DemoCloset.json`) and its product-photo cutouts (`Images/demo-<id>.png`). Excluded from Release. |
 | `FitMe/Resources/` | Asset catalog: app icons (prod and staging) and the accent color. |
 | `FitMeTests/` | App unit tests (Swift Testing), run in the Debug configuration. |
 | `Packages/FitEngine/` | The engine and its tests, plus a frozen fixture closet. |
@@ -96,8 +96,12 @@ PhotosPicker ─► CaptureModel.importPhotos ─► CaptureDraft(.processing) s
   - With `anchor` set, the same model powers "Outfits with this item".
   - `OutfitPlanner` is the shared view.
 - **Weather:** `OpenMeteoWeatherService.forecastHere()` (location rounded to about 1 km) pre-fills the inputs on open.
-- **Feedback:** `FeedbackRecorder` writes reactions to `StyleProfileRecord` and wear history to `ItemRecord`. The
-  profile feeds `OutfitContext.profile`, so liked pairs score higher next time.
+- **Feedback:** `FeedbackRecorder` writes reactions to `StyleProfileRecord`, saved outfits to `SavedOutfit`, and
+  wear history to `ItemRecord`. The profile feeds `OutfitContext.profile`, so liked pairs score higher next time.
+  - `TodayModel` keeps hidden and worn as separate sets.
+  - Every reaction publishes a `Toast`; ✕ includes an undo.
+- **Look:** every color, font and shape comes from `UI/Theme.swift`, and screens compose `UI/Components.swift`.
+  Tabs: Today, Saved, Closet, Settings.
 - **Stylist:** `ClaudeStylist.pick` gets 12 diversified engine candidates as labeled text and returns up to 3
   label-constrained picks with reasons.
 

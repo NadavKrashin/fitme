@@ -93,6 +93,9 @@ Goal: at least 70% of top-5 suggestions rated "I'd wear that" over two weeks.
   - the schema only allows candidate letters
 - [x] "Outfits with this" from item detail (`TodayModel.anchor` → `mustInclude`).
 - [x] Engine taste fixes: statement pieces rotate in packing, and light dresses stay out of the cold.
+- [x] Saved outfits (♥), hide with Undo (✕), and a toast for every reaction. Separate worn state (fixes like
+  resetting wear).
+- [x] Warm editorial redesign across every screen, plus a menswear demo closet with AI product photos.
 - [ ] "Swap one item" on a card. Not built.
 - [ ] Two weeks of daily use to measure the goal (Nadav).
 

@@ -17,3 +17,7 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - Like, dislike or "wear" any suggestion; FitMe learns your taste and rotates what you wore recently.
 - "Ask the stylist" has Claude pick the best few outfits and explain why each works.
 - Find outfits built around any item from its detail screen.
+- New warm editorial look: cream paper, serif headlines, terracotta and sage, a color per occasion.
+- ♥ saves an outfit to the new Saved tab; ✕ hides it with Undo; every reaction confirms with a toast.
+- Liking an outfit no longer resets "Wear this".
+- The demo closet is now menswear, with real product photos.

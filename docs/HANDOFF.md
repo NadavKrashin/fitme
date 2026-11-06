@@ -9,6 +9,13 @@ _Last updated: 2026-11-05._
 
 - **Phases 0 and 1 are done, and Phase 2 (daily outfits) is built:** collages, weather, feedback, stylist, and
   "Outfits with this". Details are in [ROADMAP.md](ROADMAP.md).
+- **Redesign after Nadav's second trial (2026-11-06):**
+  - Warm editorial design system (`UI/Theme.swift`, `UI/Components.swift`), applied to every screen.
+  - Saved tab: ♥ saves.
+  - ✕ hides with an Undo toast.
+  - Toasts confirm every reaction.
+  - Menswear demo closet with real product photos.
+  - Fixed: liking no longer resets "Wear this".
 - **Capture flow:**
   1. Closet → **+** → pick photos.
   2. Each photo becomes a `CaptureDraft`.
@@ -123,6 +130,29 @@ xcrun devicectl device install app --device 00008140-000129522413C01C DerivedDat
   - A real stylist call, and its quality.
   - Collage looks on a device.
   - The Phase 2 goal: at least 70% of suggestions rated "I'd wear that" over two weeks.
+
+## Verified in the simulator (2026-11-06, iPhone 18 Pro, iOS 27.2)
+
+This Mac now has the iOS Simulator runtime, so `make test` runs everything locally.
+- All engine and app suites pass.
+- Checked by driving the app and taking screenshots:
+  - live Open-Meteo weather (simulated Tel Aviv location) with automatic rain
+  - location permission prompt text
+  - demo closet with photos in Closet and Today
+  - ♥ → Saved tab
+  - ✕ removes the card
+  - "Wear this" → "Worn today" with ♥ still filled
+  - toast above the tab bar
+  - Settings
+- **Not verified:**
+  - Inbox, review and item-detail screens in the new style (they only got theming; worth a look)
+  - a real stylist call (needs an API key)
+  - dark mode
+- **Simulator tips:**
+  - Grant location with `xcrun simctl privacy <device> grant location io.github.nadavkrashin.fitme.staging`; it
+    restarts the app.
+  - System alerts don't receive simulated taps.
+  - Screenshots can lag about one action, so wait about a second.
 
 ## Next steps, in order
 

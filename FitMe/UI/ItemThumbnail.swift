@@ -17,7 +17,7 @@ struct ItemThumbnail: View {
             .overlay {
                 if isFramed {
                     RoundedRectangle(cornerRadius: size * 0.2)
-                        .strokeBorder(.secondary.opacity(0.3), lineWidth: 1)
+                        .strokeBorder(Theme.line, lineWidth: 1)
                 }
             }
             .accessibilityElement()
@@ -30,7 +30,7 @@ struct ItemThumbnail: View {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFit()
-                .background(isFramed ? Color(.secondarySystemBackground) : .clear)
+                .background(isFramed ? Theme.card : .clear)
         } else {
             swatch
         }
@@ -44,7 +44,7 @@ struct ItemThumbnail: View {
         .overlay {
             Image(systemName: item.category.symbolName)
                 .font(.system(size: size * 0.4))
-                .foregroundStyle(colors.first?.contrastingColor ?? .primary)
+                .foregroundStyle(colors.first?.contrastingColor ?? Theme.ink)
         }
     }
 }

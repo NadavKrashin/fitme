@@ -74,6 +74,10 @@ not done. CI enforces the mechanical rules (format, lint, tests); the rest are c
 - **Logging:** use `os.Logger` with the category set to the feature. No `print` outside tests. Never log personal
   data or keys.
 - **Previews:** every screen has a `#Preview` backed by fake services and demo data.
+- **Design system:**
+  - Colors, fonts and radii come from `Theme`; reusable pieces come from `UI/Components.swift`.
+  - No hard-coded colors or system grey/blue in views.
+  - New UI patterns go into the design system first.
 - **Accessibility:**
   - Dynamic Type works.
   - Interactive elements have labels.

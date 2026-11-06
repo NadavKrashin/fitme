@@ -2,7 +2,12 @@ import Foundation
 import SwiftData
 
 enum Persistence {
-    static let models: [any PersistentModel.Type] = [ItemRecord.self, CaptureDraft.self, StyleProfileRecord.self]
+    static let models: [any PersistentModel.Type] = [
+        ItemRecord.self,
+        CaptureDraft.self,
+        StyleProfileRecord.self,
+        SavedOutfit.self,
+    ]
 
     /// The on-device closet store. Creates Application Support first: on a fresh install it doesn't exist yet,
     /// and Core Data logs a burst of errors while working around that.

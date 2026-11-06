@@ -6,7 +6,7 @@ set -euo pipefail
 app="${1:?usage: verify-release.sh path/to/FitMe.app}"
 [[ -d "$app" ]] || { echo "No app bundle at $app" >&2; exit 1; }
 
-if find "$app" -name 'DemoCloset*' | grep -q .; then
+if find "$app" \( -name 'DemoCloset*' -o -name 'demo-*.png' \) | grep -q .; then
     echo "error: demo closet resource found in Release bundle" >&2
     exit 1
 fi

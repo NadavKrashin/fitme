@@ -7,17 +7,22 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                if let model {
-                    APIKeySection(model: model)
+                Group {
+                    if let model {
+                        APIKeySection(model: model)
+                    }
+                    #if STAGING
+                    DemoClosetSection()
+                    #endif
+                    Section("About") {
+                        LabeledContent("Environment", value: AppEnvironment.current.displayName)
+                        LabeledContent("Version", value: AppEnvironment.versionDescription)
+                    }
                 }
-                #if STAGING
-                DemoClosetSection()
-                #endif
-                Section("About") {
-                    LabeledContent("Environment", value: AppEnvironment.current.displayName)
-                    LabeledContent("Version", value: AppEnvironment.versionDescription)
-                }
+                .editorialRow()
             }
+            .editorialCanvas()
+            .tint(Theme.terracotta)
             .navigationTitle("Settings")
         }
         .task {

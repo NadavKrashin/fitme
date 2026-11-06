@@ -7,6 +7,7 @@ import Testing
 @MainActor
 struct TodayModelTests {
     let closet = try! DemoCloset.items()
+    let container = try! Persistence.makeInMemoryContainer()
 
     @Test func suggestsValidOutfitsForTheChosenOccasion() async {
         let model = makeTodayModel()
@@ -28,7 +29,7 @@ struct TodayModelTests {
     }
 
     @Test func anchoredSuggestionsAllIncludeTheItem() async throws {
-        let sweater = try #require(closet.first { $0.id == "t18" })
+        let sweater = try #require(closet.first { $0.id == "t13" })
         let model = makeTodayModel(anchor: sweater)
         model.feelsLikeC = 12
 
@@ -38,21 +39,70 @@ struct TodayModelTests {
         #expect(model.suggestions.allSatisfy { $0.outfit.contains(sweater) })
     }
 
-    @Test func dislikedOutfitDisappearsAndIsRemembered() async throws {
-        let container = try Persistence.makeInMemoryContainer()
-        let recorder = FeedbackRecorder(context: container.mainContext)
+    private func modelWithSuggestions() async throws -> (TodayModel, FeedbackRecorder) {
         let model = makeTodayModel()
         await model.refresh(closet: closet, profile: StyleProfile())
-        let disliked = try #require(model.suggestions.first)
+        try #require(model.suggestions.count >= 2)
+        return (model, FeedbackRecorder(context: container.mainContext))
+    }
 
-        model.react(.disliked, to: disliked, recorder: recorder)
+    /// Regression: liking an outfit used to overwrite "worn", so "Wear this" came back.
+    @Test func savingKeepsTheOutfitWorn() async throws {
+        let (model, recorder) = try await modelWithSuggestions()
+        let outfit = model.suggestions[0]
 
-        #expect(!model.suggestions.contains(disliked))
-        #expect(model.feedback[disliked.id] == .disliked)
-        #expect(recorder.profile().affinityScore(disliked.outfit.coreItems) < 0.5)
+        model.wear(outfit, recorder: recorder)
+        model.toggleSaved(outfit, isSaved: false, recorder: recorder)
 
+        #expect(model.worn.contains(outfit.id))
+    }
+
+    @Test func dismissingHidesWithAnUndoThatRestoresIt() async throws {
+        let (model, recorder) = try await modelWithSuggestions()
+        let outfit = model.suggestions[1]
+
+        model.dismiss(outfit, recorder: recorder)
+
+        #expect(!model.suggestions.contains(outfit))
+        #expect(recorder.profile().affinityScore(outfit.outfit.coreItems) < 0.5)
+        let undo = try #require(model.toast?.undo, "dismissing offers an undo")
+
+        undo()
+
+        #expect(model.suggestions[1] == outfit, "back in its old place")
+        #expect(recorder.profile().affinityScore(outfit.outfit.coreItems) == 0.5)
         await model.refresh(closet: closet, profile: recorder.profile())
-        #expect(!model.suggestions.contains(disliked), "stays hidden for the session")
+        #expect(model.suggestions.contains(outfit), "no longer hidden after undo")
+    }
+
+    @Test func savingStoresTheOutfitAndUnsavingRemovesIt() async throws {
+        let (model, recorder) = try await modelWithSuggestions()
+        let outfit = model.suggestions[0]
+
+        model.toggleSaved(outfit, isSaved: false, recorder: recorder)
+        let saved = try container.mainContext.fetch(FetchDescriptor<SavedOutfit>())
+        #expect(saved.map(\.outfitID) == [outfit.id])
+        #expect(saved.first?.occasion == model.occasion)
+        #expect(model.toast?.message.hasPrefix("Saved") == true)
+        #expect(recorder.profile().affinityScore(outfit.outfit.coreItems) > 0.5)
+
+        model.toggleSaved(outfit, isSaved: true, recorder: recorder)
+        #expect(try container.mainContext.fetchCount(FetchDescriptor<SavedOutfit>()) == 0)
+        #expect(recorder.profile().affinityScore(outfit.outfit.coreItems) == 0.5)
+    }
+
+    @Test func wearingTwiceLogsOnce() async throws {
+        let (model, recorder) = try await modelWithSuggestions()
+        let outfit = model.suggestions[0]
+        for item in outfit.outfit.items {
+            container.mainContext.insert(ItemRecord(item: item))
+        }
+
+        model.wear(outfit, recorder: recorder)
+        model.wear(outfit, recorder: recorder)
+
+        let records = try container.mainContext.fetch(FetchDescriptor<ItemRecord>())
+        #expect(records.allSatisfy { $0.wearCount == 1 })
     }
 
     @Test func weatherFillsTemperatureAndRain() async {

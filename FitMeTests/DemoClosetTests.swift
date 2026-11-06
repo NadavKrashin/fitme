@@ -9,6 +9,7 @@ struct DemoClosetTests {
     @Test func everyOccasionHasSuggestions() throws {
         let items = try DemoCloset.items()
         #expect(items.count >= 50)
+        #expect(items.allSatisfy { DemoCloset.cutout(for: $0.id) != nil }, "every demo item has a photo")
         #expect(Set(items.map(\.id)).count == items.count, "ids must be unique")
 
         let generator = OutfitGenerator()

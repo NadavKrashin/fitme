@@ -8,6 +8,7 @@ struct FitMeApp: App {
     @State private var capture: CaptureModel
 
     init() {
+        Theme.applyNavigationBarAppearance()
         let container: ModelContainer
         do {
             container = try Persistence.makeContainer()

@@ -5,11 +5,16 @@ struct RootView: View {
         TabView {
             TodayView()
                 .tabItem { Label("Today", systemImage: "sun.max") }
+            SavedView()
+                .tabItem { Label("Saved", systemImage: "heart") }
             ClosetView()
                 .tabItem { Label("Closet", systemImage: "hanger") }
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
+        .tint(Theme.terracotta)
+        .toolbarBackground(Theme.card, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 }
 

@@ -38,4 +38,16 @@ struct FeedbackRecorderTests {
         #expect(stored.count == 1)
         #expect(recorder.profile().affinityScore(liked.coreItems) > 0.5)
     }
+
+    @Test func savedOutfitsAreUniqueAndRemovable() throws {
+        let outfit = try outfit(["t13", "b04", "s03"])
+        let recorder = FeedbackRecorder(context: container.mainContext)
+
+        recorder.saveOutfit(outfit, occasion: .date)
+        recorder.saveOutfit(outfit, occasion: .date)
+        #expect(try container.mainContext.fetchCount(FetchDescriptor<SavedOutfit>()) == 1)
+
+        recorder.removeSavedOutfit(id: outfit.id)
+        #expect(try container.mainContext.fetchCount(FetchDescriptor<SavedOutfit>()) == 0)
+    }
 }

@@ -31,8 +31,12 @@ final class TodayModel {
     var feelsLikeC = 20.0
     var isRainy = false
     private(set) var suggestions: [ScoredOutfit] = []
-    /// Reactions given this session, by outfit id.
-    private(set) var feedback: [String: OutfitFeedback] = [:]
+    /// Outfits hidden with 👎 this session.
+    private(set) var dismissed: Set<String> = []
+    /// Outfits logged with "Wear this" this session. Independent of saving, so one never resets the other.
+    private(set) var worn: Set<String> = []
+    /// The latest confirmation to show, if any.
+    var toast: Toast?
     private(set) var weather: WeatherState = .idle
     private(set) var stylist: StylistState = .idle
 
@@ -73,17 +77,45 @@ final class TodayModel {
             limit: Self.suggestionCount,
             anchor: anchor
         )
-        suggestions = found.filter { feedback[$0.id] != .disliked }
+        suggestions = found.filter { !dismissed.contains($0.id) }
         stylist = .idle
     }
 
-    /// Records a reaction. Disliked outfits disappear from the list right away.
-    func react(_ reaction: OutfitFeedback, to outfit: ScoredOutfit, recorder: FeedbackRecorder) {
-        feedback[outfit.id] = reaction
-        recorder.record(reaction, for: outfit.outfit)
-        if reaction == .disliked {
-            suggestions.removeAll { $0.id == outfit.id }
+    // MARK: Reactions
+
+    /// ♥ saves the outfit and teaches the engine you like these pairings; tapping again takes both back.
+    func toggleSaved(_ outfit: ScoredOutfit, isSaved: Bool, recorder: FeedbackRecorder) {
+        if isSaved {
+            recorder.removeSavedOutfit(id: outfit.id)
+            recorder.revert(.liked, for: outfit.outfit)
+            toast = Toast(symbol: "heart.slash", message: "Removed from saved")
+        } else {
+            recorder.saveOutfit(outfit.outfit, occasion: occasion)
+            recorder.record(.liked, for: outfit.outfit)
+            toast = Toast(symbol: "heart.fill", message: "Saved. You'll see more like this.")
         }
+    }
+
+    /// ✕ hides the outfit and teaches the engine to avoid these pairings, with an undo.
+    func dismiss(_ outfit: ScoredOutfit, recorder: FeedbackRecorder) {
+        guard let index = suggestions.firstIndex(of: outfit) else { return }
+        suggestions.remove(at: index)
+        dismissed.insert(outfit.id)
+        recorder.record(.disliked, for: outfit.outfit)
+        toast = Toast(symbol: "eye.slash", message: "Hidden. You'll see fewer like this.") { [weak self] in
+            guard let self else { return }
+            dismissed.remove(outfit.id)
+            suggestions.insert(outfit, at: min(index, suggestions.count))
+            recorder.revert(.disliked, for: outfit.outfit)
+        }
+    }
+
+    /// "Wear this" logs the outfit for today, so its pieces rest for a few days.
+    func wear(_ outfit: ScoredOutfit, recorder: FeedbackRecorder) {
+        guard !worn.contains(outfit.id) else { return }
+        worn.insert(outfit.id)
+        recorder.record(.wore, for: outfit.outfit)
+        toast = Toast(symbol: "checkmark.circle.fill", message: "Logged as today's outfit")
     }
 
     // MARK: Weather

@@ -32,6 +32,7 @@ struct InboxView: View {
                     }
                 }
                 .onDelete { offsets in offsets.map { drafts[$0] }.forEach(capture.discard) }
+                .editorialRow()
 
                 Section {} footer: { Text(Self.photoTip) }
             }
@@ -44,6 +45,7 @@ struct InboxView: View {
                     )
                 }
             }
+            .editorialCanvas()
             .navigationTitle("Inbox")
             .navigationDestination(for: String.self) { id in
                 if let draft = drafts.first(where: { $0.draftID == id }) {
@@ -105,7 +107,7 @@ private struct DraftRow: View {
             Spacer(minLength: 0)
             if draft.status == .failed {
                 Button("Retry") { Task { await capture.retry(draft) } }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.pill(.quiet))
             }
         }
     }
@@ -153,6 +155,7 @@ struct DraftReviewView: View {
 
             ItemEditorSections(item: $item)
         }
+        .editorialCanvas()
         .navigationTitle("Review")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
@@ -161,17 +164,18 @@ struct DraftReviewView: View {
                     capture.discard(draft)
                     onFinished()
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.pill(.quiet))
                 Button("Add to closet") {
                     capture.confirm(draft, as: item)
                     onFinished()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.pill(.primary))
                 .disabled(item.name.trimmingCharacters(in: .whitespaces).isEmpty)
                 .frame(maxWidth: .infinity)
             }
-            .padding()
-            .background(.bar)
+            .padding(.horizontal, Theme.gutter)
+            .padding(.vertical, 12)
+            .background(Theme.canvas)
         }
     }
 }

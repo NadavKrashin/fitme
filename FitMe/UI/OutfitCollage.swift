@@ -7,18 +7,23 @@ struct OutfitCollage: View {
     let outfit: Outfit
     /// Cutout photo for an item id, when one exists.
     var image: (String) -> Data? = { _ in nil }
-    var height: CGFloat = 200
+    var height: CGFloat = 240
 
     var body: some View {
-        HStack(alignment: .center, spacing: 8) {
-            VStack(spacing: -height * 0.04) {
-                ForEach(mainPieces) { piece(for: $0, size: height / CGFloat(max(mainPieces.count, 1))) }
+        HStack(alignment: .center, spacing: 4) {
+            VStack(spacing: -height * 0.05) {
+                ForEach(mainPieces) { piece(for: $0, size: height / CGFloat(max(mainPieces.count, 1)) * 1.05) }
             }
-            VStack(spacing: 4) {
-                ForEach(sidePieces) { piece(for: $0, size: height / 3.4) }
+            if !sidePieces.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(sidePieces) { piece(for: $0, size: height / 3.1) }
+                }
             }
         }
+        .frame(maxWidth: .infinity)
         .frame(height: height)
+        .padding(.vertical, 12)
+        .background(Theme.canvas, in: .rect(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
@@ -36,55 +41,83 @@ struct OutfitCollage: View {
     }
 }
 
-/// A suggested outfit with its collage, score, and the reactions that teach the engine your taste.
+/// A suggested outfit: its flat-lay, what it is, and the actions that teach FitMe your taste.
 struct OutfitCard: View {
     let outfit: ScoredOutfit
     var image: (String) -> Data? = { _ in nil }
     /// The stylist's one-line reason, when this card is one of its picks.
     var reason: String?
-    var reaction: OutfitFeedback?
-    let onReact: (OutfitFeedback) -> Void
+    var isSaved = false
+    var isWorn = false
+    var onToggleSave: () -> Void = {}
+    var onDismiss: (() -> Void)?
+    var onWear: () -> Void = {}
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top) {
-                OutfitCollage(outfit: outfit.outfit, image: image)
-                Spacer(minLength: 0)
-                Text(outfit.score, format: .number.precision(.fractionLength(0)))
-                    .font(.headline.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel("Score \(Int(outfit.score.rounded())) out of 100")
-            }
-            if let reason {
-                Text(reason).font(.subheadline)
-            }
-            Text(outfit.outfit.items.map(\.name).formatted(.list(type: .and)))
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            HStack(spacing: 20) {
-                reactionButton(.liked, symbol: "hand.thumbsup", label: "Like")
-                reactionButton(.disliked, symbol: "hand.thumbsdown", label: "Not for me")
-                Spacer()
-                Button {
-                    onReact(.wore)
-                } label: {
-                    Label(reaction == .wore ? "Worn today" : "Wear this", systemImage: "checkmark.circle")
+        VStack(alignment: .leading, spacing: 14) {
+            OutfitCollage(outfit: outfit.outfit, image: image)
+
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(Self.title(for: outfit.outfit))
+                        .font(Theme.title(18))
+                        .foregroundStyle(Theme.ink)
+                    if let extras = Self.extras(for: outfit.outfit) {
+                        Text(extras)
+                            .font(.footnote)
+                            .foregroundStyle(Theme.inkMuted)
+                    }
                 }
-                .buttonStyle(.bordered)
-                .disabled(reaction == .wore)
+                Spacer(minLength: 0)
+                Text("\(Int(outfit.score.rounded()))% match")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.butterInk)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Theme.butter, in: .capsule)
+                    .accessibilityLabel("Match \(Int(outfit.score.rounded())) out of 100")
             }
-            .buttonStyle(.borderless)
+
+            if let reason {
+                Label {
+                    Text(reason).font(.callout).foregroundStyle(Theme.ink)
+                } icon: {
+                    Image(systemName: "sparkles").foregroundStyle(Theme.terracotta)
+                }
+            }
+
+            HStack(spacing: 10) {
+                CircleIconButton(
+                    symbol: "heart",
+                    label: isSaved ? "Unsave" : "Save",
+                    isOn: isSaved,
+                    action: onToggleSave
+                )
+                if let onDismiss {
+                    CircleIconButton(symbol: "xmark", label: "Not for me", action: onDismiss)
+                }
+                Spacer()
+                Button(action: onWear) {
+                    Label(isWorn ? "Worn today" : "Wear this", systemImage: isWorn ? "checkmark" : "tshirt")
+                }
+                .buttonStyle(.pill(isWorn ? .quiet : .primary))
+                .allowsHitTesting(!isWorn)
+            }
         }
-        .padding(.vertical, 6)
+        .card()
     }
 
-    private func reactionButton(_ feedback: OutfitFeedback, symbol: String, label: String) -> some View {
-        Button { onReact(feedback) } label: {
-            Image(systemName: reaction == feedback ? "\(symbol).fill" : symbol)
-                .font(.title3)
-        }
-        .accessibilityLabel(label)
-        .accessibilityAddTraits(reaction == feedback ? .isSelected : [])
+    /// "Navy crewneck sweater with beige chinos": the two pieces that define the outfit.
+    static func title(for outfit: Outfit) -> String {
+        let main = [outfit.top ?? outfit.onePiece, outfit.bottom].compactMap(\.self).map(\.name)
+        guard let first = main.first else { return "Outfit" }
+        return main.dropFirst().reduce(first) { "\($0) with \($1.lowercased())" }
+    }
+
+    /// The supporting pieces, if any: "Charcoal overcoat · Black chelsea boots".
+    static func extras(for outfit: Outfit) -> String? {
+        let extras = [outfit.outerwear, outfit.midLayer, outfit.shoes].compactMap(\.self).map(\.name)
+        return extras.isEmpty ? nil : extras.joined(separator: " · ")
     }
 }
 
@@ -92,16 +125,19 @@ struct OutfitCard: View {
 #Preview {
     let items = PreviewData.items
     let outfit = Outfit(items: [items[0], items[2], items[4], items[6]])
-    List {
+    ScrollView {
         OutfitCard(
             outfit: ScoredOutfit(
                 outfit: outfit,
                 breakdown: OutfitScorer().score(outfit, context: OutfitContext(occasion: .casual))
             ),
             reason: "The denim jacket echoes the jeans and keeps it relaxed.",
-            onReact: { _ in }
+            isSaved: true,
+            onDismiss: {}
         )
+        .padding()
     }
+    .editorialCanvas()
     .environment(\.dependencies, .preview())
 }
 #endif
