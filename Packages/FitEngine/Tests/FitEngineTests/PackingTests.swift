@@ -65,3 +65,19 @@ struct PackingTests {
         #expect(!result.assignments.contains { $0.exceedsWearLimit }, sourceLocation: sourceLocation)
     }
 }
+
+struct StatementRotationTests {
+    /// A red-trousers capsule worn to every meeting reads as "the same outfit again". Statement pieces rotate like
+    /// tops.
+    @Test func statementPiecesAreWornAtMostOncePerLaundryCycle() {
+        var trip = Fixtures.days(3, weather: Weather(feelsLikeC: 18), occasions: [.work])
+        trip[2].occasions.append(.formal)
+        let result = PackingOptimizer().pack(closet: Fixtures.closet, trip: trip)
+
+        #expect(result.uncovered.isEmpty, "\(result.summary)")
+        let statementWears = result.assignments
+            .compactMap(\.outfit)
+            .flatMap { $0.outfit.items.filter(\.isStatement).map(\.id) }
+        #expect(statementWears.count == Set(statementWears).count, "repeated statement pieces: \(statementWears)")
+    }
+}

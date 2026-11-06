@@ -6,7 +6,8 @@ import Foundation
 /// need them, per unit of packing cost. When no single item helps (e.g. a formal dinner needs new shoes *and* a
 /// new outfit), a whole outfit is added at once. A final pass drops anything that turned out redundant.
 ///
-/// "Covered" means every slot in a laundry cycle gets its own top or one-piece; bottoms, shoes and layers repeat.
+/// "Covered" means every slot in a laundry cycle gets its own top or one-piece, and statement pieces aren't repeated
+/// within a cycle; plain bottoms, shoes and layers repeat.
 public struct PackingOptimizer: Sendable {
     public var generator: OutfitGenerator
     public var options: PackingOptions
@@ -49,7 +50,7 @@ public struct PackingOptimizer: Sendable {
             }
 
             // Nothing helps alone: add a whole outfit for the neediest group, reusing what's packed.
-            let usedBases = Set(states.flatMap(\.keys))
+            let usedBases = Set(states.flatMap { $0.values.map(\.outfit.baseKey) })
             if let outfit = injection(
                 for: plan.groups[neediest],
                 capsule: capsule,
@@ -124,10 +125,18 @@ public struct PackingOptimizer: Sendable {
 
     // MARK: Objective
 
+    /// Items worn at most once per laundry cycle: the top or one-piece, plus any statement piece (a repeated red
+    /// trouser reads as "the same outfit again" even with a different shirt).
+    static func oncePerCycle(_ outfit: Outfit) -> [String] {
+        Array(Set([outfit.baseKey] + outfit.items.filter(\.isStatement).map(\.id))).sorted()
+    }
+
+    /// Keeps the best outfit per once-per-cycle combination, so a base's version without a statement piece survives
+    /// alongside the one with it.
     private func merged(_ state: [String: ScoredOutfit], with outfits: [ScoredOutfit]) -> [String: ScoredOutfit] {
         var result = state
         for outfit in outfits {
-            let key = outfit.outfit.baseKey
+            let key = Self.oncePerCycle(outfit.outfit).joined(separator: "|")
             if let current = result[key], !OutfitGenerator.ranking(outfit, current) {
                 continue
             }
@@ -136,7 +145,7 @@ public struct PackingOptimizer: Sendable {
         return result
     }
 
-    /// Gives each slot its own base within a laundry cycle, scarcest groups first.
+    /// Gives each slot its own base (and statement pieces) within a laundry cycle, scarcest groups first.
     /// Coverage dominates (1 per filled slot); quality breaks ties (up to 0.5 more each).
     private func match(_ states: GroupStates, plan: TripPlan) -> (value: Double, unfilled: [Int: Int]) {
         var value = 0.0
@@ -149,10 +158,10 @@ public struct PackingOptimizer: Sendable {
             for slotIndex in scarcestFirst {
                 let group = plan.slots[slotIndex].group
                 let pick = states[group].values
-                    .filter { !used.contains($0.outfit.baseKey) }
+                    .filter { used.isDisjoint(with: Self.oncePerCycle($0.outfit)) }
                     .max { OutfitGenerator.ranking($1, $0) }
                 if let pick {
-                    used.insert(pick.outfit.baseKey)
+                    used.formUnion(Self.oncePerCycle(pick.outfit))
                     value += 1 + 0.5 * pick.score / 100
                 } else {
                     unfilled[group, default: 0] += 1
@@ -238,9 +247,9 @@ public struct PackingOptimizer: Sendable {
     }
 
     private func isWithinWearLimits(_ outfit: Outfit, wears: [String: Int]) -> Bool {
-        let baseFresh = wears[outfit.baseKey, default: 0] < 1
+        let fresh = Self.oncePerCycle(outfit).allSatisfy { wears[$0, default: 0] < 1 }
         let bottomOK = outfit.bottom.map { wears[$0.id, default: 0] < options.maxWearsPerBottom } ?? true
-        return baseFresh && bottomOK
+        return fresh && bottomOK
     }
 
     /// Repeating bottoms and shoes is fine, but spread the wear when there's a choice.

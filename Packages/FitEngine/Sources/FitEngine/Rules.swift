@@ -40,8 +40,11 @@ public enum Rules {
             return !(item.warmth <= 1 && t < 16)
         case .shoes:
             return !(item.warmth <= 1 && (t < 15 || weather.isRainy))
-        case .top, .onePiece:
+        case .top:
             return !(item.warmth >= 3 && t >= 27)
+        case .onePiece:
+            // A light dress leaves the legs bare, like shorts.
+            return !(item.warmth >= 3 && t >= 27) && !(item.warmth <= 1 && t < 15)
         case .bag, .accessory:
             return false
         }

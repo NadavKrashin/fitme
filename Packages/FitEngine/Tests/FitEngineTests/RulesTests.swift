@@ -33,3 +33,12 @@ struct RulesTests {
         #expect(combined == Weather(feelsLikeC: 12, precipitationChance: 0.7))
     }
 }
+
+struct LegCoverageTests {
+    @Test func lightDressesAreNotSuggestedInTheCold() {
+        let cold = Fixtures.context(.casual, Weather(feelsLikeC: 7, precipitationChance: 0.6))
+        #expect(!Rules.isEligible(Fixtures.item("d03"), for: cold), "sundress at 7°C")
+        #expect(!Rules.isEligible(Fixtures.item("d02"), for: cold), "light shirt dress at 7°C")
+        #expect(Rules.isEligible(Fixtures.item("d03"), for: Fixtures.context(.casual, Weather(feelsLikeC: 22))))
+    }
+}

@@ -129,16 +129,11 @@ xcrun devicectl device install app --device 00008140-000129522413C01C DerivedDat
 
 ## Known engine issues (taste, not correctness)
 
-Found by inspecting the fixture packing results. Fix them with a failing "should beat" test first.
-
-- **Accent overuse:** the scorer rewards one accent color (0.95 against 0.85 for all neutrals), so a single
-  statement bottom (red trousers) can end up in every work-trip outfit. Idea: add a statement-repeat penalty in
-  `PackingOptimizer.adjusted`, and/or lower the accent bonus.
-- **Bare legs in the cold:** dresses and skirts aren't weather-checked for legs, so a sundress can be suggested at
-  7°C in the rain. Idea: treat one-pieces and skirts like shorts below about 12°C unless a future "tights" layer
-  exists.
-- **The fixture closet mixes menswear and womenswear,** so packing results mix polos and sundresses. A real closet
-  won't. Don't tune weights to the fixture's quirks.
+- **Fixed in Phase 2 (2026-11-06), each with a test:**
+  - Statement pieces now rotate like tops in packing (`StatementRotationTests`).
+  - Light dresses are excluded below 15°C (`LegCoverageTests`).
+- **Open:** the fixture closet mixes menswear and womenswear, so packing results mix polos and sundresses. A real
+  closet won't. Don't tune weights to the fixture's quirks.
 
 ## Conventions every session must follow
 
