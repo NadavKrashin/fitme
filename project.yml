@@ -21,8 +21,8 @@ settings:
     MARKETING_VERSION: "0.1.0"
     # CI overrides this with the GitHub Actions run number.
     CURRENT_PROJECT_VERSION: "1"
-    # Fill in your 10-character Apple Developer Team ID (see docs/RELEASE_PROCESS.md, one-time setup).
-    DEVELOPMENT_TEAM: ""
+    # Apple Developer team "Nadav Krashin". Not secret: it is embedded in every signed app.
+    DEVELOPMENT_TEAM: 4ARX779852
     CODE_SIGN_STYLE: Automatic
     # Simulator builds are ad-hoc signed so tests get Keychain entitlements and a writable sandbox
     # without an Apple team.
