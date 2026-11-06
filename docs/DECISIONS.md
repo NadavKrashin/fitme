@@ -5,6 +5,28 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-06: Stylist on demand, from text descriptions
+
+- **Decision:**
+  - The Claude stylist runs only when the user taps "Ask the stylist", not on every input change.
+  - It gets text descriptions (names, color names plus hex, pattern, fit, statement flag) of 12 engine candidates
+    labeled A to L.
+  - The schema's enum only allows those labels, and it returns up to 3 picks with reasons.
+- **Why:**
+  - Sliders change often, so automatic calls would cost money and add latency constantly.
+  - Text is a fraction of the cost of 12 collage images and works for items without photos (demo closet).
+  - Label enums make inventing an outfit impossible.
+  - Revisit with images if the picks feel color-blind.
+
+### 2026-11-06: Weather from Open-Meteo with a rounded location
+
+- **Decision:** `OpenMeteoWeatherService` (free, no key) with a one-shot Core Location fix at kilometer accuracy,
+  rounded to two decimals before sending. The forecast pre-fills feels-like and rain, and the user can still
+  override both.
+- **Why:**
+  - WeatherKit needs extra entitlements and sends the exact location to Apple.
+  - Open-Meteo needs nothing, and about 1 km of precision is plenty for clothing.
+
 ### 2026-11-06: Crop worn-item cutouts with a box from the tagging call
 
 - **Context:** Vision's subject lift treats a person and the clothes they wear as one subject, so worn photos kept

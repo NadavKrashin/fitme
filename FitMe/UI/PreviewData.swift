@@ -94,4 +94,18 @@ struct PreviewTaggingService: TaggingService {
         return TaggedPhoto(tags: tags, itemBox: nil)
     }
 }
+
+/// Mild and dry, instantly.
+struct PreviewWeatherService: WeatherProviding {
+    func forecastHere() async throws -> DayForecast {
+        DayForecast(feelsLikeNowC: 17, feelsLikeMinC: 12, feelsLikeMaxC: 21, precipitationChance: 0.2)
+    }
+}
+
+/// Picks the first candidate with a canned reason.
+struct PreviewStylist: OutfitStylist {
+    func pick(from candidates: [ScoredOutfit], context _: OutfitContext) async throws -> [StylistPick] {
+        candidates.prefix(1).map { StylistPick(outfit: $0, reason: "Calm neutrals with one warm accent.") }
+    }
+}
 #endif

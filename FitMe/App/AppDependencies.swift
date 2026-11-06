@@ -8,6 +8,8 @@ struct AppDependencies: Sendable {
     let outfitGenerator: OutfitGenerator
     let photoProcessor: any PhotoProcessing
     let tagger: any TaggingService
+    let weather: any WeatherProviding
+    let stylist: any OutfitStylist
     let thumbnails: ThumbnailCache
 
     static func live() -> AppDependencies {
@@ -18,8 +20,15 @@ struct AppDependencies: Sendable {
             outfitGenerator: OutfitGenerator(),
             photoProcessor: ImagePipeline(),
             tagger: ClaudeTaggingService(client: claude),
+            weather: OpenMeteoWeatherService(locator: CoreLocationLocator(), transport: URLSession.shared),
+            stylist: ClaudeStylist(client: claude),
             thumbnails: ThumbnailCache()
         )
+    }
+
+    @MainActor
+    func makeTodayModel(anchor: Item?) -> TodayModel {
+        TodayModel(generator: outfitGenerator, weatherService: weather, stylist: stylist, anchor: anchor)
     }
 
     #if DEBUG
@@ -29,6 +38,8 @@ struct AppDependencies: Sendable {
             outfitGenerator: OutfitGenerator(),
             photoProcessor: ImagePipeline(),
             tagger: PreviewTaggingService(),
+            weather: PreviewWeatherService(),
+            stylist: PreviewStylist(),
             thumbnails: ThumbnailCache()
         )
     }

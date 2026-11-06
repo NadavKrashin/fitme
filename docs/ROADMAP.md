@@ -76,13 +76,25 @@ Goal: catalog about 100 items in **under 60–90 minutes**, with at least 85% of
 
 Goal: at least 70% of top-5 suggestions rated "I'd wear that" over two weeks.
 
-- [ ] Flat-lay collage renderer (outerwear, top, bottom, shoes stacked; accessories at the side).
-- [ ] `Services/WeatherService`: Open-Meteo current weather and forecast. Today's weather becomes automatic.
-- [ ] Feedback on suggestions (👍 / 👎 / wore it / swap one item), persisted to `StyleProfile`.
-- [ ] Claude stylist pass: re-rank the top 12–15 candidates and add a one-line "why it works". The model may only
-  return candidate IDs.
-- [ ] "Build around this item" from item detail (the engine already supports `mustInclude`).
-- [ ] Engine taste fixes (see "Known engine issues" in [HANDOFF.md](HANDOFF.md)).
+- [x] Flat-lay collage (`UI/OutfitCollage`): top or one-piece over bottom on the left; outerwear, mid layer and
+  shoes on the right. Used in `OutfitCard`.
+- [x] `Services/Weather`:
+  - Open-Meteo forecast for the current location, rounded to about 1 km, when-in-use permission
+  - fills feels-like and rain on open
+  - manual edits still work
+- [x] Feedback: 👍 / 👎 / "Wear this" on every card.
+  - Stored in `StyleProfileRecord` (affinities) via `FeedbackRecorder`.
+  - "Wear this" updates `wearCount` and `lastWorn`, so novelty rotates items.
+  - 👎 hides the outfit for the session.
+- [x] Claude stylist (`Services/Stylist/ClaudeStylist`):
+  - on demand ("Ask the stylist")
+  - picks up to 3 of 12 engine candidates with one-line reasons
+  - text-only descriptions with color names
+  - the schema only allows candidate letters
+- [x] "Outfits with this" from item detail (`TodayModel.anchor` → `mustInclude`).
+- [x] Engine taste fixes: statement pieces rotate in packing, and light dresses stay out of the cold.
+- [ ] "Swap one item" on a card. Not built.
+- [ ] Two weeks of daily use to measure the goal (Nadav).
 
 ## Phase 3: Trip packer (the differentiator)
 

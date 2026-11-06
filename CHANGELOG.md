@@ -13,3 +13,7 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - Closet and outfit suggestions show your real item photos.
 - Photos of clothes you're wearing are cropped to the item, so your face and legs no longer end up in the cutout.
 - The Inbox shows photos while they import, and skips photos you already added.
+- Today shows outfits as flat-lay collages and fills in the weather where you are.
+- Like, dislike or "wear" any suggestion; FitMe learns your taste and rotates what you wore recently.
+- "Ask the stylist" has Claude pick the best few outfits and explain why each works.
+- Find outfits built around any item from its detail screen.

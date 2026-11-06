@@ -104,3 +104,49 @@ enum ScaleLabels {
         }
     }
 }
+
+extension ItemColor {
+    /// A plain-language approximation ("navy", "dark green"), for the stylist and accessibility.
+    var name: String {
+        let (lightness, chroma, hue) = (lch.L, lch.C, lch.h)
+        switch lch.neutrality {
+        case .neutral:
+            if lightness < 0.3 {
+                return "black"
+            }
+            if lightness > 0.9 {
+                return "white"
+            }
+            return lightness < 0.55 ? "dark grey" : "grey"
+        case .softNeutral:
+            if (215 ... 275).contains(hue) {
+                return lightness < 0.4 ? "navy" : "denim blue"
+            }
+            if lightness > 0.8 {
+                return "beige"
+            }
+            if hue < 75 {
+                return lightness < 0.45 ? "dark brown" : "camel"
+            }
+            return lightness > 0.65 ? "khaki" : "olive"
+        case .chromatic:
+            let family = switch hue {
+            case ..<15, 345...: "pink"
+            case ..<45: "red"
+            case ..<75: "orange"
+            case ..<115: "yellow"
+            case ..<170: "green"
+            case ..<225: "teal"
+            case ..<285: "blue"
+            default: "purple"
+            }
+            if lightness < 0.45 {
+                return "dark \(family)"
+            }
+            if lightness > 0.8, chroma < 0.12 {
+                return "light \(family)"
+            }
+            return family
+        }
+    }
+}

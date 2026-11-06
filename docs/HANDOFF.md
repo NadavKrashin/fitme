@@ -7,8 +7,8 @@ _Last updated: 2026-11-05._
 
 ## Current state
 
-- **Phase 0 (foundations)** is done, and **Phase 1 (closet capture)** is built. Details are in
-  [ROADMAP.md](ROADMAP.md).
+- **Phases 0 and 1 are done, and Phase 2 (daily outfits) is built:** collages, weather, feedback, stylist, and
+  "Outfits with this". Details are in [ROADMAP.md](ROADMAP.md).
 - **Capture flow:**
   1. Closet → **+** → pick photos.
   2. Each photo becomes a `CaptureDraft`.
@@ -110,22 +110,37 @@ xcrun devicectl device install app --device 00008140-000129522413C01C DerivedDat
 - **Not re-verified on the phone yet:** the crop fix on real worn photos (arms and hands inside a top's box are
   expected to stay).
 
+## Phase 2: what's verified and what isn't
+
+- **Verified locally:**
+  - 34 engine tests pass, including the two new taste rules.
+  - The app and tests build without warnings, lint is clean, and `verify-release` passes.
+- **Verified only by CI:** `TodayModelTests`, `FeedbackRecorderTests`, `WeatherServiceTests`, `StylistTests`.
+  Check the run for the "Phase 2" commit.
+- **Not verified at all:**
+  - A real Open-Meteo call, and the location permission prompt.
+  - A real stylist call, and its quality.
+  - Collage looks on a device.
+  - The Phase 2 goal: at least 70% of suggestions rated "I'd wear that" over two weeks.
+
 ## Next steps, in order
 
-1. **Confirm CI is green** on the latest `main` (`gh run list --limit 3`, then `gh run view <id> --log-failed`).
-   Phase 1's app tests have only run there.
-2. **Real-device trial of Phase 1** (Nadav, on FitMe β from TestFlight):
-   1. Settings → paste the Claude API key.
-   2. Closet → **+** → pick about 10 photos.
-   3. Time the review, and note wrong tags and bad cutouts.
-3. **Fix what the trial finds**, in this order:
-   1. Cutout failures (photo tips: plain background, item laid flat).
-   2. Tag errors: tune `ClaudeTaggingService.systemPrompt`, and add a regression test with the recorded response.
-   3. Review speed: e.g. swipe gestures, or skipping straight to the next draft.
-4. **Finish Phase 1 leftovers:** closet filters by color and formality. Build the in-app batch camera only if
-   importing from Photos turns out too slow in practice.
-5. **Then Phase 2** ([ROADMAP.md](ROADMAP.md#phase-2-outfit-engine-in-daily-use)): collage renderer, Open-Meteo
-   weather, feedback buttons, and the Claude stylist pass. Reuse `ClaudeClient.structuredOutput`.
+1. **Confirm CI is green** for the latest commits (`gh run list --limit 3`).
+2. **Nadav tries Phase 2 on FitMe β:**
+   - allow location; check the weather line is right
+   - react to suggestions for a few days
+   - tap "Ask the stylist" and judge the reasons
+   - open an item → "Outfits with this"
+3. **Fix what that finds.** Likely candidates:
+   - collage proportions for one-pieces and shoes
+   - stylist prompt tone
+   - whether 👎 should hide outfits for longer than the session
+4. **Phase 2 leftover:** "swap one item" on a card (regenerate with all but one piece fixed; the engine can do it
+   via `mustInclude` plus filtering).
+5. **Phase 3, the trip packer** ([ROADMAP.md](ROADMAP.md#phase-3-trip-packer-the-differentiator)):
+   - trip wizard, with an Open-Meteo forecast per day (add a date range to the weather service)
+   - `PackingOptimizer` result screen
+   - essentials checklist, trip mode, and post-trip debrief
 
 ## Known engine issues (taste, not correctness)
 

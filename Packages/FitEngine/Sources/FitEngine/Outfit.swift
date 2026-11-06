@@ -62,6 +62,11 @@ public struct ScoredOutfit: Identifiable, Hashable, Sendable {
     public let outfit: Outfit
     public let breakdown: ScoreBreakdown
 
+    public init(outfit: Outfit, breakdown: ScoreBreakdown) {
+        self.outfit = outfit
+        self.breakdown = breakdown
+    }
+
     public var id: String {
         outfit.id
     }

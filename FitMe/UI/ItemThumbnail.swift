@@ -7,14 +7,18 @@ struct ItemThumbnail: View {
     let item: Item
     var image: Data?
     var size: CGFloat = 56
+    /// Collages lay cutouts directly on the card, without a tile behind each one.
+    var isFramed = true
 
     var body: some View {
         content
             .frame(width: size, height: size)
-            .clipShape(.rect(cornerRadius: size * 0.2))
+            .clipShape(.rect(cornerRadius: isFramed ? size * 0.2 : 0))
             .overlay {
-                RoundedRectangle(cornerRadius: size * 0.2)
-                    .strokeBorder(.secondary.opacity(0.3), lineWidth: 1)
+                if isFramed {
+                    RoundedRectangle(cornerRadius: size * 0.2)
+                        .strokeBorder(.secondary.opacity(0.3), lineWidth: 1)
+                }
             }
             .accessibilityElement()
             .accessibilityLabel(item.name)
@@ -26,7 +30,7 @@ struct ItemThumbnail: View {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFit()
-                .background(Color(.secondarySystemBackground))
+                .background(isFramed ? Color(.secondarySystemBackground) : .clear)
         } else {
             swatch
         }

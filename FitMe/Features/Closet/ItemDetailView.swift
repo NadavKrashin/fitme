@@ -24,6 +24,14 @@ struct ItemDetailView: View {
             }
             .listRowBackground(Color.clear)
 
+            Section {
+                NavigationLink {
+                    OutfitsWithItemView(item: item)
+                } label: {
+                    Label("Outfits with this", systemImage: "sparkles")
+                }
+            }
+
             ItemEditorSections(item: $item)
 
             Section {

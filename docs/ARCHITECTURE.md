@@ -29,8 +29,8 @@ FitMe is a local-first iOS app with two layers:
 | `project.yml` | XcodeGen spec: targets, the three build configurations, bundle IDs. `FitMe.xcodeproj` is generated and git-ignored. |
 | `FitMe/App/` | `FitMeApp` (entry), `RootView` (tabs), `AppDependencies` (service container), `AppEnvironment` (staging/prod switch). |
 | `FitMe/Features/<Feature>/` | One folder per screen: the SwiftUI view plus its `@Observable` model. |
-| `FitMe/Models/` | SwiftData `@Model` types: `ItemRecord` (closet item, photo and cutout), `CaptureDraft` (unreviewed photo), and `Persistence` (store setup). |
-| `FitMe/Services/` | Side-effecting services behind protocols: `SecretStore` (Keychain), `Claude/ClaudeClient` (Messages API over an `HTTPTransport`), `Tagging/ClaudeTaggingService`, `ImagePipeline` (Vision cutout + colors). |
+| `FitMe/Models/` | SwiftData `@Model` types: `ItemRecord` (closet item, photo and cutout), `CaptureDraft` (unreviewed photo), `StyleProfileRecord` (learned taste), and `Persistence` (store setup). |
+| `FitMe/Services/` | Side-effecting services behind protocols: `SecretStore` (Keychain), `Claude/ClaudeClient` (Messages API over an `HTTPTransport`), `Tagging/ClaudeTaggingService`, `ImagePipeline` (Vision cutout, box crop, colors), `Weather/OpenMeteoWeatherService` + `CoreLocationLocator`, `Stylist/ClaudeStylist`. |
 | `FitMe/UI/` | Shared views (`ItemThumbnail`, `OutfitRow`), display helpers, `PreviewData` (Debug only). |
 | `FitMe/DemoData/` | Staging-only demo closet. Compiled out of Release. |
 | `FitMe/Resources/` | Asset catalog: app icons (prod and staging) and the accent color. |
@@ -89,10 +89,21 @@ PhotosPicker ─► CaptureModel.importPhotos ─► CaptureDraft(.processing) s
 - **Drafts live in their own model** so unreviewed items never reach the closet or the engine.
 - **`CaptureModel` lives at app level,** so processing continues across screens and resumes after relaunch.
 
+## Daily outfits (Phase 2)
+
+- **`TodayModel`** owns the inputs (occasion, feels-like, rain), the suggestions, the session's reactions, and the
+  weather and stylist state.
+  - With `anchor` set, the same model powers "Outfits with this item".
+  - `OutfitPlanner` is the shared view.
+- **Weather:** `OpenMeteoWeatherService.forecastHere()` (location rounded to about 1 km) pre-fills the inputs on open.
+- **Feedback:** `FeedbackRecorder` writes reactions to `StyleProfileRecord` and wear history to `ItemRecord`. The
+  profile feeds `OutfitContext.profile`, so liked pairs score higher next time.
+- **Stylist:** `ClaudeStylist.pick` gets 12 diversified engine candidates as labeled text and returns up to 3
+  label-constrained picks with reasons.
+
 ## Planned additions
 
 Each lands in its own folder, following the same pattern. Details are in [ROADMAP.md](ROADMAP.md).
 
-- the Claude stylist judge, reusing `ClaudeClient.structuredOutput`
 - `Services/WeatherService` (Open-Meteo)
 - `Features/Trips`

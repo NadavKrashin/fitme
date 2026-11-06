@@ -1,3 +1,4 @@
+import CoreLocation
 import FitEngine
 import Foundation
 @testable import FitMe
@@ -79,4 +80,41 @@ struct FakeTagger: TaggingService {
 /// Photo-library loaders that hand back fixed bytes (nil = a photo that fails to load).
 func loaders(_ images: [Data?]) -> [@Sendable () async -> Data?] {
     images.map { image in { image } }
+}
+
+struct FakeWeather: WeatherProviding {
+    var result: Result<DayForecast, WeatherError> = .success(
+        DayForecast(feelsLikeNowC: 8.6, feelsLikeMinC: 5, feelsLikeMaxC: 12, precipitationChance: 0.7)
+    )
+
+    func forecastHere() async throws -> DayForecast {
+        try result.get()
+    }
+}
+
+struct FakeLocator: Locating {
+    func currentCoordinate() async throws -> CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: 32.08532, longitude: 34.78177)
+    }
+}
+
+/// Picks the last candidate, so tests can tell it chose from what it was given.
+struct FakeStylist: OutfitStylist {
+    var error: Error?
+
+    func pick(from candidates: [ScoredOutfit], context _: OutfitContext) async throws -> [StylistPick] {
+        if let error {
+            throw error
+        }
+        return candidates.suffix(1).map { StylistPick(outfit: $0, reason: "Works.") }
+    }
+}
+
+@MainActor
+func makeTodayModel(
+    weather: FakeWeather = .init(),
+    stylist: FakeStylist = .init(),
+    anchor: Item? = nil
+) -> TodayModel {
+    TodayModel(generator: OutfitGenerator(), weatherService: weather, stylist: stylist, anchor: anchor)
 }
