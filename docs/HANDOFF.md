@@ -115,8 +115,9 @@ xcrun devicectl device install app --device 00008140-000129522413C01C DerivedDat
 - **Verified locally:**
   - 34 engine tests pass, including the two new taste rules.
   - The app and tests build without warnings, lint is clean, and `verify-release` passes.
-- **Verified only by CI:** `TodayModelTests`, `FeedbackRecorderTests`, `WeatherServiceTests`, `StylistTests`.
-  Check the run for the "Phase 2" commit.
+- **Verified only by CI:** `TodayModelTests`, `FeedbackRecorderTests`, `WeatherServiceTests`, `StylistTests`, all
+  green in run 42167171629, which also uploaded **Staging build 15**. The trial fixes (crop, import progress,
+  duplicates) shipped in build 13 (run 42166272190).
 - **Not verified at all:**
   - A real Open-Meteo call, and the location permission prompt.
   - A real stylist call, and its quality.
@@ -125,7 +126,7 @@ xcrun devicectl device install app --device 00008140-000129522413C01C DerivedDat
 
 ## Next steps, in order
 
-1. **Confirm CI is green** for the latest commits (`gh run list --limit 3`).
+1. **Confirm CI is green** for anything newer than build 15 (`gh run list --limit 3`).
 2. **Nadav tries Phase 2 on FitMe β:**
    - allow location; check the weather line is right
    - react to suggestions for a few days
