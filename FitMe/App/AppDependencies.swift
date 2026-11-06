@@ -6,17 +6,33 @@ import SwiftUI
 struct AppDependencies: Sendable {
     let secrets: any SecretStore
     let outfitGenerator: OutfitGenerator
+    let photoProcessor: any PhotoProcessing
+    let tagger: any TaggingService
+    let thumbnails: ThumbnailCache
 
     static func live() -> AppDependencies {
-        AppDependencies(
-            secrets: KeychainSecretStore(service: Bundle.main.bundleIdentifier ?? "FitMe"),
-            outfitGenerator: OutfitGenerator()
+        let secrets = KeychainSecretStore(service: Bundle.main.bundleIdentifier ?? "FitMe")
+        let claude = ClaudeClient(apiKey: { try secrets.read(.claudeAPIKey) }, transport: URLSession.shared)
+        return AppDependencies(
+            secrets: secrets,
+            outfitGenerator: OutfitGenerator(),
+            photoProcessor: ImagePipeline(),
+            tagger: ClaudeTaggingService(client: claude),
+            thumbnails: ThumbnailCache()
         )
     }
 
+    #if DEBUG
     static func preview() -> AppDependencies {
-        AppDependencies(secrets: InMemorySecretStore(), outfitGenerator: OutfitGenerator())
+        AppDependencies(
+            secrets: InMemorySecretStore(),
+            outfitGenerator: OutfitGenerator(),
+            photoProcessor: ImagePipeline(),
+            tagger: PreviewTaggingService(),
+            thumbnails: ThumbnailCache()
+        )
     }
+    #endif
 }
 
 extension EnvironmentValues {

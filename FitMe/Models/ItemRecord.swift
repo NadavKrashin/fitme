@@ -22,7 +22,11 @@ final class ItemRecord {
     var lastWorn: Date?
     var addedAt: Date
 
-    init(item: Item, addedAt: Date = .now) {
+    /// Original photo (JPEG) and the item cut out on a transparent square (PNG). Stored outside the database file.
+    @Attribute(.externalStorage) var photo: Data?
+    @Attribute(.externalStorage) var cutout: Data?
+
+    init(item: Item, photo: Data? = nil, cutout: Data? = nil, addedAt: Date = .now) {
         itemID = item.id
         name = item.name
         category = item.category
@@ -38,7 +42,25 @@ final class ItemRecord {
         isAvailable = item.isAvailable
         wearCount = item.wearCount
         lastWorn = item.lastWorn
+        self.photo = photo
+        self.cutout = cutout
         self.addedAt = addedAt
+    }
+
+    /// Copies everything the user can edit. Identity, photos and wear history stay as they are.
+    func update(from item: Item) {
+        name = item.name
+        category = item.category
+        subcategory = item.subcategory
+        colors = item.colors.map(StoredColor.init)
+        pattern = item.pattern
+        formality = item.formality
+        warmth = item.warmth
+        fit = item.fit
+        isStatement = item.isStatement
+        styleTags = item.styleTags.sorted { $0.rawValue < $1.rawValue }
+        waterResistant = item.waterResistant
+        isAvailable = item.isAvailable
     }
 
     var item: Item {

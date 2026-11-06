@@ -29,8 +29,8 @@ FitMe is a local-first iOS app with two layers:
 | `project.yml` | XcodeGen spec: targets, the three build configurations, bundle IDs. `FitMe.xcodeproj` is generated and git-ignored. |
 | `FitMe/App/` | `FitMeApp` (entry), `RootView` (tabs), `AppDependencies` (service container), `AppEnvironment` (staging/prod switch). |
 | `FitMe/Features/<Feature>/` | One folder per screen: the SwiftUI view plus its `@Observable` model. |
-| `FitMe/Models/` | SwiftData `@Model` types and their mapping to engine types. |
-| `FitMe/Services/` | Side-effecting services behind protocols (Keychain now; Claude, weather and image pipeline later). |
+| `FitMe/Models/` | SwiftData `@Model` types: `ItemRecord` (closet item, photo and cutout), `CaptureDraft` (unreviewed photo), and `Persistence` (store setup). |
+| `FitMe/Services/` | Side-effecting services behind protocols: `SecretStore` (Keychain), `Claude/ClaudeClient` (Messages API over an `HTTPTransport`), `Tagging/ClaudeTaggingService`, `ImagePipeline` (Vision cutout + colors). |
 | `FitMe/UI/` | Shared views (`ItemThumbnail`, `OutfitRow`), display helpers, `PreviewData` (Debug only). |
 | `FitMe/DemoData/` | Staging-only demo closet. Compiled out of Release. |
 | `FitMe/Resources/` | Asset catalog: app icons (prod and staging) and the accent color. |
@@ -73,12 +73,26 @@ this.
   `scripts/verify-release.sh` enforces this.
 - See [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
 
+## Capture pipeline (Phase 1)
+
+```
+PhotosPicker ─► CaptureModel.importPhotos ─► CaptureDraft(.processing) saved first
+                     │  (3 at a time, off the main actor)
+                     ├─► ImagePipeline.process ─► photo JPEG, cutout PNG, tagging JPEG, colors (FitEngine.ColorExtractor)
+                     └─► ClaudeTaggingService.tags ─► ItemTags (JSON schema built from the engine enums)
+                     ▼
+           CaptureDraft(.ready / .failed) ─► Inbox ─► DraftReviewView ─► ItemRecord (closet)
+```
+
+- **Colors** come from pixels, never from the model. The model tags category, pattern, formality, warmth, fit,
+  style and water resistance.
+- **Drafts live in their own model** so unreviewed items never reach the closet or the engine.
+- **`CaptureModel` lives at app level,** so processing continues across screens and resumes after relaunch.
+
 ## Planned additions
 
 Each lands in its own folder, following the same pattern. Details are in [ROADMAP.md](ROADMAP.md).
 
-- `Services/ClaudeClient` (tagging and stylist judge)
-- `Services/ImagePipeline` (Vision subject lift and OKLab k-means colors)
+- the Claude stylist judge, reusing `ClaudeClient.structuredOutput`
 - `Services/WeatherService` (Open-Meteo)
-- `Features/Capture`
 - `Features/Trips`

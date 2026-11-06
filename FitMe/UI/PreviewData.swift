@@ -1,5 +1,6 @@
 #if DEBUG
 import FitEngine
+import Foundation
 import SwiftData
 
 /// A tiny closet for SwiftUI previews. Debug builds only; separate from the staging demo closet so previews stay
@@ -67,10 +68,7 @@ enum PreviewData {
 
     static let container: ModelContainer = {
         do {
-            let container = try ModelContainer(
-                for: ItemRecord.self,
-                configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-            )
+            let container = try Persistence.makeInMemoryContainer()
             for item in items {
                 container.mainContext.insert(ItemRecord(item: item))
             }
@@ -79,5 +77,21 @@ enum PreviewData {
             fatalError("Preview container failed: \(error)")
         }
     }()
+
+    static let captureModel = CaptureModel(
+        processor: ImagePipeline(),
+        tagger: PreviewTaggingService(),
+        context: container.mainContext
+    )
+}
+
+/// Answers instantly with plausible tags, so previews never call the network.
+struct PreviewTaggingService: TaggingService {
+    func tags(forJPEG _: Data) async throws -> ItemTags {
+        var tags = ItemTags.blank
+        tags.name = "Preview item"
+        tags.subcategory = "t-shirt"
+        return tags
+    }
 }
 #endif

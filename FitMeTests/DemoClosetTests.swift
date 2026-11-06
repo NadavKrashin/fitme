@@ -19,10 +19,7 @@ struct DemoClosetTests {
     }
 
     @Test func loadReplacesTheClosetAndClearEmptiesIt() throws {
-        let container = try ModelContainer(
-            for: ItemRecord.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
+        let container = try Persistence.makeInMemoryContainer()
         let context = container.mainContext
         context.insert(ItemRecord(item: Item(
             id: "mine",

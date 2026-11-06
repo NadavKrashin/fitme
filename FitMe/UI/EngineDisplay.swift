@@ -54,3 +54,53 @@ extension ItemColor {
         lab.L > 0.6 ? .black : .white
     }
 }
+
+extension ItemPattern {
+    var title: String {
+        switch self {
+        case .solid: "Solid"
+        case .textured: "Textured"
+        case .stripe: "Stripes"
+        case .check: "Check"
+        case .floral: "Floral"
+        case .graphic: "Graphic"
+        case .print: "Print"
+        case .other: "Other"
+        }
+    }
+}
+
+extension Fit {
+    var title: String {
+        rawValue.capitalized
+    }
+}
+
+extension StyleTag {
+    var title: String {
+        rawValue.capitalized
+    }
+}
+
+/// Labels for the engine's 1–5 scales, matching the definitions given to the tagging model.
+enum ScaleLabels {
+    static func formality(_ value: Int) -> String {
+        switch value {
+        case 1: "Lounge"
+        case 2: "Casual"
+        case 3: "Smart casual"
+        case 4: "Dressy"
+        default: "Black tie"
+        }
+    }
+
+    static func warmth(_ value: Int) -> String {
+        switch value {
+        case 1: "Very light"
+        case 2: "Light"
+        case 3: "Medium"
+        case 4: "Warm"
+        default: "Very warm"
+        }
+    }
+}

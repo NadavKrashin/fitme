@@ -33,22 +33,42 @@ collages now, try-on later. The reasoning is in [DECISIONS.md](DECISIONS.md).
 
 Goal: catalog about 100 items in **under 60–90 minutes**, with at least 85% of tags right.
 
-- [ ] `Services/ClaudeClient`:
+- [x] `Services/Claude/ClaudeClient`:
   - Messages API over `URLSession`
-  - image content blocks
-  - JSON-schema structured output
-  - a protocol with a fake
-  - model IDs in one place (see the `claude-api` skill for current IDs)
-- [ ] `Services/ImagePipeline`: Vision `VNGenerateForegroundInstanceMaskRequest` cutout → square padded PNG → OKLab
-  k-means (k ≤ 3) colors with proportions.
-- [ ] `ItemRecord`: add the photo and the cutout (`@Attribute(.externalStorage)`).
-- [ ] `Features/Capture`:
-  - batch camera ("shoot many in a row") and multi-select from Photos
-  - concurrent pipeline
-  - an "Inbox to review" with every field pre-filled
-- [ ] Review screen: swipe through items, fix tags, confirm.
-- [ ] Item detail and edit. Closet filters (category, color, formality, season).
-- [ ] `ItemThumbnail` shows the cutout when one exists.
+  - base64 image blocks
+  - `output_config.format` JSON schema
+  - `fallbacks: "default"`
+  - an `HTTPTransport` protocol faked in tests
+- [x] `Services/Tagging`: `ClaudeTaggingService`
+  - `claude-opus-5-5` at low effort; the model is one constant
+  - schema generated from the engine's enums
+  - out-of-range values rejected
+- [x] `Services/ImagePipeline`:
+  - Vision subject lift → 512 px transparent PNG cutout and a 1024 px JPEG on white for tagging
+  - colors from the cutout via `FitEngine.ColorExtractor` (OKLab k-means)
+  - falls back to the full photo when Vision can't lift a subject
+- [x] `ItemRecord` stores the photo and the cutout (`.externalStorage`). New `CaptureDraft` model for unreviewed
+  items.
+- [x] `Features/Capture/CaptureModel`:
+  - multi-select import from Photos
+  - drafts saved before processing
+  - three processed at a time
+  - resumes after relaunch
+  - retry on failure
+- [x] Inbox and review:
+  - each draft pre-filled
+  - "Add to closet" jumps to the next draft
+  - "Accept all" for drafts that look right
+- [x] Item detail and edit (saved on leaving the screen), delete, laundry toggle. Closet filters by category, plus
+  name search.
+- [x] `ItemThumbnail` shows the cutout when one exists, including in Today's suggestions.
+- [ ] **In-app batch camera.** Not built. Today's flow is to shoot items in the Camera app, then multi-select them in
+  FitMe.
+- [ ] Closet filters by color and formality (only category and search exist).
+- [ ] **Verify on the iPhone with real clothes:**
+  - subject-lift quality
+  - tag accuracy (target at least 85%)
+  - the time to catalog 100 items (target under 90 minutes)
 
 ## Phase 2: Outfit engine in daily use
 

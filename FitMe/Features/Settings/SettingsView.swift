@@ -58,6 +58,7 @@ private struct APIKeySection: View {
 #Preview {
     SettingsView()
         .environment(\.dependencies, .preview())
+        .environment(PreviewData.captureModel)
         .modelContainer(PreviewData.container)
 }
 #endif

@@ -7,7 +7,14 @@ _Last updated: 2026-11-05._
 
 ## Current state
 
-- **Phase 0 (foundations)** is done in code. See [ROADMAP.md](ROADMAP.md).
+- **Phase 0 (foundations)** is done, and **Phase 1 (closet capture)** is built. Details are in
+  [ROADMAP.md](ROADMAP.md).
+- **Capture flow:**
+  1. Closet → **+** → pick photos.
+  2. Each photo becomes a `CaptureDraft`.
+  3. `ImagePipeline` cuts out the item and measures colors, and `ClaudeTaggingService` tags it.
+  4. The draft lands in the **Inbox** for review.
+  5. **Add to closet** turns it into an `ItemRecord` with its photo and cutout.
 - **`FitEngine`**:
   - Complete for daily suggestions and trip packing; 25 tests pass (`make test-engine`, about 1 s).
   - Swift 6 strict concurrency, no force unwraps.
@@ -77,19 +84,36 @@ xcodebuild -project FitMe.xcodeproj -scheme FitMe-Staging -configuration Staging
 xcrun devicectl device install app --device 00008140-000129522413C01C DerivedData/Build/Products/Staging-iphoneos/FitMe.app
 ```
 
+## Phase 1: what's verified and what isn't
+
+- **Verified locally:**
+  - 32 engine tests pass, including `ColorExtractor`.
+  - The app and tests build with no warnings, lint is clean, and `verify-release` passes.
+- **Verified only by CI:** the app tests below (this Mac still has no simulator runtime).
+  - `ClaudeClientTests`, `TaggingServiceTests`, `CaptureModelTests`, `ImagePipelineTests`.
+  - They use fake transports and processors, so no real API call has been made yet.
+- **Not verified at all:**
+  - A real Claude call. Needs Nadav's API key in Settings on the phone.
+  - Vision subject lift on real photos. The CI simulator may fall back to the full photo.
+  - The full capture UI flow on a device.
+  - The Phase 1 goals: 100 items in under 90 minutes, and at least 85% of tags right.
+
 ## Next steps, in order
 
-1. **Confirm CI is green** on the latest `main` (`gh run list --limit 3`, then `gh run view <id> --log-failed`). Fix
-   anything red first.
-2. **Once the setup above is done:** push any commit to `main`, watch the `deploy` job, and fix the signing or
-   upload issues it reports. Then install FitMe β from TestFlight, load the demo closet, and check the Today tab.
-3. **Start Phase 1** with `Services/ClaudeClient`:
-   - Load the `claude-api` skill for the current Messages API shape and model IDs.
-   - Define a `TaggingService` protocol that returns a decoded `Item` draft from an image, plus a fake for tests.
-   - Read the key from `SecretStore` (`.claudeAPIKey`).
-   - Unit-test request building and response decoding with recorded JSON fixtures; never call the network in tests.
-4. Then `Services/ImagePipeline` (Vision cutout plus OKLab k-means), followed by `Features/Capture`. Follow the
-   checklist in [ROADMAP.md → Phase 1](ROADMAP.md#phase-1-closet-capture-make-or-break).
+1. **Confirm CI is green** on the latest `main` (`gh run list --limit 3`, then `gh run view <id> --log-failed`).
+   Phase 1's app tests have only run there.
+2. **Real-device trial of Phase 1** (Nadav, on FitMe β from TestFlight):
+   1. Settings → paste the Claude API key.
+   2. Closet → **+** → pick about 10 photos.
+   3. Time the review, and note wrong tags and bad cutouts.
+3. **Fix what the trial finds**, in this order:
+   1. Cutout failures (photo tips: plain background, item laid flat).
+   2. Tag errors: tune `ClaudeTaggingService.systemPrompt`, and add a regression test with the recorded response.
+   3. Review speed: e.g. swipe gestures, or skipping straight to the next draft.
+4. **Finish Phase 1 leftovers:** closet filters by color and formality. Build the in-app batch camera only if
+   importing from Photos turns out too slow in practice.
+5. **Then Phase 2** ([ROADMAP.md](ROADMAP.md#phase-2-outfit-engine-in-daily-use)): collage renderer, Open-Meteo
+   weather, feedback buttons, and the Claude stylist pass. Reuse `ClaudeClient.structuredOutput`.
 
 ## Known engine issues (taste, not correctness)
 

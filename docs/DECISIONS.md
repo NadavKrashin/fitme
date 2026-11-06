@@ -5,6 +5,34 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-06: Tagging with Claude Opus 5.5 at low effort, colors measured locally
+
+- **Decision:**
+  - `ClaudeTaggingService` calls `claude-opus-5-5` with `effort: "low"` and a JSON schema generated from the
+    engine's enums, with the server-side fallback `fallbacks: "default"` on.
+  - Colors come from on-device OKLab k-means over the cutout's pixels, not from the model.
+- **Why:**
+  - The claude-api skill's default model is Opus 5.5. At low effort, a ~1k-token image costs about a cent, so roughly
+    a dollar for a whole closet. The model is one constant (`ClaudeTaggingService.model`) if cost ever matters.
+  - Models are imprecise with exact color values, and the engine's color math needs exact OKLab values.
+  - Generating the schema from the enums means it can never drift from the decoder.
+
+### 2026-11-06: Unreviewed photos are `CaptureDraft`s, not closet items
+
+- **Decision:** a separate SwiftData model holds photos from import until review. Confirming creates the
+  `ItemRecord`.
+- **Why:**
+  - Unreviewed or mis-tagged items must never reach outfit suggestions.
+  - Saving the draft before processing means a quit or crash never loses a photo; `resumePending` picks it up.
+
+### 2026-11-06: Import from Photos first, in-app camera later
+
+- **Decision:** Phase 1 ships a multi-select import from Photos, not an in-app batch camera.
+- **Why:**
+  - Shooting in the Camera app and then multi-selecting is already a fast batch flow.
+  - It can be verified in the simulator, while camera code can't.
+  - Revisit if the real-closet trial shows it's slow.
+
 ### 2026-11-05: Trunk-based git, tags for production
 
 - **Decision:**

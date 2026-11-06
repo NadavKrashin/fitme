@@ -11,7 +11,7 @@ struct TodayView: View {
         NavigationStack {
             Group {
                 if let model {
-                    TodayContent(model: model, closet: records.map(\.item))
+                    TodayContent(model: model, records: records)
                 } else {
                     ProgressView()
                 }
@@ -28,7 +28,11 @@ struct TodayView: View {
 
 private struct TodayContent: View {
     @Bindable var model: TodayModel
-    let closet: [Item]
+    let records: [ItemRecord]
+
+    private var closet: [Item] {
+        records.map(\.item)
+    }
 
     var body: some View {
         List {
@@ -52,7 +56,10 @@ private struct TodayContent: View {
                     Text("Nothing in your closet fits this occasion and weather.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(model.suggestions) { OutfitRow(outfit: $0) }
+                    let recordsByID = Dictionary(uniqueKeysWithValues: records.map { ($0.itemID, $0) })
+                    ForEach(model.suggestions) { suggestion in
+                        OutfitRow(outfit: suggestion) { recordsByID[$0]?.cutout }
+                    }
                 }
             }
         }
@@ -82,6 +89,7 @@ private struct TodayContent: View {
 #Preview {
     TodayView()
         .environment(\.dependencies, .preview())
+        .environment(PreviewData.captureModel)
         .modelContainer(PreviewData.container)
 }
 #endif
