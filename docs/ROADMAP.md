@@ -8,7 +8,7 @@ occasion), and packs the **smallest set of items that covers a trip**.
 **Decisions so far:** personal tool first; native iOS; Claude vision for tagging and styling judgement; flat-lay
 collages now, try-on later. The reasoning is in [DECISIONS.md](DECISIONS.md).
 
-## Phase 0: Foundations ✅ (except signing)
+## Phase 0: Foundations ✅
 
 - [x] `FitEngine`:
   - color math
@@ -25,8 +25,9 @@ collages now, try-on later. The reasoning is in [DECISIONS.md](DECISIONS.md).
   - Closet (grid by category)
   - Settings (Claude API key in Keychain, demo closet in staging)
 - [x] CI/CD pipeline: lint, tests, Release demo-data guard, TestFlight deploy for staging and production.
-- [ ] One-time account setup (Nadav): see [RELEASE_PROCESS.md](RELEASE_PROCESS.md#one-time-setup-owner-nadav).
-- [ ] First TestFlight build of FitMe β on the phone.
+- [x] One-time account setup (Nadav): see [RELEASE_PROCESS.md](RELEASE_PROCESS.md#one-time-setup-owner-nadav).
+- [x] First TestFlight upload of FitMe β (Staging build 8, 2026-11-06).
+- [ ] Install FitMe β from TestFlight on the phone (Nadav adds himself as an internal tester).
 
 ## Phase 1: Closet capture (make-or-break)
 
