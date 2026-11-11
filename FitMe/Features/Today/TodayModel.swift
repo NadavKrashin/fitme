@@ -13,6 +13,13 @@ final class TodayModel {
         case failed(String)
     }
 
+    enum CalendarState: Equatable {
+        /// Not read: access was refused, or the screen isn't today's.
+        case unavailable
+        case notAsked
+        case hints([CalendarHint])
+    }
+
     enum StylistState: Equatable {
         case idle
         case loading
@@ -39,23 +46,27 @@ final class TodayModel {
     var toast: Toast?
     private(set) var weather: WeatherState = .idle
     private(set) var stylist: StylistState = .idle
+    private(set) var calendarHints: CalendarState = .unavailable
 
     /// When set, every suggestion is built around this item ("Outfits with this").
     let anchor: Item?
     private let generator: OutfitGenerator
     private let weatherService: any WeatherProviding
     private let outfitStylist: any OutfitStylist
+    private let calendar: any CalendarReading
 
     init(
         generator: OutfitGenerator,
         weatherService: any WeatherProviding,
         stylist: any OutfitStylist,
+        calendar: any CalendarReading,
         anchor: Item? = nil
     ) {
         self.anchor = anchor
         self.generator = generator
         self.weatherService = weatherService
         outfitStylist = stylist
+        self.calendar = calendar
     }
 
     func context(profile: StyleProfile? = nil, date: Date = .now) -> OutfitContext {
@@ -132,6 +143,32 @@ final class TodayModel {
         } catch {
             weather = .failed((error as? WeatherError)?.userMessage ?? WeatherError.unavailable.userMessage)
         }
+    }
+
+    // MARK: Calendar
+
+    /// Reads the rest of today's events for ones worth dressing for. Never prompts; `connectCalendar` does.
+    func loadCalendarHints(now: Date = .now, calendar dates: Calendar = .current) async {
+        switch calendar.access {
+        case .notAsked:
+            calendarHints = .notAsked
+        case .denied:
+            calendarHints = .unavailable
+        case .granted:
+            let endOfDay = dates.date(byAdding: .day, value: 1, to: dates.startOfDay(for: now)) ?? now
+            calendarHints = await .hints(OccasionHint.hints(from: calendar.events(from: now, to: endOfDay)))
+        }
+    }
+
+    func connectCalendar(now: Date = .now) async {
+        _ = await calendar.requestAccess()
+        await loadCalendarHints(now: now)
+    }
+
+    /// Switches the occasion to what an event calls for.
+    func dress(for hint: CalendarHint) {
+        occasion = hint.occasion
+        toast = Toast(symbol: "calendar", message: "Dressing for \(hint.title)")
     }
 
     // MARK: Stylist

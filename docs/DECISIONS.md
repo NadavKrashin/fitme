@@ -5,6 +5,24 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-11: Learning that shows, and an honest gap finder
+
+- **Decision:**
+  - Learned taste is added on top of the style score (up to 8 points either way, limited by the room left to 0 or
+    100) instead of being one weighted component (5%). With no opinion the score is exactly the style score; the
+    blend without the old neutral affinity term shifts every score by about 1–2 points.
+  - Reactions also teach color-family pairings, at a fifth of the item-pair rate, so taste carries over to pieces
+    never reacted to.
+  - A dislike moves item pairs further (−0.4) than a like (+0.25): a rejected outfit should not come back.
+  - The closet analyzer judges a missing staple by the outfits it adds on kinds of day the closet can't already
+    dress, not by every look it's in. A second coat beside one that does the same job adds little.
+  - Calendar titles are matched to occasions with keywords on the device. They're never sent to Claude.
+- **Why:** with the old 5% weight, a like or dislike moved an outfit by under a point, so learning was invisible.
+  Counting every look made any coat "unlock 48 looks" in a closet that already had one. Keywords cover the common
+  events ("dinner", "wedding", "gym") without sending private calendar data anywhere.
+
+---
+
 ### 2026-11-06: Trip weather, edits and learning
 
 - **Decision:**

@@ -23,14 +23,30 @@ enum DemoCloset {
         bundle.url(forResource: "demo-\(itemID)", withExtension: "png").flatMap { try? Data(contentsOf: $0) }
     }
 
-    /// Replaces whatever is in the closet with the demo items and their photos.
+    /// Replaces whatever is in the closet with the demo items and their photos, with a made-up wear history.
     @MainActor
-    static func load(into context: ModelContext) throws {
+    static func load(into context: ModelContext, now: Date = .now) throws {
         try removeAllItems(from: context)
-        for item in try items() {
-            context.insert(ItemRecord(item: item, cutout: cutout(for: item.id)))
+        for (index, item) in try items().enumerated() {
+            let record = ItemRecord(
+                item: item,
+                cutout: cutout(for: item.id),
+                addedAt: now.addingTimeInterval(-addedAgo)
+            )
+            (record.wearCount, record.lastWorn) = wearHistory(index, now: now)
+            context.insert(record)
         }
         try context.save()
+    }
+
+    /// The demo closet pretends to be four months old, so insights about wear have something to show.
+    private static let addedAgo: TimeInterval = 120 * 86400
+
+    /// Every seventh piece never worn; the rest worn a few times, last between a week and about four months ago.
+    private static func wearHistory(_ index: Int, now: Date) -> (count: Int, lastWorn: Date?) {
+        guard index % 7 != 3 else { return (0, nil) }
+        let daysAgo = 7 + (index * 37) % 110
+        return (1 + index % 6, now.addingTimeInterval(-Double(daysAgo) * 86400))
     }
 
     @MainActor
@@ -54,7 +70,7 @@ struct DemoClosetSection: View {
 
     var body: some View {
         Section {
-            Button("Load demo closet") { run("load", DemoCloset.load) }
+            Button("Load demo closet") { run("load") { try DemoCloset.load(into: $0) } }
             Button("Clear closet", role: .destructive) { run("clear", DemoCloset.clear) }
             if let errorMessage {
                 Text(errorMessage).foregroundStyle(.red)

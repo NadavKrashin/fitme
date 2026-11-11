@@ -58,6 +58,8 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.lifestyle
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: >-
           FitMe uses your approximate location to get today's weather, so outfit suggestions suit it.
+        INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: >-
+          FitMe reads today's event titles on your iPhone to suggest what to dress for. They never leave the device.
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
       configs:
         Debug:

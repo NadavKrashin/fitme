@@ -29,3 +29,9 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - "Check my bag": Claude reviews the whole bag against your days and suggests changes you apply with one tap.
 - Trip mode: Today links to the trip in progress, and "Wear this" logs the outfit.
 - After a trip, tell FitMe what you wore. Pieces that came home unworn are less likely to be packed next time.
+- Reactions now visibly change suggestions: one ✕ keeps an outfit out of the next day's picks, one ♥ brings a look
+  back, and liked color pairings carry over to other pieces.
+- New Insights screen (Closet → Insights): how many looks your closet makes, the best next buy, hard-to-style
+  pieces, workhorses, pieces resting in the closet, and the color pairings FitMe learned. You can make FitMe forget
+  what it learned.
+- Today can read your calendar (when you allow it) and offer to dress for today's events, like a dinner or the gym.

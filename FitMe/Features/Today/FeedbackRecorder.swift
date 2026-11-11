@@ -32,6 +32,14 @@ struct FeedbackRecorder {
         save()
     }
 
+    /// Forgets every learned pairing. Saved outfits and wear history stay.
+    func resetLearning() {
+        for record in (try? context.fetch(FetchDescriptor<StyleProfileRecord>())) ?? [] {
+            context.delete(record)
+        }
+        save()
+    }
+
     func saveOutfit(_ outfit: Outfit, occasion: Occasion) {
         guard savedOutfit(id: outfit.id) == nil else { return }
         context.insert(SavedOutfit(outfit: outfit, occasion: occasion))

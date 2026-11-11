@@ -117,9 +117,14 @@ Goal: on a real trip, wear at least 90% of what's packed, while packing noticeab
 
 ## Phase 4: Learning and insights
 
-- [ ] Tune affinity learning.
-- [ ] Never-worn items, "orphans" that match nothing, and gap suggestions ("one white sneaker unlocks 9 outfits").
-- [ ] Saved favorite outfits, calendar hints.
+- [x] Tune affinity learning: learned points added on top of the style score (up to 8), color-family pairings, a
+  stronger dislike, and "Forget what FitMe learned".
+- [x] Insights (Closet → Insights): looks per piece, hard-to-style pieces, workhorses, resting pieces (never or not
+  lately worn), and the best next buy from a catalog of menswear staples, counted by new outfits.
+- [x] Saved favorite outfits (shipped in Phase 2).
+- [x] Calendar hints on Today: today's events suggest an occasion ("Dinner with Dana" → Date), on device.
+- [ ] Calendar hints in the trip wizard (prefill a day's occasions from its events).
+- [ ] Nadav checks insights and learning on his own closet.
 
 ## Phase 5: Virtual try-on (optional)
 

@@ -102,6 +102,21 @@ struct PreviewWeatherService: WeatherProviding {
     }
 }
 
+/// A calendar with dinner tonight.
+struct PreviewCalendar: CalendarReading {
+    var access: CalendarAccess {
+        .granted
+    }
+
+    func requestAccess() async -> Bool {
+        true
+    }
+
+    func events(from start: Date, to _: Date) async -> [CalendarEvent] {
+        [CalendarEvent(title: "Dinner at Nopi", start: start.addingTimeInterval(4 * 3600), isAllDay: false)]
+    }
+}
+
 /// Picks the first candidate with a canned reason.
 struct PreviewStylist: OutfitStylist {
     func pick(from candidates: [ScoredOutfit], context _: OutfitContext) async throws -> [StylistPick] {

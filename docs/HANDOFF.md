@@ -3,13 +3,16 @@
 **Read this first.** It's the single source of truth for "where are we and what's next". Whoever ends a work
 session (person or agent) updates it before the final commit.
 
-_Last updated: 2026-11-06._
+_Last updated: 2026-11-11._
 
 ## Current state
 
-- **Phases 0 to 2 are done, and Phase 3 (the trip packer) is built:** Trips tab, wizard, per-day weather, packing
-  list, bag edits, swap, Claude's bag check, trip mode and debrief. Details are in [ROADMAP.md](ROADMAP.md) and
-  [ARCHITECTURE.md](ARCHITECTURE.md#trip-packer-phase-3).
+- **Phases 0 to 2 are done, Phase 3 (the trip packer) is built, and Phase 4 (learning and insights) is built:**
+  - Phase 3: Trips tab, wizard, per-day weather, packing list, bag edits, swap, Claude's bag check, trip mode and
+    debrief.
+  - Phase 4: reactions that visibly move suggestions, color-pairing learning, Closet → Insights, and calendar
+    hints on Today.
+  - Details are in [ROADMAP.md](ROADMAP.md) and [ARCHITECTURE.md](ARCHITECTURE.md#learning-and-insights-phase-4).
 - **Redesign after Nadav's second trial (2026-11-06):**
   - Warm editorial design system (`UI/Theme.swift`, `UI/Components.swift`), applied to every screen.
   - Saved tab: ♥ saves.
@@ -24,14 +27,16 @@ _Last updated: 2026-11-06._
   4. The draft lands in the **Inbox** for review.
   5. **Add to closet** turns it into an `ItemRecord` with its photo and cutout.
 - **`FitEngine`**:
-  - Complete for daily suggestions and trip packing; 42 tests pass (`make test-engine`, about 2 s).
+  - Complete for daily suggestions, trip packing and closet analysis; 58 tests pass (`make test-engine`, about
+    5 s).
   - Swift 6 strict concurrency, no force unwraps.
 - **App:**
   - Five tabs:
-    - Today: weather, occasion and feels-like → top 5 varied outfits, plus the stylist; links to a trip in progress.
+    - Today: weather, calendar hints, occasion and feels-like → top 5 varied outfits, plus the stylist; links to a
+      trip in progress.
     - Trips: plan, pack, edit the bag, trip mode, debrief.
     - Saved: outfits saved with ♥.
-    - Closet: grid by category with item photos, the capture Inbox, item detail.
+    - Closet: grid by category with item photos, the capture Inbox, item detail, and Insights.
     - Settings: Claude API key in the Keychain, plus "Load demo closet" / "Clear closet" in staging.
   - Builds cleanly in Debug, Staging and Release.
   - `make verify-release` proves Release has no demo data. It was also checked against a Staging build, which it
@@ -182,42 +187,44 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
   - dark mode on the trip screens
   - packing speed on a phone with a full 150-item closet (about 1.5 s for the fixture in Debug on a Mac)
 
+## Phase 4: what's verified and what isn't
+
+- **Verified locally:** 58 engine tests (new `LearningTests`, `ColorFamilyTests`, `AnalyzerTests`) and every app
+  suite (new `InsightsModelTests`, `OccasionHintTests`, `TodayCalendarTests`) pass. Lint is clean.
+- **Verified in the simulator** (Debug build, demo closet):
+  - Today's calendar card: the "Plans today?" prompt, then two seeded events ("Gym" → Sport, "Dinner with Dana" →
+    Date); "Dress for it" switches the occasion with a toast.
+  - Insights: "50 pieces, 876 looks", workhorses (camel quarter-zip in 90 looks), resting pieces with "Never worn" /
+    "Last worn 3 months ago", the taste card, and "Forget what FitMe learned" with its confirmation and toast.
+  - A profile saved before this change (no color pairings) still loads.
+- **Found and fixed while testing:** the first gap finder said a camel overcoat "unlocks 48 looks" although the demo
+  closet already has a warm coat. Gaps now count only outfits the closet can't already make on some kind of day,
+  with a test (`aCoatCountsForTheColdDaysItOpensUp`). The demo closet now shows "Nothing to buy".
+- **Not verified:**
+  - the system calendar permission prompt (simulator alerts don't take taps; access was granted with `simctl`)
+  - the gap card with real gaps in the app (covered by engine tests and the earlier screenshot of its layout)
+  - "You like / You skip" color pairings on screen (they need several reactions; covered by `LearningTests`)
+  - analysis speed on a phone with a 150-piece closet (about 2 s for 134 items in a Mac release build)
+  - whether learning feels right over weeks of real use
+- **Simulator tip:** to test calendar hints, grant access with
+  `xcrun simctl privacy <device> grant calendar io.github.nadavkrashin.fitme.staging`. The Calendar app's own
+  first-run alerts can't be dismissed by taps, so seed events from a throwaway test in the app's test host instead.
+
 ## Next steps, in order
 
 1. **Confirm CI is green** and TestFlight got the build (`gh run list --limit 3`).
-2. **Nadav tries trips on FitMe β:**
+2. **Nadav tries trips and insights on FitMe β:**
    - load the demo closet, plan a real upcoming trip, and judge the bag and the day plans
    - add the Claude API key and tap "Check my bag"; judge the suggestions
+   - on Today, tap "Use my calendar"; check the hints for real events
+   - react to a week of suggestions, then look at Closet → Insights → Your taste
    - on the trip: wear from "Today in…", then do the debrief at home
 3. **Fix what that finds.** Likely candidates:
    - the day planner's 8 occasion chips per day make long trips a long scroll; consider presets ("same as
      yesterday", "all casual")
    - per-day manual weather edits (today a failed fetch falls back to mild days with a warning)
    - the statement floral shirt still leads many casual and travel plans; it may need a gentler share of the plan
-4. **Leftovers from earlier phases:** "swap one item" on a Today card (the engine's `alternatives` is a start), closet
-   filters by color and formality, the in-app batch camera, and a dark-mode pass.
-5. **Phase 4** ([ROADMAP.md](ROADMAP.md#phase-4-learning-and-insights)): never-worn items, orphans, gap suggestions.
-
-## Known engine issues (taste, not correctness)
-
-- **Fixed in Phase 2 (2026-11-06), each with a test:**
-  - Statement pieces now rotate like tops in packing (`StatementRotationTests`).
-  - Light dresses are excluded below 15°C (`LegCoverageTests`).
-- **Open:** in the menswear demo closet the statement floral shirt is often the first pick for casual and travel
-  plans. One statement piece per outfit is allowed and scored as neutral; whether it should appear less often is a
-  taste call for Nadav.
-- **Open:** the fixture closet mixes menswear and womenswear, so packing results mix polos and sundresses. A real
-  closet won't. Don't tune weights to the fixture's quirks.
-
-## Conventions every session must follow
-
-- Read [ENGINEERING_STANDARDS.md](ENGINEERING_STANDARDS.md) before writing code. `make lint test` before every
-  commit.
-- Commit to `main` and **push right away** (the owner pre-authorized this). Avoid branches unless a change is risky;
-  delete them after merging.
-- Never edit `FitMe.xcodeproj`; edit `project.yml` and run `make project`.
-- At the end of a session:
-  - update this file (state, what wasn't verified, next steps)
-  - tick [ROADMAP.md](ROADMAP.md)
-  - add user-visible changes under `Unreleased` in [CHANGELOG.md](../CHANGELOG.md)
-  - log any new decision in [DECISIONS.md](DECISIONS.md)
+   - keyword coverage for calendar hints (titles that should map to an occasion but don't)
+4. **Leftovers:** calendar hints in the trip wizard, "swap one item" on a Today card (the engine's `alternatives` is
+   a start), closet filters by color and formality, the in-app batch camera, and a dark-mode pass.
+5. **Phase 5** ([ROADMAP.md](ROADMAP.md#phase-5-virtual-try-on-optional)): evaluate virtual try-on, only if wanted.

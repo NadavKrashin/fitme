@@ -15,6 +15,8 @@ struct AppDependencies: Sendable {
     let tripWeather: any TripWeatherProviding
     let capsuleReviewer: any CapsuleReviewing
     let tripPlanner: TripPlanner
+    let closetAnalyzer: ClosetAnalyzer
+    let calendar: any CalendarReading
     let thumbnails: ThumbnailCache
 
     static func live() -> AppDependencies {
@@ -32,13 +34,21 @@ struct AppDependencies: Sendable {
             tripWeather: openMeteo,
             capsuleReviewer: ClaudeCapsuleReviewer(client: claude),
             tripPlanner: TripPlanner(),
+            closetAnalyzer: ClosetAnalyzer(),
+            calendar: EventKitCalendar(),
             thumbnails: ThumbnailCache()
         )
     }
 
     @MainActor
     func makeTodayModel(anchor: Item?) -> TodayModel {
-        TodayModel(generator: outfitGenerator, weatherService: weather, stylist: stylist, anchor: anchor)
+        TodayModel(
+            generator: outfitGenerator,
+            weatherService: weather,
+            stylist: stylist,
+            calendar: calendar,
+            anchor: anchor
+        )
     }
 
     @MainActor
@@ -49,6 +59,11 @@ struct AppDependencies: Sendable {
     @MainActor
     func makeTripModel(_ trip: TripRecord, context: ModelContext) -> TripModel {
         TripModel(record: trip, planner: tripPlanner, reviewer: capsuleReviewer, context: context)
+    }
+
+    @MainActor
+    func makeInsightsModel() -> InsightsModel {
+        InsightsModel(analyzer: closetAnalyzer)
     }
 
     #if DEBUG
@@ -64,6 +79,8 @@ struct AppDependencies: Sendable {
             tripWeather: PreviewTripWeather(),
             capsuleReviewer: PreviewCapsuleReviewer(),
             tripPlanner: TripPlanner(),
+            closetAnalyzer: ClosetAnalyzer(),
+            calendar: PreviewCalendar(),
             thumbnails: ThumbnailCache()
         )
     }

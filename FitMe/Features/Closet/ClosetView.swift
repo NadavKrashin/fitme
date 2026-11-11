@@ -36,6 +36,7 @@ struct ClosetView: View {
                         }
                         .card(padding: 22)
                     } else {
+                        insightsLink
                         categoryChips
                         ForEach(sections, id: \.category) { section in
                             categorySection(section.category, records: section.records)
@@ -95,6 +96,28 @@ struct ClosetView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Inbox").font(Theme.title(17)).foregroundStyle(Theme.ink)
                     Text(summary).font(.footnote).foregroundStyle(Theme.inkMuted)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(Theme.inkMuted)
+            }
+            .card(padding: 14)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var insightsLink: some View {
+        NavigationLink { InsightsView() } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "lightbulb")
+                    .font(.title3)
+                    .foregroundStyle(Theme.sageInk)
+                    .frame(width: 44, height: 44)
+                    .background(Theme.sage, in: .circle)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Insights").font(Theme.title(17)).foregroundStyle(Theme.ink)
+                    Text("What your closet can do, and what it's missing")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.inkMuted)
                 }
                 Spacer()
                 Image(systemName: "chevron.right").foregroundStyle(Theme.inkMuted)

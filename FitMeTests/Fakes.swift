@@ -1,6 +1,7 @@
 import CoreLocation
 import FitEngine
 import Foundation
+import os
 @testable import FitMe
 
 /// Records requests and answers with a canned status and body. Never touches the network.
@@ -110,13 +111,56 @@ struct FakeStylist: OutfitStylist {
     }
 }
 
+/// A calendar with fixed events; once asked, it grants access if `grantsOnRequest`.
+final class FakeCalendar: CalendarReading {
+    private struct State {
+        var access: CalendarAccess
+        var requestedRange: ClosedRange<Date>?
+    }
+
+    private let state: OSAllocatedUnfairLock<State>
+    private let grantsOnRequest: Bool
+    private let stored: [CalendarEvent]
+
+    init(access: CalendarAccess = .granted, grantsOnRequest: Bool = true, events: [CalendarEvent] = []) {
+        state = OSAllocatedUnfairLock(initialState: State(access: access))
+        self.grantsOnRequest = grantsOnRequest
+        stored = events
+    }
+
+    var access: CalendarAccess {
+        state.withLock(\.access)
+    }
+
+    var requestedRange: ClosedRange<Date>? {
+        state.withLock(\.requestedRange)
+    }
+
+    func requestAccess() async -> Bool {
+        state.withLock { $0.access = grantsOnRequest ? .granted : .denied }
+        return grantsOnRequest
+    }
+
+    func events(from start: Date, to end: Date) async -> [CalendarEvent] {
+        state.withLock { $0.requestedRange = start ... end }
+        return stored
+    }
+}
+
 @MainActor
 func makeTodayModel(
     weather: FakeWeather = .init(),
     stylist: FakeStylist = .init(),
+    calendar: FakeCalendar = .init(),
     anchor: Item? = nil
 ) -> TodayModel {
-    TodayModel(generator: OutfitGenerator(), weatherService: weather, stylist: stylist, anchor: anchor)
+    TodayModel(
+        generator: OutfitGenerator(),
+        weatherService: weather,
+        stylist: stylist,
+        calendar: calendar,
+        anchor: anchor
+    )
 }
 
 /// Answers each request with the body for its host (status 500 for unknown hosts), and records requests.

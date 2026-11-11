@@ -46,10 +46,11 @@ FitMe is a local-first iOS app with two layers:
 |---|---|---|
 | Color | `ColorMath.swift` | Converts hex to perceptual OKLab/OKLCH. Classifies colors as neutral (black, white, grey), soft neutral (navy, denim, camel, khaki, olive) or chromatic. |
 | Hard rules | `Rules.swift` | Removes items or outfits that are never acceptable: structure, a formality spread of 3 or more, occasion formality, required sportswear, dress shoes for formal events, and warmth against temperature, rain or cold limits. |
-| Soft score | `Scorer.swift` | Weighted 0–100 score from color harmony, pattern balance, formality cohesion, occasion fit, weather fit, silhouette balance, statement-piece budget, learned affinity and novelty. The weights are in `ScoreWeights`. |
+| Soft score | `Scorer.swift` | Weighted 0–100 score from color harmony, pattern balance, formality cohesion, occasion fit, weather fit, silhouette balance, statement-piece budget and novelty, then moved by up to `learnedPoints` (8) by learned taste, never past 0 or 100. The weights are in `ScoreWeights`. |
 | Generation | `OutfitGenerator.swift` | Beam search: bases (top+bottom or one-piece) → shoes → mid layer → outerwear, keeping the best partial outfits at each step. `suggest` picks a varied top N, each with a different top. `allOutfits` is exhaustive, for small pools. |
 | Packing | `PackingOptimizer.swift`, `Trip.swift` | Groups trip slots by occasion and weather band. Greedily adds the item with the best marginal gain per packing cost, falling back to injecting a whole outfit. Prunes redundant items, then assigns outfits to days. A top or one-piece is used once per laundry cycle. |
-| Learning | `StyleProfile.swift` | Item-pair affinities from 👍 / 👎 / "wore it". |
+| Learning | `StyleProfile.swift`, `ColorFamily.swift` | Item-pair affinities from ♥ / ✕ / "wore it", plus slower color-family pair affinities ("navy with white") that carry a liked look over to other pieces. Pair opinions add up through `tanh`, so a liked outfit as a whole moves more than one sharing a single pair. |
+| Closet analysis | `ClosetAnalyzer.swift`, `GapCatalog.swift` | Searches every piece in 17 typical kinds of day (4 occasions × 4 temperatures, plus a beach day) and counts its looks (base and shoes, layers aside). Finds hard-to-style pieces (under 3 looks) and staples from `GapCatalog` that would add outfits the closet can't make yet. |
 
 **Determinism:** everything sorts with an id tie-breaker, so the same input gives the same output. Tests depend on
 this.
@@ -137,3 +138,22 @@ PhotosPicker ─► CaptureModel.importPhotos ─► CaptureDraft(.processing) s
   item and applies with one tap through `TripModel.apply`.
 - **Learning:** a finished trip's debrief records what was worn. Each trip an item came home unworn adds a third to
   its packing cost (`PackingOptions.packedUnworn`).
+
+## Learning and insights (Phase 4)
+
+- **Taste:** `FeedbackRecorder` still records every reaction, now into item pairs and color-family pairs. One ✕
+  drops an outfit out of the next day's top five, and one ♥ brings a look just outside it in (engine tests
+  `LearningTests`). `resetLearning()` deletes the profile; saved outfits and wear history stay.
+- **Insights screen:** Closet → Insights (`InsightsView`, `InsightsModel`). The analysis runs off the main actor
+  (about 0.25 s for the 50-piece demo closet in a release build) every time the screen opens or the closet changes.
+  Sections:
+  - the headline (pieces and looks)
+  - best next buy
+  - hard to style
+  - workhorses
+  - resting (never worn after 14 days, or not worn for 60)
+  - your taste, with learned color pairings and "Forget what FitMe learned"
+- **Calendar hints:** `EventKitCalendar` (an actor around `EKEventStore`) reads the rest of today's events once the
+  user taps "Use my calendar" on Today. `OccasionHint` maps titles to occasions with English and Hebrew keywords,
+  most demanding dress code first, on device. Today shows up to three events with "Dress for it", which switches
+  the occasion. Nothing prompts for access until the user asks.

@@ -10,7 +10,7 @@ struct TodayView: View {
         NavigationStack {
             Group {
                 if let model {
-                    OutfitPlanner(model: model, showsTrip: true)
+                    OutfitPlanner(model: model, isToday: true)
                 } else {
                     ProgressView()
                 }
@@ -56,12 +56,13 @@ struct OutfitsWithItemView: View {
 private struct OutfitPlanner: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var model: TodayModel
-    /// Today's screen points to the trip in progress, whose outfits come from the bag.
-    var showsTrip = false
+    /// Today's screen also points to the trip in progress (whose outfits come from the bag) and reads the calendar.
+    var isToday = false
     @Query(sort: \ItemRecord.addedAt) private var records: [ItemRecord]
     @Query(sort: \TripRecord.startDate) private var trips: [TripRecord]
     @Query private var profiles: [StyleProfileRecord]
     @Query private var savedOutfits: [SavedOutfit]
+    @AppStorage("calendarPromptDismissed") private var isCalendarPromptDismissed = false
 
     private var closet: [Item] {
         records.map(\.item)
@@ -82,10 +83,11 @@ private struct OutfitPlanner: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.inkMuted)
 
-                if showsTrip, let trip = trips.first(where: { $0.details.phase() == .ongoing }) {
+                if isToday, let trip = trips.first(where: { $0.details.phase() == .ongoing }) {
                     TripInProgressCard(trip: trip)
                 }
                 WeatherCard(state: model.weather) { Task { await model.loadWeather() } }
+                calendarCard
                 occasionChips
                 conditionsCard
 
@@ -118,6 +120,11 @@ private struct OutfitPlanner: View {
                 await model.loadWeather()
             }
         }
+        .task {
+            if isToday {
+                await model.loadCalendarHints()
+            }
+        }
         .task(id: RefreshKey(model: model, closet: closet)) {
             await model.refresh(closet: closet, profile: profile)
         }
@@ -141,6 +148,43 @@ private struct OutfitPlanner: View {
             .padding(.horizontal, Theme.gutter)
         }
         .padding(.horizontal, -Theme.gutter)
+    }
+
+    @ViewBuilder
+    private var calendarCard: some View {
+        switch model.calendarHints {
+        case .notAsked where !isCalendarPromptDismissed:
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Plans today?", systemImage: "calendar")
+                    .font(Theme.title(18))
+                    .foregroundStyle(Theme.ink)
+                Text("FitMe can look at today's calendar and pick the occasion for you. Event titles stay on your "
+                    + "phone.")
+                    .font(.callout)
+                    .foregroundStyle(Theme.inkMuted)
+                HStack(spacing: 10) {
+                    Button("Use my calendar") { Task { await model.connectCalendar() } }
+                        .buttonStyle(.pill(.accent))
+                    Button("Not now") { isCalendarPromptDismissed = true }
+                        .buttonStyle(.pill(.quiet))
+                }
+            }
+            .card()
+        case let .hints(hints) where !hints.isEmpty:
+            VStack(alignment: .leading, spacing: 12) {
+                Label("From your calendar", systemImage: "calendar")
+                    .font(Theme.title(18))
+                    .foregroundStyle(Theme.ink)
+                ForEach(hints) { hint in
+                    CalendarHintRow(hint: hint, isChosen: model.occasion == hint.occasion) {
+                        model.dress(for: hint)
+                    }
+                }
+            }
+            .card()
+        default:
+            EmptyView()
+        }
     }
 
     private var conditionsCard: some View {
@@ -257,6 +301,40 @@ private struct OutfitPlanner: View {
             isRainy = model.isRainy
             itemIDs = closet.map(\.id)
         }
+    }
+}
+
+/// One event, what it calls for, and a button to dress for it.
+private struct CalendarHintRow: View {
+    let hint: CalendarHint
+    let isChosen: Bool
+    let onDress: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(hint.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(2)
+                HStack(spacing: 6) {
+                    Text(hint.isAllDay ? "All day" : hint.start.formatted(date: .omitted, time: .shortened))
+                        .font(.footnote)
+                        .foregroundStyle(Theme.inkMuted)
+                    Badge(text: hint.occasion.title, tint: Theme.tint(for: hint.occasion))
+                }
+            }
+            Spacer(minLength: 8)
+            if isChosen {
+                Label("Dressing for it", systemImage: "checkmark")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.sageInk)
+            } else {
+                Button("Dress for it", action: onDress)
+                    .buttonStyle(.pill(.quiet))
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
