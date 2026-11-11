@@ -8,13 +8,17 @@ public struct ScoreWeights: Equatable, Sendable {
     public var weather = 0.13
     public var fit = 0.06
     public var statement = 0.06
-    public var affinity = 0.05
     public var novelty = 0.03
+    /// Most points your reactions can add to or take from the 0...100 total. Added on top of the blend, so an
+    /// outfit scores the same with no profile as with a profile that has no opinion about it. Near either end of
+    /// the scale the room left is the limit, so a liked outfit still outranks a near-copy instead of tying at 100.
+    public var learnedPoints = 8.0
 
     public init() {}
 }
 
-/// Each component is 0...1; `total` is the weighted blend on a 0...100 scale.
+/// Each component is 0...1; `total` is the weighted blend on a 0...100 scale, moved by what was learned (`affinity`,
+/// where 0.5 is neutral).
 public struct ScoreBreakdown: Equatable, Sendable {
     public var color: Double
     public var pattern: Double
@@ -54,10 +58,11 @@ public struct OutfitScorer: Sendable {
         )
         let weighted = w.color * b.color + w.pattern * b.pattern + w.formality * b.formality
             + w.occasion * b.occasion + w.weather * b.weather + w.fit * b.fit
-            + w.statement * b.statement + w.affinity * b.affinity + w.novelty * b.novelty
-        let sum = w.color + w.pattern + w.formality + w.occasion + w.weather + w.fit
-            + w.statement + w.affinity + w.novelty
-        b.total = weighted / sum * 100
+            + w.statement * b.statement + w.novelty * b.novelty
+        let sum = w.color + w.pattern + w.formality + w.occasion + w.weather + w.fit + w.statement + w.novelty
+        let blend = weighted / sum * 100
+        let opinion = 2 * b.affinity - 1
+        b.total = blend + opinion * min(w.learnedPoints, opinion > 0 ? 100 - blend : blend)
         return b
     }
 
