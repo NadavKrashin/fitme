@@ -74,51 +74,43 @@ public struct OutfitScorer: Sendable {
 
     // MARK: Components
 
-    /// Color, after menswear color guides: outfits are built on neutrals (black, grey, white, navy, denim, beige,
-    /// brown, camel, khaki, olive). An accent color is a choice, not a requirement, and several accents must relate
-    /// by hue. About three colors read as deliberate; more looks busy. `palette` is how much color the user is in the
-    /// mood for.
+    /// Color, after menswear color guides: how well each pair of colors in the outfit goes together (`StyleColor`),
+    /// where the weakest pair counts as much as the average, so one clash shows. Neutral outfits and outfits with a
+    /// classic accent both score well; neither wins by itself. More than two accent colors, or more than three colors
+    /// in all, looks busy. `palette` is how much color the user is in the mood for.
     public static func colorHarmony(_ outfit: Outfit, palette: Palette = .balanced) -> Double {
-        let colors = outfit.coreItems.flatMap(\.significantColors)
-        var score = accentScore(accentFamilies(colors.map(\.lch)), palette: palette)
-        score -= 0.05 * Double(max(0, Set(colors.map(\.family)).count - 3))
-        if isMuddy(outfit) {
-            score -= 0.1
-        }
-        return min(max(score, 0), 1)
-    }
-
-    /// Chromatic colors grouped by hue: within ~25° they read as one family (tonal dressing).
-    static func accentFamilies(_ colors: [OKLCH]) -> [OKLCH] {
-        var families: [OKLCH] = []
-        for color in colors where color.neutrality == .chromatic {
-            if !families.contains(where: { OKLCH.hueDistance($0.h, color.h) <= 25 }) {
-                families.append(color)
-            }
-        }
-        return families
-    }
-
-    static func accentScore(_ accents: [OKLCH], palette: Palette) -> Double {
-        guard accents.count > 1 else {
-            switch (palette, accents.first) {
-            case (.colorful, nil): return 0.8
-            case (_, nil), (.colorful, _): return 1
-            case (.balanced, _): return 0.95
-            case let (.neutral, accent?): return accent.C < 0.13 ? 0.75 : 0.6
+        // One representative shade per named color.
+        var colors: [(style: StyleColor, lch: OKLCH)] = []
+        for color in outfit.coreItems.flatMap(\.significantColors) {
+            let style = StyleColor(color.lch)
+            if !colors.contains(where: { $0.style == style }) {
+                colors.append((style, color.lch))
             }
         }
         var pairs: [Double] = []
-        for i in 0 ..< accents.count {
-            for j in (i + 1) ..< accents.count {
-                pairs.append(huePairScore(accents[i], accents[j]))
+        for (i, a) in colors.enumerated() {
+            for b in colors[(i + 1)...] {
+                pairs.append(StyleColor.pairing(a.style, b.style) ?? huePairScore(a.lch, b.lch))
             }
         }
-        let harmony = pairs.reduce(0, +) / Double(pairs.count) - 0.12 * Double(accents.count - 2)
-        switch palette {
-        case .neutral: return harmony * 0.5
-        case .balanced: return harmony
-        case .colorful: return min(1, harmony + 0.05)
+        // A single color head to toe is tonal dressing: fine, a little flat.
+        var score = pairs.min().map { 0.5 * pairs.reduce(0, +) / Double(pairs.count) + 0.5 * $0 } ?? 0.95
+        let accents = colors.filter { !$0.style.isNeutral }.map(\.lch)
+        score -= 0.15 * Double(max(0, accents.count - 2))
+        score -= 0.05 * Double(max(0, colors.count - 3))
+        if isMuddy(outfit) {
+            score -= 0.1
+        }
+        return min(max(mood(score, accents: accents, palette: palette), 0), 1)
+    }
+
+    /// Neutral pushes outfits with color back (loud colors more); Colorful lifts them over all-neutral ones.
+    static func mood(_ score: Double, accents: [OKLCH], palette: Palette) -> Double {
+        switch (palette, accents.isEmpty) {
+        case (.balanced, _), (.neutral, true): score
+        case (.neutral, false): score * (accents.allSatisfy { $0.C < 0.13 } ? 0.75 : 0.6)
+        case (.colorful, true): score * 0.85
+        case (.colorful, false): score + 0.03
         }
     }
 

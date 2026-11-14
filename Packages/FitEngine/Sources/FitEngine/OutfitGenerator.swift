@@ -185,8 +185,21 @@ public struct OutfitGenerator: Sendable {
         return chosen
     }
 
+    /// How much two outfits share, 0...1, weighted by how much each piece makes an outfit look different: the top and
+    /// trousers do; the same shoes or jacket on two days is normal.
     static func jaccard(_ a: Outfit, _ b: Outfit) -> Double {
-        let sa = Set(a.items.map(\.id)), sb = Set(b.items.map(\.id))
-        return Double(sa.intersection(sb).count) / Double(sa.union(sb).count)
+        let ia = Set(a.items), ib = Set(b.items)
+        let weight = { (items: Set<Item>) in items.map { Self.distinctness($0.category) }.reduce(0, +) }
+        let union = weight(ia.union(ib))
+        return union > 0 ? weight(ia.intersection(ib)) / union : 0
+    }
+
+    private static func distinctness(_ category: ItemCategory) -> Double {
+        switch category {
+        case .top, .onePiece: 3
+        case .bottom: 2
+        case .midLayer, .outerwear: 1.5
+        case .shoes, .bag, .accessory: 1
+        }
     }
 }

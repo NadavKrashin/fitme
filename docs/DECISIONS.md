@@ -5,6 +5,30 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Color judged by stylist pairings (supersedes "Neutrals first, color by mood")
+
+- **Decision:**
+  - Colors are named the way menswear color guides name them (`StyleColor`: navy, burgundy, rust, forest, light
+    blue...), and an outfit's color score comes from how well each pair goes together: the average and the weakest
+    pair count equally, so one clash shows.
+  - Neutrals never clash with each other, except navy with black (0.6, "accidentally dark"), brown with black (0.75,
+    contested) and navy with charcoal (0.85). Named classics score 1: navy with burgundy, rust, pink, forest or
+    mustard; grey with burgundy or pink; olive with burgundy, rust or mustard; brown with pink, rust or blue; white
+    with any color. A neutral with any other color scores 0.9; two colors are judged by hue unless the guides name
+    them (red with green 0.35).
+  - More than two accent colors costs 0.15 each, more than three colors in all 0.05 each. The Color mood stays:
+    Mixed is merit only, Neutral pushes color back, Colorful lifts it.
+  - Outfit variety weighs what makes outfits look different: the top (3) and trousers (2) more than layers (1.5) and
+    shoes (1), so the same sneakers on two suggestions don't count as a repeat.
+- **Why:** the previous entry made all-neutral outfits score highest. Nadav meant the opposite of a blanket rule: color
+  should be judged on real style advice, so a navy-and-burgundy outfit can be as good as navy, grey and white. With
+  this, about 38% of the probe's suggestions carry a color, chosen because the pairing is a classic.
+- **Sources:** [Aza Fashions, menswear colour cheat sheet](https://www.azafashions.com/blog/menswear-colour-cheat-sheet/),
+  [Ape to Gentleman, outfit colour combinations](https://www.apetogentleman.com/outfit-colour-combinations/),
+  [Real Men Real Style, colour rules](https://www.realmenrealstyle.com/match-colors-style-rules/),
+  [Louis Copeland, matching colours](https://www.louiscopeland.com/blogs/news/how-to-match-your-clothing-colours-complete-mens-guide),
+  [Westwood Hart, wardrobe palette](https://westwoodhart.com/blogs/westwood-hart/best-clothing-colors-for-men-wardrobe-palette).
+
 ### 2026-11-14: Weather for the whole outfit, and rain that counts
 
 - **Decision:**

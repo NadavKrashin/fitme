@@ -2,17 +2,41 @@ import Foundation
 import Testing
 @testable import FitEngine
 
-/// Color as menswear guides teach it: outfits are built on neutrals (navy, grey, white, beige, brown, olive), an
-/// accent color is a choice rather than a requirement, about three colors read as deliberate, and how much color to
-/// wear is a matter of mood.
+/// Color as menswear color guides teach it: neutrals never clash with each other (except navy with black, which
+/// looks accidentally dark), some neutral-and-color pairings are classics (navy with burgundy or rust, grey with
+/// pink, olive with burgundy), two colors need a known pairing or related hues, and about three colors read as
+/// deliberate. Neither neutral nor colorful wins by itself; how much color to wear is a matter of mood.
 struct ColorTests {
     /// White oxford, navy chinos, brown loafers.
     private let neutral = Fixtures.outfit("t07", "b05", "s03")
-    /// The same with a rust polo instead of the oxford.
+    /// Rust polo, navy chinos, brown loafers: rust with navy is a classic.
     private let accent = Fixtures.outfit("t13", "b05", "s03")
 
-    @Test func aNeutralOutfitScoresAtLeastAsWellAsOneWithAnAccent() {
-        #expect(OutfitScorer.colorHarmony(neutral) >= OutfitScorer.colorHarmony(accent))
+    private func outfit(_ top: String, _ bottom: String, shoes: String = "#6B4226") -> Outfit {
+        Outfit(items: [
+            makeItem("top", .top, [top]),
+            makeItem("bottom", .bottom, [bottom]),
+            makeItem("shoes", .shoes, [shoes], warmth: 2),
+        ])
+    }
+
+    @Test func aClassicAccentScoresAsWellAsAllNeutrals() {
+        #expect(isClose(OutfitScorer.colorHarmony(accent), OutfitScorer.colorHarmony(neutral), tolerance: 0.02))
+    }
+
+    @Test func classicPairingsBeatPoorOnes() {
+        let navy = "#27324A", burgundy = "#6B1F2E", grey = "#8E8E8E", pink = "#F2B8C6"
+        let red = "#B3262E", green = "#2F7D3A", purple = "#6B2D8C", olive = "#5A6140"
+        #expect(OutfitScorer.colorHarmony(outfit(burgundy, navy)) > OutfitScorer.colorHarmony(outfit(red, green)))
+        #expect(OutfitScorer.colorHarmony(outfit(pink, grey)) > OutfitScorer.colorHarmony(outfit(purple, olive)))
+    }
+
+    @Test func navyWithBlackLooksAccidental() {
+        let navyTop = "#22304D"
+        #expect(
+            OutfitScorer.colorHarmony(outfit(navyTop, "#161616", shoes: "#101010"))
+                < OutfitScorer.colorHarmony(outfit(navyTop, "#8E8E8E", shoes: "#101010"))
+        )
     }
 
     @Test func aNeutralMoodPushesAccentsBack() {
@@ -40,10 +64,13 @@ struct ColorTests {
         #expect(OutfitScorer.colorHarmony(five) < OutfitScorer.colorHarmony(three))
     }
 
-    @Test func everydaySuggestionsAreMostlyNeutral() {
+    /// Mixed mood: every suggestion is well put together in color, whether it's all neutrals or has an accent.
+    @Test func everydaySuggestionsAreWellColoredEitherWay() {
         let suggestions = suggest(.balanced)
         #expect(suggestions.count == 5)
-        #expect(suggestions.count(where: { !Self.hasAccent($0.outfit) }) >= 3, "\(suggestions.map(\.id))")
+        for suggestion in suggestions {
+            #expect(suggestion.breakdown.color >= 0.85, "\(suggestion.id)")
+        }
     }
 
     @Test func aNeutralMoodSuggestsOnlyNeutrals() {

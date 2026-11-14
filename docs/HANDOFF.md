@@ -328,7 +328,8 @@ found 14 problems. Fixed so far, each with failing tests first:
 - **Fix 1, shoes:** shoes are scored for dress code and trouser color; exact ties rotate by day. Casual white
   sneakers went from 81/90 to 56/90 (the rest are boots in the cold and sandals in the heat); formal black oxfords
   went from 38/90 to 60/90.
-- **Fix 5, color:** neutral outfits score full marks; a Color choice on Today (Neutral, Mixed, Colorful).
+- **Fix 5, color:** judged by stylist pairings (`StyleColor`), not neutral-first; a Color mood on Today (Neutral,
+  Mixed, Colorful). Outfit variety now weighs tops and trousers over shoes and layers.
 - **Fixes 2–3, weather for the whole outfit:** comfort ranges per piece; shorts, linen and sandals at 32°; boots and
   knitwear at 0°.
 - **Fix 4, rain:** cover is scored for jacket and shoes; trips pack rain gear when the closet has it.
