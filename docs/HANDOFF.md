@@ -353,7 +353,16 @@ found 14 problems. Fixed so far, each with failing tests first:
 
 - **Fix 14, stylist brief:** fabric, dress code, warmth, style and the day's swing; a menswear-guidance prompt.
 
-All 14 are done. What's left is judging them on the phone (see "Not verified yet").
+- **After the round:** Sport now dresses for the effort (6° warmer) and treats hiking gear as a fallback, after the
+  final probe found no Sport outfit at 14° and below in the demo closet.
+
+All 14 are done. The final probe gives five suggestions everywhere except Sport above 20° (2) and Hike from 27° (3):
+the demo closet has only two training tops that suit warm weather.
+
+**Not verified yet (outfit quality pass):** none of this on the phone. Worth judging there: whether colour pairings
+feel right with Mixed, whether the day-range layer shows up on a real cool-morning day (it needs the forecast
+loaded, and the slider untouched), the Color and Fabric controls with large text, and whether items tagged before
+today need their warmth or fabric edited.
 
 **Testing note:** Xcode, open on the Mac for 8 days, holds a file lock on `FitMe.xcodeproj`, and `xcodebuild` waits
 on it forever. App tests ran from a scratch copy of the project generated with XcodeGen (`--project` into the
