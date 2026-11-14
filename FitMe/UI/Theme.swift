@@ -78,6 +78,7 @@ enum Theme {
         case .date: (dynamic(light: 0xF2DCD6, dark: 0x3E2622), dynamic(light: 0x7A3328, dark: 0xF0C4B9))
         case .formal: (dynamic(light: 0xE4E0EC, dark: 0x2E2A38), dynamic(light: 0x3A3352, dark: 0xD3CDE3))
         case .sport: (dynamic(light: 0xF3E6C4, dark: 0x3A3119), dynamic(light: 0x6B5413, dark: 0xEBD69A))
+        case .hike: (dynamic(light: 0xDCE5D0, dark: 0x27321F), dynamic(light: 0x3F5A2A, dark: 0xC5D9B0))
         case .beach: (dynamic(light: 0xD8E9E6, dark: 0x1F3633), dynamic(light: 0x1F5A52, dark: 0xB5DDD6))
         case .travel: (dynamic(light: 0xEBDDD3, dark: 0x3A2A21), dynamic(light: 0x6E3F28, dark: 0xE8C6B1))
         }

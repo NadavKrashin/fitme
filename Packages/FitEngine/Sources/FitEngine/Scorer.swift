@@ -260,7 +260,7 @@ public struct OutfitScorer: Sendable {
         if occasion == .formal, tone != .black {
             color *= 0.7
         }
-        return dressCode * color
+        return dressCode * color * Rules.kitFit(shoes, occasion: occasion)
     }
 
     /// Balanced silhouettes (one loose piece, one fitted) read as intentional.

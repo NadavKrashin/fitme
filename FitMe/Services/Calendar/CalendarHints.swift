@@ -73,9 +73,10 @@ enum OccasionHint {
     /// Checked in order, so the most demanding dress code wins: a "client dinner" is work, not a date.
     private static let keywords: [(occasion: Occasion, words: [String])] = [
         (.formal, ["wedding", "gala", "black tie", "ceremony", "opera", "funeral", "awards", "reception", "חתונה"]),
+        (.hike, ["hike", "hiking", "trek", "trekking", "trail", "טיול רגלי"]),
         (.sport, [
-            "gym", "workout", "run", "running", "training", "yoga", "pilates", "crossfit", "tennis", "padel",
-            "football", "soccer", "basketball", "cycling", "hike", "hiking", "climbing",
+            "gym", "workout", "run", "running", "jog", "training", "yoga", "pilates", "crossfit", "tennis", "padel",
+            "football", "soccer", "basketball", "cycling", "climbing",
             "אימון", "חדר כושר", "ריצה", "יוגה",
         ]),
         (.beach, ["beach", "pool", "swim", "swimming", "בריכה"]),

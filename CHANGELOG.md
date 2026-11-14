@@ -69,3 +69,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - A ♥ counts for more, so liked outfits come back sooner.
 - Dress codes are respected: formal means a dress shirt, tailored trousers, a jacket and dress shoes (a suit jacket
   only with its own trousers); work stays business casual, with no shorts, light-wash jeans or gym gear.
+- New Hike occasion with boots and outdoor gear; Sport is now running and gym kit, and the beach leads with shorts
+  and sandals. Calendar events like "hike" or "trail" pick Hike.

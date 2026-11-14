@@ -1,7 +1,8 @@
 import Foundation
 
 public enum Occasion: String, Codable, CaseIterable, Sendable {
-    case casual, smartCasual, work, date, formal, sport, beach, travel
+    /// `sport` is a run or the gym; `hike` is outdoors on foot.
+    case casual, smartCasual, work, date, formal, sport, hike, beach, travel
 
     /// Acceptable range for the outfit's average formality.
     public var formalityRange: ClosedRange<Double> {
@@ -9,7 +10,7 @@ public enum Occasion: String, Codable, CaseIterable, Sendable {
         case .casual, .travel: return 1 ... 3
         case .smartCasual, .work, .date: return 2.5 ... 4
         case .formal: return 3.75 ... 5
-        case .sport, .beach: return 1 ... 2
+        case .sport, .hike, .beach: return 1 ... 2
         }
     }
 
@@ -20,13 +21,17 @@ public enum Occasion: String, Codable, CaseIterable, Sendable {
         case .smartCasual, .work: return 3
         case .date: return 3.3
         case .formal: return 4.5
-        case .sport, .beach: return 1.2
+        case .sport, .hike, .beach: return 1.2
         }
     }
 
-    /// A style every core item must carry (e.g. sportswear for a workout).
-    public var requiredStyle: StyleTag? {
-        self == .sport ? .sporty : nil
+    /// Styles every core item must carry one of: sportswear for a workout, sportswear or outdoor gear for a hike.
+    public var requiredStyles: Set<StyleTag> {
+        switch self {
+        case .sport: [.sporty]
+        case .hike: [.outdoor, .sporty]
+        default: []
+        }
     }
 }
 

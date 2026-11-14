@@ -10,6 +10,7 @@ extension Occasion {
         case .date: "Date"
         case .formal: "Formal"
         case .sport: "Sport"
+        case .hike: "Hike"
         case .beach: "Beach"
         case .travel: "Travel"
         }

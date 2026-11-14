@@ -9,6 +9,8 @@ struct OccasionHintTests {
         ("Client dinner", .work),
         ("Dinner with Dana", .date),
         ("Morning run", .sport),
+        ("Run: Jog 2-45min@RPE1-2 **After", .sport),
+        ("Hike at Ein Gedi", .hike),
         ("Brunch at Benedict", .smartCasual),
         ("Flight to Lisbon", .travel),
         ("Pool day", .beach),

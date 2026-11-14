@@ -5,6 +5,19 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Hike is its own occasion; sport and beach kits
+
+- **Decision:**
+  - New `Occasion.hike`: every core piece is sporty or outdoor, and outdoor shoes (hiking boots) are preferred
+    (other shoes score 0.7 for fit). `requiredStyle` became `requiredStyles` (any of), and `Violation.missingStyle`
+    lost its payload.
+  - Sport means a run or the gym: no outdoor-tagged bottoms or shoes (hiking trousers and boots).
+  - Beach: no outdoor-tagged pieces; from 22° no jeans-weight bottoms and no boots; sandals preferred, running shoes
+    least (0.7).
+  - Calendar: "hike", "hiking", "trek", "trail" and "טיול רגלי" map to Hike; "jog" joins Sport.
+- **Why:** Nadav's calendar had "Run: Jog 2-45min", and Sport suggested hiking pants with hiking boots (52 of 88
+  sport outfits used hiking boots). Beach suggested hiking boots in 39 of 90 outfits and sandals in 7.
+
 ### 2026-11-14: Dress codes for formal, work, smart casual and dates
 
 - **Decision** (`DressCode.swift`):

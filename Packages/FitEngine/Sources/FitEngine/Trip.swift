@@ -94,7 +94,7 @@ public enum Essentials {
         if occasions.contains(.beach) {
             list.append(EssentialItem(name: "Swimwear", count: 1))
         }
-        if occasions.contains(.sport) {
+        if !occasions.isDisjoint(with: [.sport, .hike]) {
             list.append(EssentialItem(name: "Sports socks", count: min(days, 3)))
         }
         return list

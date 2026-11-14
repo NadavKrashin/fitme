@@ -6,7 +6,8 @@ public enum Violation: Equatable, Sendable {
     /// Pieces from very different dress codes, e.g. a blazer with gym shorts.
     case formalityClash
     case occasionMismatch
-    case missingStyle(StyleTag)
+    /// A piece without the style the occasion calls for, e.g. jeans for a run.
+    case missingStyle
     case tooWarm
     case tooCold
     /// A jacket over a mid layer on a day too mild for both.
@@ -25,11 +26,11 @@ public enum Rules {
         let range = context.occasion.formalityRange
         let f = Double(item.formality)
         guard f >= range.lowerBound - 1, f <= range.upperBound + 1,
-              suitsDressCode(item, occasion: context.occasion)
+              suitsDressCode(item, context: context)
         else { return false }
 
-        if let style = context.occasion.requiredStyle,
-           !item.styleTags.contains(style),
+        let styles = context.occasion.requiredStyles
+        if !styles.isEmpty, item.styleTags.isDisjoint(with: styles),
            !(item.category == .outerwear && item.styleTags.contains(.outdoor)) {
             return false
         }
@@ -97,10 +98,11 @@ public enum Rules {
             }
         }
 
-        if let style = context.occasion.requiredStyle {
+        let styles = context.occasion.requiredStyles
+        if !styles.isEmpty {
             let mustCarry = core.filter { [.top, .bottom, .onePiece, .shoes].contains($0.category) }
-            if mustCarry.contains(where: { !$0.styleTags.contains(style) }) {
-                result.append(.missingStyle(style))
+            if mustCarry.contains(where: { $0.styleTags.isDisjoint(with: styles) }) {
+                result.append(.missingStyle)
             }
         }
 
