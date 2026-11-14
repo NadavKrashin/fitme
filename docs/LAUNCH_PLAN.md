@@ -27,13 +27,15 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 ## Milestones
 
 ### M1: Claude through a proxy (engineering)
-- [ ] Cloudflare Worker: one endpoint per feature (tag, stylist, bag review, product match), model and `max_tokens`
-      allowlisted, no client-chosen tools. Anthropic key in Worker secrets.
-- [ ] App Attest: attest a key on first launch, assert on each request; the Worker verifies and records the key.
-- [ ] Durable Object per device: monthly allowance, reset on the 1st; global daily spend cap; kill switch.
-- [ ] App: `ClaudeClient` talks to the proxy in Release and Staging; the API-key field stays only in Debug.
-- [ ] Friendly states for "allowance used up", "AI paused" and offline; manual tagging always available.
-- [ ] Tests: fake proxy in app tests; Worker unit tests; staging Worker separate from production.
+- [x] Cloudflare Worker: one Messages endpoint, the feature named in a header (tag, stylist, bag review; finding
+      online is tagging), model and `max_tokens` allowlisted, no tools. Anthropic key in Worker secrets.
+- [x] App Attest: attest a key on first launch, assert on each request; the Worker verifies and records the key.
+- [x] Durable Object per device: monthly allowance, reset on the 1st; global daily spend cap; kill switch.
+- [x] App: `ClaudeClient` talks to the proxy in Release and Staging; the API-key field stays only in Debug.
+- [x] Friendly states for "allowance used up", "AI paused" and offline; manual tagging always available.
+- [x] Tests: fake proxy in app tests; Worker unit tests; staging Worker separate from production.
+- [ ] Deploy (needs Nadav's Cloudflare account), then set `FITME_PROXY_URL` and the App Attest entitlement. See
+      [RELEASE_PROCESS.md](RELEASE_PROCESS.md) → "Claude proxy".
 
 ### M2: Privacy and consent
 - [ ] AI consent screen (what's sent: the photo and the item's tags; to whom: Anthropic; why), stored choice,

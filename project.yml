@@ -68,16 +68,24 @@ targets:
           PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.staging
           APP_DISPLAY_NAME: FitMe β
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG STAGING
+          # Claude proxy (server/claude-proxy). Empty until deployed: Debug and Staging then use your own API key.
+          FITME_PROXY_URL: ""
+          APP_ATTEST_ENVIRONMENT: development
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-Staging
         Staging:
           PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.staging
           APP_DISPLAY_NAME: FitMe β
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: STAGING
+          FITME_PROXY_URL: ""
+          APP_ATTEST_ENVIRONMENT: production
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-Staging
         Release:
           PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme
           APP_DISPLAY_NAME: FitMe
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
+          # Required before the first public release: without it, Claude features say they aren't set up.
+          FITME_PROXY_URL: ""
+          APP_ATTEST_ENVIRONMENT: production
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
           # Demo data never ships to production; CI verifies this (make verify-release).
           EXCLUDED_SOURCE_FILE_NAMES: DemoCloset.json demo-*.png

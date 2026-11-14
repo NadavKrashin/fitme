@@ -13,7 +13,7 @@ SIMULATOR  ?= $(shell xcrun simctl list devices available | grep -oE 'iPhone [0-
 DESTINATION = platform=iOS Simulator,name=$(SIMULATOR)
 XCODEBUILD := xcodebuild -project $(PROJECT) -derivedDataPath $(DERIVED)
 
-.PHONY: help bootstrap project open format lint test test-engine test-app verify-release icons release clean
+.PHONY: help bootstrap project open format lint test test-engine test-app test-proxy verify-release icons release clean
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -35,10 +35,13 @@ lint: ## Check formatting and lint (what CI runs)
 	swiftformat --lint .
 	swiftlint lint --strict --quiet
 
-test: test-engine test-app ## Run all tests
+test: test-engine test-proxy test-app ## Run all tests
 
 test-engine: ## FitEngine package tests (fast, no simulator)
 	cd Packages/FitEngine && swift test
+
+test-proxy: ## Claude proxy (server/claude-proxy): typecheck and tests, no Cloudflare account needed
+	cd server/claude-proxy && npm ci --no-audit --no-fund && npm run typecheck && npm test
 
 test-app: project ## App tests on the iOS Simulator
 	$(PIPEFAIL) $(XCODEBUILD) -scheme $(SCHEME) -destination '$(DESTINATION)' test | xcbeautify

@@ -49,9 +49,29 @@ jobs:
       - name: Release build contains no demo data
         run: make verify-release
 
+  proxy:
+    name: Claude proxy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: server/claude-proxy
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/claude-proxy/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+
   deploy:
     name: Deploy
-    needs: checks
+    needs: [checks, proxy]
     if: github.event_name == 'push'
     runs-on: macos-26
     timeout-minutes: 45

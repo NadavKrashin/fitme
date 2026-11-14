@@ -4,6 +4,10 @@ import Security
 
 enum SecretKey: String, CaseIterable, Sendable {
     case claudeAPIKey = "claude-api-key"
+    /// This install's App Attest key, registered with FitMe's proxy.
+    case appAttestKeyID = "app-attest-key-id"
+    /// A random ID standing in for App Attest where it isn't available (the Simulator, Staging only).
+    case installID = "install-id"
 }
 
 /// Storage for secrets the user enters at runtime (never compiled into the app).

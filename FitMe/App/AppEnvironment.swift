@@ -21,6 +21,12 @@ enum AppEnvironment: String, Sendable {
         }
     }
 
+    /// FitMe's Claude proxy for this build (`FITME_PROXY_URL` in project.yml), or nil when none is configured yet.
+    static var proxyURL: URL? {
+        guard let text = Bundle.main.infoDictionary?["FitMeProxyURL"] as? String, !text.isEmpty else { return nil }
+        return URL(string: text)
+    }
+
     /// "0.1.0 (42)": marketing version and CI build number.
     static var versionDescription: String {
         let info = Bundle.main.infoDictionary

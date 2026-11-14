@@ -371,6 +371,19 @@ scratchpad, with the repo's folders symlinked beside it). Quitting Xcode should 
 **Not verified yet:** these changes on the phone, especially whether neutral-first feels right day to day, and
 whether the Color chips fit next to large accessibility text sizes.
 
+## Launch M1: the Claude proxy (2026-11-14)
+
+- **Built:** `server/claude-proxy`, a Cloudflare Worker with App Attest, per-device monthly allowances (Durable
+  Objects), a daily token cap and a kill switch; the app's `ClaudeAccess` (proxy, own key, unavailable) and
+  `ProxyAccess` (attest once, sign each request, re-attest on `attestation_failed`, install ID in the Simulator).
+- **Verified:** 30 Worker tests (real App Attest checks against a fake Apple chain; the real Apple root refuses it),
+  a Worker typecheck and a `wrangler deploy --dry-run` bundle (282 KB gzipped); 171 app tests including
+  `ProxyAccessTests` with a fake App Attest; lint.
+- **Not verified yet:** the Worker on Cloudflare (not deployed: needs Nadav's account), App Attest on a real iPhone,
+  the App Attest entitlement with cloud signing, and real Anthropic calls through the proxy.
+- **Until deployed:** `FITME_PROXY_URL` is empty, so Debug and Staging use the API key in Settings as before, and a
+  Release build says Claude isn't set up. Don't cut a public release before the proxy URL is set.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and

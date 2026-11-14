@@ -34,13 +34,14 @@ struct ClaudeCapsuleReviewer: CapsuleReviewing {
 
     func review(_ details: TripDetails, closet: [Item]) async throws -> CapsuleReview {
         let labels = Labels(details: details, closet: closet)
-        let json = try await client.structuredOutput(
+        let json = try await client.structuredOutput(StructuredRequest(
+            feature: .bag,
             model: ClaudeStylist.model,
             effort: ClaudeStylist.effort,
             system: Self.systemPrompt,
             content: [.text(Self.brief(details, labels: labels))],
             schema: Self.schema(labels: labels)
-        )
+        ))
         return try Self.decode(json, labels: labels)
     }
 

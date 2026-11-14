@@ -67,7 +67,10 @@ struct CapsuleReviewerTests {
         let details = await packedTrip()
         let reply = #"{"verdict":"Good.","changes":[]}"#
         let transport = RecordingTransport(body: messagesResponse(text: reply))
-        let reviewer = ClaudeCapsuleReviewer(client: ClaudeClient(apiKey: { "key" }, transport: transport))
+        let reviewer = ClaudeCapsuleReviewer(client: ClaudeClient(
+            access: OwnKeyAccess(apiKey: { "key" }),
+            transport: transport
+        ))
 
         let review = try await reviewer.review(details, closet: closet)
 

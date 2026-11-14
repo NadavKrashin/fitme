@@ -5,6 +5,24 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Launch shape: no accounts, a Claude proxy on Cloudflare with App Attest
+
+- **Decision:**
+  - v1.0 has no accounts: the closet stays on the device and in its iCloud backup.
+  - Claude goes through a proxy (`server/claude-proxy`), a Cloudflare Worker holding Nadav's Anthropic key. Devices
+    prove they're genuine with App Attest (Staging also accepts the Simulator by install ID, at a small allowance).
+  - Each device gets a monthly allowance per feature (tag 200, stylist 60, bag review 20 to start), with a daily token
+    cap across everyone and an `AI_PAUSED` kill switch. Over the limit, the app explains and manual tagging works.
+  - The Worker passes the app's Messages API request through after checking its shape (allowlisted model, size, one
+    user turn, structured output, no tools), using the official TypeScript SDK. Prompts stay in the app.
+  - Until `FITME_PROXY_URL` is set, Debug and Staging keep using the user's own key and Release says Claude isn't set
+    up. The App Attest entitlement is added together with the proxy URL (one step, so a signing surprise can't block
+    Staging builds before the proxy exists).
+- **Why:** Nadav chose a public launch where he pays for Claude within limits. Shipping the key in the app would leak
+  it; accounts would add a sign-up wall and account-deletion duties for no v1 benefit. Durable Objects count exactly,
+  where Cloudflare's rate limiter is approximate by design. Limits are in tokens and uses, not dollars, so no prices
+  are hard-coded; the Anthropic Console's spend limit is the backstop.
+
 ### 2026-11-14: Runs dress for the effort; activity kit is a preference (supersedes part of "Hike is its own occasion")
 
 - **Decision:**

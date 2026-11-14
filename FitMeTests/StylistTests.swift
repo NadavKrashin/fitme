@@ -90,7 +90,10 @@ struct StylistTests {
         let options = try candidates(3)
         let transport =
             RecordingTransport(body: messagesResponse(text: #"{"picks":[{"candidate":"B","why":"Balanced."}]}"#))
-        let stylist = ClaudeStylist(client: ClaudeClient(apiKey: { "sk-test" }, transport: transport))
+        let stylist = ClaudeStylist(client: ClaudeClient(
+            access: OwnKeyAccess(apiKey: { "sk-test" }),
+            transport: transport
+        ))
 
         let picks = try await stylist.pick(from: options, context: OutfitContext(occasion: .casual))
 

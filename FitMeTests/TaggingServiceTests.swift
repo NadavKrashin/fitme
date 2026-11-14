@@ -74,7 +74,10 @@ struct TaggingServiceTests {
 
     @Test func tagsAPhotoEndToEndWithoutNetwork() async throws {
         let transport = RecordingTransport(body: messagesResponse(text: Self.validJSON))
-        let service = ClaudeTaggingService(client: ClaudeClient(apiKey: { "sk-test" }, transport: transport))
+        let service = ClaudeTaggingService(client: ClaudeClient(
+            access: OwnKeyAccess(apiKey: { "sk-test" }),
+            transport: transport
+        ))
 
         let tagged = try await service.tag(jpeg: Data([0xFF, 0xD8]), listing: nil)
 
@@ -103,7 +106,10 @@ struct TaggingServiceTests {
 
     @Test func theShopListingIsSentBetweenThePhotoAndTheRequest() async throws {
         let transport = RecordingTransport(body: messagesResponse(text: Self.validJSON))
-        let service = ClaudeTaggingService(client: ClaudeClient(apiKey: { "sk-test" }, transport: transport))
+        let service = ClaudeTaggingService(client: ClaudeClient(
+            access: OwnKeyAccess(apiKey: { "sk-test" }),
+            transport: transport
+        ))
 
         _ = try await service.tag(jpeg: Data([0xFF, 0xD8]), listing: "Material: 100% merino")
 

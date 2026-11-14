@@ -23,13 +23,14 @@ struct ClaudeStylist: OutfitStylist {
 
     func pick(from candidates: [ScoredOutfit], context: OutfitContext) async throws -> [StylistPick] {
         let labeled = Dictionary(uniqueKeysWithValues: zip(Self.labels, candidates))
-        let json = try await client.structuredOutput(
+        let json = try await client.structuredOutput(StructuredRequest(
+            feature: .stylist,
             model: Self.model,
             effort: Self.effort,
             system: Self.systemPrompt,
             content: [.text(Self.brief(candidates: candidates, context: context))],
             schema: Self.schema(labels: Array(Self.labels.prefix(candidates.count)))
-        )
+        ))
         return try Self.decode(json, labeled: labeled)
     }
 

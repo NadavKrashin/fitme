@@ -4,17 +4,18 @@ import Testing
 
 struct ClaudeClientTests {
     private func client(_ transport: RecordingTransport, key: String? = "sk-test") -> ClaudeClient {
-        ClaudeClient(apiKey: { key }, transport: transport)
+        ClaudeClient(access: OwnKeyAccess(apiKey: { key }), transport: transport)
     }
 
     private func call(_ client: ClaudeClient) async throws -> String {
-        try await client.structuredOutput(
+        try await client.structuredOutput(StructuredRequest(
+            feature: .tag,
             model: "claude-opus-5-5",
             effort: "low",
             system: "Describe it.",
             content: [.jpeg(Data([0xFF, 0xD8])), .text("Tag this item.")],
             schema: .object(["type": .string("object")])
-        )
+        ))
     }
 
     @Test func sendsTheDocumentedRequestShape() async throws {
@@ -22,11 +23,12 @@ struct ClaudeClientTests {
         _ = try await call(client(transport))
 
         let request = try #require(await transport.requests.first)
-        #expect(request.url == ClaudeClient.endpoint)
+        #expect(request.url == OwnKeyAccess.anthropicEndpoint)
         #expect(request.httpMethod == "POST")
         #expect(request.value(forHTTPHeaderField: "x-api-key") == "sk-test")
-        #expect(request.value(forHTTPHeaderField: "anthropic-version") == ClaudeClient.apiVersion)
-        #expect(request.value(forHTTPHeaderField: "anthropic-beta") == ClaudeClient.fallbackBeta)
+        #expect(request.value(forHTTPHeaderField: "anthropic-version") == OwnKeyAccess.apiVersion)
+        #expect(request.value(forHTTPHeaderField: "anthropic-beta") == OwnKeyAccess.fallbackBeta)
+        #expect(request.value(forHTTPHeaderField: "x-fitme-feature") == "tag")
 
         let body = try #require(request.httpBody)
         let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
@@ -78,6 +80,22 @@ struct ClaudeClientTests {
     @Test func missingKeyFailsWithoutSending() async {
         let transport = RecordingTransport(body: messagesResponse(text: "{}"))
         await #expect(throws: ClaudeError.missingAPIKey) { try await call(client(transport, key: nil)) }
+        #expect(await transport.requests.isEmpty)
+    }
+
+    /// The proxy's limits are final for now: no point retrying until the month (or the day) turns.
+    @Test func proxyLimitsExplainThemselvesAndArentRetried() {
+        let allowance = ClaudeError.api(status: 429, type: "allowance_exceeded", message: nil)
+        #expect(!allowance.isRetryable)
+        #expect(allowance.userMessage.contains("allowance"))
+        #expect(!ClaudeError.api(status: 503, type: "daily_cap", message: nil).isRetryable)
+        #expect(ClaudeError.api(status: 503, type: "ai_paused", message: nil).userMessage.contains("paused"))
+    }
+
+    @Test func aBuildWithoutAWayToClaudeSaysSo() async {
+        let transport = RecordingTransport(body: messagesResponse(text: "{}"))
+        let client = ClaudeClient(access: UnavailableAccess(), transport: transport)
+        await #expect(throws: ClaudeError.unavailable) { try await call(client) }
         #expect(await transport.requests.isEmpty)
     }
 }

@@ -143,3 +143,33 @@ Full list: `make help`.
 - **Staging:** push a fix or `git revert` to `main`. The next build replaces the old one.
 - **Production:** TestFlight builds stay available, so you can reinstall the previous build from the TestFlight
   app right away. Then fix on `main` and release a new patch tag. Never move or delete a published tag.
+
+## Claude proxy (one-time, Nadav)
+
+The proxy (`server/claude-proxy`) holds the Anthropic key; the app never has it. It's tested in CI but deploys by
+hand, because it needs your Cloudflare account.
+
+1. Create a free Cloudflare account. Durable Objects on SQLite are available on the free plan.
+2. In the Anthropic Console, create an API key for FitMe production and set a monthly spend limit.
+3. From `server/claude-proxy`:
+   ```bash
+   npx wrangler login
+   ```
+   ```bash
+   npx wrangler secret put ANTHROPIC_API_KEY --env staging
+   ```
+   ```bash
+   npx wrangler secret put CHALLENGE_SECRET --env staging
+   ```
+   ```bash
+   npm run deploy:staging
+   ```
+   Then the same three commands with `--env production` / `deploy:production`. `CHALLENGE_SECRET` is any long
+   random string (for example `openssl rand -hex 32`), different per environment.
+4. Give the agent the two `workers.dev` URLs wrangler prints. It sets `FITME_PROXY_URL` per configuration in
+   `project.yml` and adds the App Attest entitlement (`com.apple.developer.devicecheck.appattest-environment`); if
+   cloud signing then complains, enable the App Attest capability for both bundle IDs in the developer portal.
+
+Tuning without a release: allowances, the daily token cap and the kill switch (`AI_PAUSED = "true"`) are
+`[env.*.vars]` in `wrangler.toml`; change them and redeploy the Worker.
+

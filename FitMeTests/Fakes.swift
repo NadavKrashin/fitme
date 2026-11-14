@@ -23,6 +23,62 @@ actor RecordingTransport: HTTPTransport {
     }
 }
 
+/// Answers by path, in order, and records every request: for flows that call several endpoints.
+actor ScriptedTransport: HTTPTransport {
+    private(set) var requests: [URLRequest] = []
+    private var answers: [String: [(status: Int, body: String)]]
+
+    init(_ answers: [String: [(status: Int, body: String)]]) {
+        self.answers = answers
+    }
+
+    var paths: [String] {
+        requests.compactMap { $0.url?.path() }
+    }
+
+    func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        requests.append(request)
+        let path = request.url?.path() ?? ""
+        guard var queue = answers[path], !queue.isEmpty else { throw URLError(.unsupportedURL) }
+        let answer = queue.removeFirst()
+        answers[path] = queue
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: answer.status,
+            httpVersion: nil,
+            headerFields: nil
+        )!
+        return (Data(answer.body.utf8), response)
+    }
+}
+
+/// App Attest without a Secure Enclave: keys are numbered, and every hash it's asked to sign is recorded.
+actor FakeAppAttest: AppAttesting {
+    nonisolated let isSupported: Bool
+    private var keys = 0
+    private(set) var attestedHashes: [Data] = []
+    private(set) var assertedHashes: [Data] = []
+
+    init(isSupported: Bool = true) {
+        self.isSupported = isSupported
+    }
+
+    func generateKey() async throws -> String {
+        keys += 1
+        return "key-\(keys)"
+    }
+
+    func attestKey(_: String, clientDataHash: Data) async throws -> Data {
+        attestedHashes.append(clientDataHash)
+        return Data("attestation".utf8)
+    }
+
+    func generateAssertion(_: String, clientDataHash: Data) async throws -> Data {
+        assertedHashes.append(clientDataHash)
+        return Data("assertion".utf8)
+    }
+}
+
 /// A Messages API success response whose text block is `text`, preceded by an (empty) thinking block.
 func messagesResponse(text: String, stopReason: String = "end_turn") -> String {
     let escaped = String(data: try! JSONEncoder().encode(text), encoding: .utf8)!

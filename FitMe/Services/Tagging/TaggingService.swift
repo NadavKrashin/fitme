@@ -93,13 +93,14 @@ struct ClaudeTaggingService: TaggingService {
 
     func tag(jpeg: Data, listing: String?) async throws -> TaggedPhoto {
         let listingBlock = listing.map { ContentBlock.text("The shop's listing for this item:\n\($0)") }
-        let json = try await client.structuredOutput(
+        let json = try await client.structuredOutput(StructuredRequest(
+            feature: .tag,
             model: Self.model,
             effort: Self.effort,
             system: Self.systemPrompt,
             content: [.jpeg(jpeg)] + [listingBlock].compactMap(\.self) + [.text("Tag this item.")],
             schema: Self.schema
-        )
+        ))
         return try Self.decode(json)
     }
 

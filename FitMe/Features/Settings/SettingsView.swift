@@ -8,8 +8,21 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Group {
-                    if let model {
-                        APIKeySection(model: model)
+                    switch dependencies.claudeAccess {
+                    case .ownKey:
+                        if let model {
+                            APIKeySection(model: model)
+                        }
+                    case .proxy:
+                        Section("Claude") {
+                            Text("Tagging and the stylist are included. There's nothing to set up.")
+                                .foregroundStyle(Theme.inkMuted)
+                        }
+                    case .unavailable:
+                        Section("Claude") {
+                            Text("Claude isn't set up in this version. You can still tag clothes by hand.")
+                                .foregroundStyle(Theme.inkMuted)
+                        }
                     }
                     #if STAGING
                     DemoClosetSection()

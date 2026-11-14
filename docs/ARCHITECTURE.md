@@ -30,12 +30,13 @@ FitMe is a local-first iOS app with two layers:
 | `FitMe/App/` | `FitMeApp` (entry), `RootView` (tabs), `AppDependencies` (service container), `AppEnvironment` (staging/prod switch). |
 | `FitMe/Features/<Feature>/` | One folder per screen: the SwiftUI view plus its `@Observable` model. |
 | `FitMe/Models/` | SwiftData `@Model` types: `ItemRecord` (closet item, photo and cutout), `CaptureDraft` (unreviewed photo), `StyleProfileRecord` (learned taste), `SavedOutfit` (♥ outfits), and `Persistence` (store setup). |
-| `FitMe/Services/` | Side-effecting services behind protocols: `SecretStore` (Keychain), `Claude/ClaudeClient` (Messages API over an `HTTPTransport`), `Tagging/ClaudeTaggingService`, `ImagePipeline` (Vision cutout, box crop, colors), `Weather/OpenMeteoWeatherService` + `CoreLocationLocator`, `Stylist/ClaudeStylist`. |
+| `FitMe/Services/` | Side-effecting services behind protocols: `SecretStore` (Keychain), `Claude/ClaudeClient` (Messages API over an `HTTPTransport`, routed by `ClaudeAccess`: proxy, own key, or unavailable; `AppAttest`), `Tagging/ClaudeTaggingService`, `ImagePipeline` (Vision cutout, box crop, colors), `Weather/OpenMeteoWeatherService` + `CoreLocationLocator`, `Stylist/ClaudeStylist`. |
 | `FitMe/UI/` | Design system (`Theme` tokens, `Components`: cards, pills, toasts, `ChipButton`), shared views (`ItemThumbnail`, `OutfitCollage`/`OutfitCard`, `ItemEditorSections`), display helpers, `PreviewData` (Debug only). |
 | `FitMe/DemoData/` | Staging-only menswear demo closet (`DemoCloset.json`) and its product-photo cutouts (`Images/demo-<id>.png`). Excluded from Release. |
 | `FitMe/Resources/` | Asset catalog: app icons (prod and staging) and the accent color. |
 | `FitMeTests/` | App unit tests (Swift Testing), run in the Debug configuration. |
 | `Packages/FitEngine/` | The engine and its tests, plus a frozen fixture closet. |
+| `server/claude-proxy/` | The Claude proxy, a Cloudflare Worker (TypeScript): App Attest checks, per-device allowances, forwarding to the Messages API. See "Claude proxy" below. |
 | `scripts/` | Release, deploy, verification and icon scripts used by `make` and CI. |
 | `.github/workflows/pipeline.yml` | The single CI/CD pipeline. |
 | `docs/` | This documentation. Start with [HANDOFF.md](HANDOFF.md). |
@@ -189,3 +190,28 @@ DraftReviewView ─► FindOnlineView (brand, item, style number, notes, or a pa
   most demanding dress code first, on device. Today shows up to three events with "Dress for it", which switches
   the occasion. Nothing prompts for access until the user asks. The trip wizard uses the same reader for new days, but
   only when access was already granted.
+
+## Claude proxy (launch milestone M1)
+
+```
+ app ── ClaudeClient ── ProxyAccess ──► Worker /v1/messages ──► Anthropic Messages API (Nadav's key)
+                          │  first use: GET /v1/attest/challenge, attestKey, POST /v1/attest
+                          │  each request: x-fitme-key-id + x-fitme-assertion (App Attest over the body)
+                          │  Simulator (Staging only): x-fitme-install-id instead
+                          ▼
+              DeviceLedgerObject (one per device): key, counter, uses this month per feature
+              DailyLedgerObject (one): tokens today, against DAILY_TOKEN_CAP
+```
+
+- **App:** `ClaudeAccessKind.choose` picks the route at launch from `FITME_PROXY_URL` (project.yml → Info.plist
+  `FitMeProxyURL`): the proxy when set; otherwise the user's own key in Debug/Staging, and "unavailable" in Release.
+  Features name themselves (`x-fitme-feature`: tag, stylist, bag). A 401 `attestation_failed` forgets the key and
+  re-attests once.
+- **Worker** (`server/claude-proxy/src`): `handler.ts` routes; `validate.ts` lets through only the request shapes the
+  app sends; `attest.ts` verifies attestations (chain to Apple's root, nonce, key ID, App ID, counter 0,
+  environment) and assertions (signature over the body, App ID, rising counter); `device.ts` and `ledger.ts` count
+  allowances; `worker.ts` wires Durable Objects and the Anthropic SDK. Errors use the Messages API error shape with
+  FitMe types (`allowance_exceeded`, `daily_cap`, `ai_paused`, `attestation_failed`, `attestation_required`).
+- **Tests:** `npm test` (`make test-proxy`) builds a fake Apple chain and runs real attestation and assertion checks
+  against it; the real Apple root is used to show a fake chain is refused.
+

@@ -6,6 +6,8 @@ import SwiftUI
 /// Previews and tests build their own with fakes.
 struct AppDependencies: Sendable {
     let secrets: any SecretStore
+    /// How this build reaches Claude: Settings asks for an API key only for `.ownKey`.
+    let claudeAccess: ClaudeAccessKind
     let outfitGenerator: OutfitGenerator
     let photoProcessor: any PhotoProcessing
     let tagger: any TaggingService
@@ -22,10 +24,20 @@ struct AppDependencies: Sendable {
 
     static func live() -> AppDependencies {
         let secrets = KeychainSecretStore(service: Bundle.main.bundleIdentifier ?? "FitMe")
-        let claude = ClaudeClient(apiKey: { try secrets.read(.claudeAPIKey) }, transport: URLSession.shared)
+        let accessKind = ClaudeAccessKind.choose(proxyURL: AppEnvironment.proxyURL, environment: .current)
+        let access: any ClaudeAccess = switch (accessKind, AppEnvironment.proxyURL) {
+        case let (.proxy, url?):
+            ProxyAccess(base: url, attest: DeviceAppAttest(), secrets: secrets, transport: URLSession.shared)
+        case (.ownKey, _):
+            OwnKeyAccess(apiKey: { try secrets.read(.claudeAPIKey) })
+        default:
+            UnavailableAccess()
+        }
+        let claude = ClaudeClient(access: access, transport: URLSession.shared)
         let openMeteo = OpenMeteoTripWeather(transport: URLSession.shared)
         return AppDependencies(
             secrets: secrets,
+            claudeAccess: accessKind,
             outfitGenerator: OutfitGenerator(),
             photoProcessor: ImagePipeline(),
             tagger: ClaudeTaggingService(client: claude),
@@ -72,6 +84,7 @@ struct AppDependencies: Sendable {
     static func preview() -> AppDependencies {
         AppDependencies(
             secrets: InMemorySecretStore(),
+            claudeAccess: .ownKey,
             outfitGenerator: OutfitGenerator(),
             photoProcessor: ImagePipeline(),
             tagger: PreviewTaggingService(),
