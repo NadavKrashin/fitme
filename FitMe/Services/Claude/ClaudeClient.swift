@@ -15,6 +15,8 @@ enum ClaudeError: Error, Equatable {
     case missingAPIKey
     /// This build has no way to reach Claude (a production build without a proxy configured).
     case unavailable
+    /// The user hasn't allowed sending data to Claude (see `AIConsent`).
+    case consentNeeded
     /// Non-2xx response. `type` is the API's error type, e.g. `rate_limit_error`.
     case api(status: Int, type: String?, message: String?)
     case refusal(category: String?)
@@ -40,6 +42,8 @@ enum ClaudeError: Error, Equatable {
             "Add your Claude API key in Settings to use Claude."
         case .unavailable:
             "Claude isn't set up in this version of FitMe. You can still tag by hand."
+        case .consentNeeded:
+            "Claude is off. Turn it on in Settings, or tag by hand."
         case .api(_, "allowance_exceeded"?, _):
             "You've used this month's AI allowance. It resets on the 1st; you can still tag by hand."
         case .api(_, "ai_paused"?, _):

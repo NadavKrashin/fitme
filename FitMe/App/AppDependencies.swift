@@ -8,6 +8,8 @@ struct AppDependencies: Sendable {
     let secrets: any SecretStore
     /// How this build reaches Claude: Settings asks for an API key only for `.ownKey`.
     let claudeAccess: ClaudeAccessKind
+    /// Whether the user allowed sending data to Claude; every Claude request checks it.
+    let aiConsent: any AIConsentStoring
     let outfitGenerator: OutfitGenerator
     let photoProcessor: any PhotoProcessing
     let tagger: any TaggingService
@@ -33,11 +35,16 @@ struct AppDependencies: Sendable {
         default:
             UnavailableAccess()
         }
-        let claude = ClaudeClient(access: access, transport: URLSession.shared)
+        let consent = UserDefaultsAIConsent()
+        let claude = ClaudeClient(
+            access: ConsentGatedAccess(inner: access, consent: consent),
+            transport: URLSession.shared
+        )
         let openMeteo = OpenMeteoTripWeather(transport: URLSession.shared)
         return AppDependencies(
             secrets: secrets,
             claudeAccess: accessKind,
+            aiConsent: consent,
             outfitGenerator: OutfitGenerator(),
             photoProcessor: ImagePipeline(),
             tagger: ClaudeTaggingService(client: claude),
@@ -85,6 +92,7 @@ struct AppDependencies: Sendable {
         AppDependencies(
             secrets: InMemorySecretStore(),
             claudeAccess: .ownKey,
+            aiConsent: PreviewConsent(),
             outfitGenerator: OutfitGenerator(),
             photoProcessor: ImagePipeline(),
             tagger: PreviewTaggingService(),

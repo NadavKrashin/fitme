@@ -384,6 +384,18 @@ whether the Color chips fit next to large accessibility text sizes.
 - **Until deployed:** `FITME_PROXY_URL` is empty, so Debug and Staging use the API key in Settings as before, and a
   Release build says Claude isn't set up. Don't cut a public release before the proxy URL is set.
 
+## Launch M2: privacy and consent (2026-11-14)
+
+- **Built:** first-launch AI consent sheet, a consent gate on every Claude request, Settings → AI toggle and privacy
+  and help links, `PrivacyInfo.xcprivacy`, `site/` (privacy policy, help, home), `docs/APP_PRIVACY.md`.
+- **Verified:** 176 app tests (5 new consent tests: nothing is sent unless allowed); in the simulator the sheet shows
+  on first launch, "Not now" closes it, and Settings shows Use Claude off; the manifest is valid (`plutil`) and
+  inside the built app.
+- **Not verified yet:** the pages online (GitHub Pages isn't turned on, so the links 404 for now), the policy text
+  read by Nadav (it's in his name), Allow on a real device, and large text sizes on the sheet.
+- **Waiting on Nadav:** turn on GitHub Pages (Settings → Pages → Source: GitHub Actions), then the agent adds
+  `.github/workflows/pages.yml`; and a support email if GitHub issues isn't the contact he wants.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and

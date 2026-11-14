@@ -2,12 +2,14 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dependencies) private var dependencies
+    @Environment(AIConsentModel.self) private var consent
     @State private var model: SettingsModel?
 
     var body: some View {
         NavigationStack {
             Form {
                 Group {
+                    AIConsentSection(consent: consent)
                     switch dependencies.claudeAccess {
                     case .ownKey:
                         if let model {
@@ -30,6 +32,8 @@ struct SettingsView: View {
                     Section("About") {
                         LabeledContent("Environment", value: AppEnvironment.current.displayName)
                         LabeledContent("Version", value: AppEnvironment.versionDescription)
+                        Link("Privacy policy", destination: PrivacyLinks.policy)
+                        Link("Help and contact", destination: PrivacyLinks.support)
                     }
                 }
                 .editorialRow()
@@ -42,6 +46,22 @@ struct SettingsView: View {
             if model == nil {
                 model = SettingsModel(secrets: dependencies.secrets)
             }
+        }
+    }
+}
+
+/// The Claude permission asked at first launch, changeable here.
+private struct AIConsentSection: View {
+    let consent: AIConsentModel
+
+    var body: some View {
+        Section {
+            Toggle("Use Claude", isOn: Binding(get: { consent.isAllowed }, set: { consent.answer(allowed: $0) }))
+        } header: {
+            Text("AI")
+        } footer: {
+            Text("Claude, Anthropic's AI, tags the photos you add and powers the stylist. It receives your clothing "
+                + "photos and descriptions. Off, you tag clothes yourself; outfit suggestions still work.")
         }
     }
 }
@@ -77,6 +97,7 @@ private struct APIKeySection: View {
     SettingsView()
         .environment(\.dependencies, .preview())
         .environment(PreviewData.captureModel)
+        .environment(AIConsentModel(store: PreviewConsent()))
         .modelContainer(PreviewData.container)
 }
 #endif

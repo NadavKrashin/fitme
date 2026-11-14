@@ -83,3 +83,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
   for the weather.
 - "Ask the stylist" now knows each piece's fabric, dress code, warmth and style, and how the day's temperature
   swings.
+- FitMe asks before sending anything to Claude, explains what goes to Anthropic, and works without it. Settings → AI
+  turns Claude on or off and links to the privacy policy and help.

@@ -211,4 +211,13 @@ struct PreviewCapsuleReviewer: CapsuleReviewing {
         )
     }
 }
+
+/// Previews act as if the user already allowed Claude.
+struct PreviewConsent: AIConsentStoring {
+    func read() -> AIConsent {
+        .allowed
+    }
+
+    func write(_: AIConsent) {}
+}
 #endif

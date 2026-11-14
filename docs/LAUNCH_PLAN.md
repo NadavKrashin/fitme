@@ -38,13 +38,13 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
       [RELEASE_PROCESS.md](RELEASE_PROCESS.md) → "Claude proxy".
 
 ### M2: Privacy and consent
-- [ ] AI consent screen (what's sent: the photo and the item's tags; to whom: Anthropic; why), stored choice,
-      withdraw in Settings.
-- [ ] Privacy policy and support page on GitHub Pages (the repo is public).
-- [ ] `PrivacyInfo.xcprivacy` (required-reason APIs such as UserDefaults and file timestamps).
-- [ ] App Privacy answers for App Store Connect: photos and closet data sent to Anthropic for processing; coarse
+- [x] AI consent screen (what's sent: the photo and the item's tags; to whom: Anthropic; why), stored choice,
+      withdraw in Settings. Asked on first launch; every Claude request is refused until allowed.
+- [x] Privacy policy and support page (`site/`). Publishing waits for GitHub Pages to be turned on.
+- [x] `PrivacyInfo.xcprivacy`: UserDefaults (CA92.1), no tracking, four collected data types.
+- [x] App Privacy answers for App Store Connect, written up in [APP_PRIVACY.md](APP_PRIVACY.md): photos and closet data sent to Anthropic for processing; coarse
       location to Open-Meteo; calendar read on the device only; no tracking, no ads.
-- [ ] `ITSAppUsesNonExemptEncryption = NO` (HTTPS only).
+- [x] `ITSAppUsesNonExemptEncryption = NO` (HTTPS only), already set.
 
 ### M3: A first run for strangers
 - [ ] Onboarding: what FitMe does, consent, then straight into "photograph your closet".

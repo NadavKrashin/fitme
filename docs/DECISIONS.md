@@ -5,6 +5,22 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Ask once, before anything reaches Claude
+
+- **Decision:**
+  - A "Before you start" sheet on first launch (`AIConsentView`) says what goes to Anthropic (clothing photos and the
+    chosen shop page for tagging; text descriptions, the occasion and weather for the stylist and bag check), that
+    the calendar stays on the device, and that FitMe works without Claude. Allow or Not now; it can't be swiped away.
+  - The choice is stored in UserDefaults (`AIConsent`), and `ConsentGatedAccess` refuses every Claude request until
+    it's "allowed", whatever the route (proxy or own key). Settings → AI → Use Claude changes it.
+  - Asked once at launch rather than at each AI action: a sheet can't open from the root while another sheet is up
+    (Find online runs inside one), and the gate already guarantees nothing is sent before the answer.
+  - Privacy policy and help pages live in `site/` for GitHub Pages; App Store Connect answers are in
+    `docs/APP_PRIVACY.md`; `PrivacyInfo.xcprivacy` declares UserDefaults (CA92.1), no tracking, and four collected
+    data types, none linked to identity.
+- **Why:** App Review guideline 5.1.2(i) (Nov 2025) requires disclosing and asking before personal data goes to a
+  third-party AI; reviewers reportedly reject a privacy-policy-only disclosure.
+
 ### 2026-11-14: Launch shape: no accounts, a Claude proxy on Cloudflare with App Attest
 
 - **Decision:**

@@ -6,6 +6,7 @@ struct FitMeApp: App {
     private let dependencies = AppDependencies.live()
     private let container: ModelContainer
     @State private var capture: CaptureModel
+    @State private var consent: AIConsentModel
 
     init() {
         Theme.applyNavigationBarAppearance()
@@ -17,6 +18,7 @@ struct FitMeApp: App {
             fatalError("Couldn't open the closet store: \(error)")
         }
         self.container = container
+        _consent = State(initialValue: AIConsentModel(store: dependencies.aiConsent))
         _capture = State(initialValue: CaptureModel(
             processor: dependencies.photoProcessor,
             tagger: dependencies.tagger,
@@ -30,6 +32,7 @@ struct FitMeApp: App {
             RootView()
                 .environment(\.dependencies, dependencies)
                 .environment(capture)
+                .environment(consent)
                 .task { await capture.resumePending() }
         }
         .modelContainer(container)
