@@ -87,13 +87,13 @@ struct OutfitCard: View {
                     }
                 }
                 Spacer(minLength: 0)
-                Text("\(Int(outfit.score.rounded()))% match")
+                Text("\(outfit.matchPercent)% match")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.butterInk)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(Theme.butter, in: .capsule)
-                    .accessibilityLabel("Match \(Int(outfit.score.rounded())) out of 100")
+                    .accessibilityLabel("Match \(outfit.matchPercent) out of 100")
             }
 
             if let reason {

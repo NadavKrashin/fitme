@@ -320,6 +320,33 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
 - **Not verified:** how often mild-day suggestions now come without any jacket on the phone, and whether that feels
   too bare on days with a cold morning (the engine only sees the slider's temperature).
 
+## Outfit quality pass (2026-11-14)
+
+An analysis ran the demo closet through all 8 occasions at 9 temperatures, dry and wet (720 suggestions), and
+found 14 problems. Fixed so far, each with failing tests first:
+
+- **Fix 1, shoes:** shoes are scored for dress code and trouser color; exact ties rotate by day. Casual white
+  sneakers went from 81/90 to 56/90 (the rest are boots in the cold and sandals in the heat); formal black oxfords
+  went from 38/90 to 60/90.
+- **Fix 5, color:** neutral outfits score full marks; a Color choice on Today (Neutral, Mixed, Colorful).
+- **Fixes 2–3, weather for the whole outfit:** comfort ranges per piece; shorts, linen and sandals at 32°; boots and
+  knitwear at 0°.
+- **Fix 4, rain:** cover is scored for jacket and shoes; trips pack rain gear when the closet has it.
+- **Side fixes:** packing counts bottom wears in coverage; likes add their full 8 points (display clamps).
+
+**Still open, in order:** formal pairs sweaters with suit trousers (fix 6); work allows light jeans and sneakers,
+smart casual a floral camp shirt (7); beach picks hiking pants and boots, sport doesn't tell running from hiking (8);
+style tags don't affect the score (9); Today dresses for one temperature, not the day's range (10); the tagging rubric
+calls a tee warmth 2 while the engine treats it as 1 (11); no fabric field (12); rotation is weak (13); the stylist
+doesn't get dress code, warmth or style (14).
+
+**Testing note:** Xcode, open on the Mac for 8 days, holds a file lock on `FitMe.xcodeproj`, and `xcodebuild` waits
+on it forever. App tests ran from a scratch copy of the project generated with XcodeGen (`--project` into the
+scratchpad, with the repo's folders symlinked beside it). Quitting Xcode should clear it.
+
+**Not verified yet:** these changes on the phone, especially whether neutral-first feels right day to day, and
+whether the Color chips fit next to large accessibility text sizes.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and

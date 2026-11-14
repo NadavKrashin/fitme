@@ -5,21 +5,22 @@ public struct ScoreWeights: Equatable, Sendable {
     public var pattern = 0.12
     public var formality = 0.15
     public var occasion = 0.12
-    public var weather = 0.13
+    public var weather = 0.18
     public var shoes = 0.12
     public var fit = 0.06
     public var statement = 0.06
     public var novelty = 0.03
-    /// Most points your reactions can add to or take from the 0...100 total. Added on top of the blend, so an
-    /// outfit scores the same with no profile as with a profile that has no opinion about it. Near either end of
-    /// the scale the room left is the limit, so a liked outfit still outranks a near-copy instead of tying at 100.
+    /// Most points your reactions can add to or take from the total. Added on top of the 0...100 blend, so an outfit
+    /// scores the same with no profile as with a profile that has no opinion about it. Not capped at 100: good
+    /// outfits all score in the high 90s, and a cap would leave a like almost no room to count. Displays clamp it
+    /// (`matchPercent`).
     public var learnedPoints = 8.0
 
     public init() {}
 }
 
 /// Each component is 0...1; `total` is the weighted blend on a 0...100 scale, moved by what was learned (`affinity`,
-/// where 0.5 is neutral).
+/// where 0.5 is neutral), so it can land a little outside 0...100.
 public struct ScoreBreakdown: Equatable, Sendable {
     public var color: Double
     public var pattern: Double
@@ -42,7 +43,8 @@ public struct OutfitScorer: Sendable {
         self.weights = weights
     }
 
-    /// `partial` scores an outfit still being assembled, so weather is left neutral.
+    /// `partial` scores an outfit still being assembled: weather judges each piece on its own, since layers may come
+    /// later.
     public func score(_ outfit: Outfit, context: OutfitContext, partial: Bool = false) -> ScoreBreakdown {
         let core = outfit.coreItems
         let w = weights
@@ -51,7 +53,8 @@ public struct OutfitScorer: Sendable {
             pattern: Self.patternBalance(core),
             formality: Self.formalityCohesion(core),
             occasion: Self.occasionFit(core, occasion: context.occasion),
-            weather: partial ? 1 : Self.weatherFit(outfit, weather: context.weather),
+            weather: partial ? Self.partialWeatherFit(outfit, weather: context.weather)
+                : Self.weatherFit(outfit, weather: context.weather),
             shoes: Self.shoePairing(outfit, occasion: context.occasion),
             fit: Self.fitBalance(outfit),
             statement: Self.statementBudget(core),
@@ -65,8 +68,7 @@ public struct OutfitScorer: Sendable {
         let sum = w.color + w.pattern + w.formality + w.occasion + w.weather + w.shoes + w.fit + w.statement
             + w.novelty
         let blend = weighted / sum * 100
-        let opinion = 2 * b.affinity - 1
-        b.total = blend + opinion * min(w.learnedPoints, opinion > 0 ? 100 - blend : blend)
+        b.total = blend + (2 * b.affinity - 1) * w.learnedPoints
         return b
     }
 
@@ -186,13 +188,67 @@ public struct OutfitScorer: Sendable {
             : max(0, warmth - target.upperBound)
         var score = distance == 0 ? 1 : (distance == 1 ? 0.6 : 0.2)
         if weather.isRainy {
-            let covered = [outfit.shoes, outfit.outerwear].contains { $0?.waterResistant == true }
-            if !covered {
-                score *= 0.75
-            }
+            score *= rainCover(outfit, feelsLike: weather.feelsLikeC)
+        }
+        let layered = outfit.midLayer != nil || outfit.outerwear != nil
+        return score * piecesFit(outfit, feelsLike: weather.feelsLikeC, layered: layered)
+    }
+
+    /// Weather for an outfit still being assembled: each piece on its own, and on a rainy day whether the shoes keep
+    /// water out, so boots survive the shoe step before a jacket is chosen.
+    static func partialWeatherFit(_ outfit: Outfit, weather: Weather) -> Double {
+        var score = piecesFit(outfit, feelsLike: weather.feelsLikeC, layered: weather.allowsLayers)
+        if weather.isRainy, let shoes = outfit.shoes, !shoes.waterResistant {
+            score *= weather.feelsLikeC < 15 ? 0.75 : 0.9
         }
         return score
     }
+
+    /// On a rainy day: a water-resistant jacket matters most, and in cold rain so do shoes that keep feet dry.
+    static func rainCover(_ outfit: Outfit, feelsLike: Double) -> Double {
+        switch (outfit.outerwear?.waterResistant == true, outfit.shoes?.waterResistant == true) {
+        case (true, true): 1
+        case (true, false): feelsLike < 15 ? 0.75 : 0.9
+        case (false, true): 0.6
+        case (false, false): 0.35
+        }
+    }
+
+    /// How well the least suitable piece suits the temperature: one piece dressed for another season (shorts with a
+    /// cable knit, jeans at 32°, sneakers at 0°) drags the whole outfit down.
+    static func piecesFit(_ outfit: Outfit, feelsLike: Double, layered: Bool) -> Double {
+        outfit.coreItems.map { pieceFit($0, feelsLike: feelsLike, layered: layered) }.min() ?? 1
+    }
+
+    static func pieceFit(_ item: Item, feelsLike t: Double, layered: Bool) -> Double {
+        guard let band = comfortBand(item, layered: layered) else { return 1 }
+        let distance = t < band.lowerBound ? band.lowerBound - t : max(0, t - band.upperBound)
+        switch distance {
+        case 0: return 1
+        case ...4: return 0.7
+        default: return 0.4
+        }
+    }
+
+    /// The feels-like range a piece is comfortable in, by its weight, after temperature dressing guides. Layers are
+    /// judged by the outfit's total warmth instead, and under a layer only a summer-weight top feels the cold.
+    static func comfortBand(_ item: Item, layered: Bool) -> ClosedRange<Double>? {
+        let bands: [ClosedRange<Double>]
+        switch item.category {
+        case .top, .onePiece: bands = layered ? layeredTopBands : topBands
+        case .bottom: bands = bottomBands
+        case .shoes: bands = shoeBands
+        default: return nil
+        }
+        return bands[min(max(item.warmth, 1), bands.count) - 1]
+    }
+
+    // Comfortable feels-like ranges by warmth (index = warmth - 1): a tee from 18°, a sweater up to 22°, shorts and
+    // sandals from 22°, jeans up to 27°, boots up to 22°.
+    private static let topBands: [ClosedRange<Double>] = [18 ... 45, 6 ... 30, -40 ... 22, -40 ... 14]
+    private static let layeredTopBands: [ClosedRange<Double>] = [4 ... 45, -40 ... 30, -40 ... 22, -40 ... 14]
+    private static let bottomBands: [ClosedRange<Double>] = [22 ... 45, 6 ... 34, -40 ... 27, -40 ... 16]
+    private static let shoeBands: [ClosedRange<Double>] = [22 ... 45, 4 ... 36, -5 ... 28, -40 ... 22, -40 ... 10]
 
     /// How well the shoes suit the rest of the outfit, after menswear shoe-and-trouser guides: they should match its
     /// dress code, and their color should follow the trousers. 1 when there are no shoes yet.

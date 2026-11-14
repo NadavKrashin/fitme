@@ -28,6 +28,7 @@ public struct PackingOptimizer: Sendable {
 
     public func pack(closet: [Item], trip: [TripDay], profile: StyleProfile? = nil) -> PackingResult {
         let plan = TripPlan(trip: trip, laundryEveryNDays: options.laundryEveryNDays, profile: profile)
+            .requiringRainGear(from: closet)
         let candidates = closet
             .filter { item in plan.groups.contains { Rules.isEligible(item, for: $0.context) } }
             .sorted { $0.id < $1.id }
@@ -65,12 +66,14 @@ public struct PackingOptimizer: Sendable {
         }
 
         capsule = pruned(capsule, plan: plan)
-        return assemble(capsule: capsule, trip: trip, plan: plan)
+        // If the limits kept rain gear out of the bag, the days still get the best outfits it allows.
+        return assemble(capsule: capsule, trip: trip, plan: plan.requiringRainGear(from: capsule))
     }
 
     /// The day-by-day plan for a capsule chosen elsewhere, e.g. after the user added or removed items by hand.
     public func plan(packed: [Item], trip: [TripDay], profile: StyleProfile? = nil) -> PackingResult {
         let plan = TripPlan(trip: trip, laundryEveryNDays: options.laundryEveryNDays, profile: profile)
+            .requiringRainGear(from: packed)
         return assemble(capsule: packed, trip: trip, plan: plan)
     }
 
@@ -97,7 +100,7 @@ public struct PackingOptimizer: Sendable {
                     context: plan.groups[g].context,
                     mustInclude: item,
                     minScore: options.scoreThreshold
-                )
+                ).filter { plan.groups[g].accepts($0.outfit) }
                 newStates[g] = merged(states[g], with: unlocked)
             }
             let gain = match(newStates, plan: plan).value - currentValue
@@ -125,6 +128,7 @@ public struct PackingOptimizer: Sendable {
         }
         return wide.build(from: closet, context: group.context, mustInclude: nil, beam: wide.beamWidth)
             .filter { $0.score >= options.scoreThreshold && !usedBases.contains($0.outfit.baseKey) }
+            .filter { group.accepts($0.outfit) }
             .filter { fitsLimits(capsule + $0.outfit.items.filter { !capsule.contains($0) }) }
             .max { (reuseRank($0), $1.id) < (reuseRank($1), $0.id) }
     }
@@ -186,10 +190,11 @@ public struct PackingOptimizer: Sendable {
     }
 
     private func recompute(capsule: [Item], groups: [TripPlan.Group]) -> GroupStates {
-        groups.map {
+        groups.map { group in
             merged(
                 [:],
-                with: generator.allOutfits(from: capsule, context: $0.context, minScore: options.scoreThreshold)
+                with: generator.allOutfits(from: capsule, context: group.context, minScore: options.scoreThreshold)
+                    .filter { group.accepts($0.outfit) }
             )
         }
     }
@@ -220,8 +225,9 @@ public struct PackingOptimizer: Sendable {
     // MARK: Day plan
 
     private func assemble(capsule: [Item], trip: [TripDay], plan: TripPlan) -> PackingResult {
-        let outfitsByGroup = plan.groups.map {
-            generator.allOutfits(from: capsule, context: $0.context, minScore: options.scoreThreshold)
+        let outfitsByGroup = plan.groups.map { group in
+            generator.allOutfits(from: capsule, context: group.context, minScore: options.scoreThreshold)
+                .filter { group.accepts($0.outfit) }
         }
         let baseCounts = outfitsByGroup.map { Set($0.map(\.outfit.baseKey)).count }
         var picks: [Int: (outfit: ScoredOutfit, overLimit: Bool)] = [:]
@@ -282,6 +288,16 @@ struct TripPlan {
     /// Slots that share an occasion and weather band.
     struct Group {
         let context: OutfitContext
+        /// Set on rainy days when the items to pack from include a water-resistant jacket.
+        var needsRainJacket = false
+        /// Set on cold rainy days when the items include water-resistant shoes. Not for formal events: dress shoes
+        /// are leather-soled, and nobody expects boots with black tie.
+        var needsDryShoes = false
+
+        func accepts(_ outfit: Outfit) -> Bool {
+            (!needsRainJacket || outfit.outerwear?.waterResistant == true)
+                && (!needsDryShoes || outfit.shoes?.waterResistant == true)
+        }
     }
 
     struct Slot {
@@ -290,7 +306,7 @@ struct TripPlan {
         let group: Int
     }
 
-    let groups: [Group]
+    private(set) var groups: [Group]
     let slots: [Slot]
     /// Slot indices per laundry cycle. A top or one-piece is worn at most once per cycle.
     let cycles: [[Int]]
@@ -331,5 +347,26 @@ struct TripPlan {
         cycles = Dictionary(grouping: slots.indices) { slots[$0].dayIndex / cycleLength }
             .sorted { $0.key < $1.key }
             .map(\.value)
+    }
+
+    /// The same plan, asking rainy days for rain gear that `items` include: a trip in cold rain should come with a
+    /// jacket that keeps water out and shoes that keep feet dry, when the closet has them.
+    func requiringRainGear(from items: [Item]) -> TripPlan {
+        var copy = self
+        copy.groups = groups.map { group in
+            let weather = group.context.weather
+            let has = { (category: ItemCategory) in
+                items
+                    .contains {
+                        $0.category == category && $0.waterResistant && Rules.isEligible($0, for: group.context)
+                    }
+            }
+            var result = group
+            result.needsRainJacket = weather.isRainy && has(.outerwear)
+            result.needsDryShoes = weather.isRainy && weather.feelsLikeC < 15 && group.context.occasion != .formal
+                && has(.shoes)
+            return result
+        }
+        return copy
     }
 }

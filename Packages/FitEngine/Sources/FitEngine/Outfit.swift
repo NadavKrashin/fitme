@@ -75,6 +75,11 @@ public struct ScoredOutfit: Identifiable, Hashable, Sendable {
         breakdown.total
     }
 
+    /// The score as people read it: a whole percentage, 0...100.
+    public var matchPercent: Int {
+        Int(min(max(score, 0), 100).rounded())
+    }
+
     public static func == (lhs: ScoredOutfit, rhs: ScoredOutfit) -> Bool {
         lhs.id == rhs.id
     }

@@ -146,7 +146,7 @@ struct OutfitDetailView: View {
                                     .foregroundStyle(Theme.ink)
                                     .lineLimit(2)
                                     .multilineTextAlignment(.center)
-                                Text("\(Int(option.score.rounded()))% match")
+                                Text("\(option.matchPercent)% match")
                                     .font(.caption2)
                                     .foregroundStyle(Theme.inkMuted)
                             }

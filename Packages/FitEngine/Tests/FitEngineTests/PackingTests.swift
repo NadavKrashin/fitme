@@ -22,7 +22,12 @@ struct PackingTests {
         let result = PackingOptimizer(options: options).pack(closet: Fixtures.closet, trip: trip)
 
         #expect(result.uncovered.isEmpty, "\(result.summary)")
-        #expect(result.items.contains { $0.category == .outerwear && $0.warmth >= 4 }, "needs a warm coat")
+        // Cold rain: a jacket that keeps water out and shoes that keep feet dry (a warm coat, or a shell over
+        // knitwear, both pass; the warmth is checked by `Rules` below).
+        for assignment in result.assignments where assignment.dayIndex >= 5 {
+            #expect(assignment.outfit?.outfit.outerwear?.waterResistant == true, "\(assignment.outfit?.id ?? "-")")
+            #expect(assignment.outfit?.outfit.shoes?.waterResistant == true, "\(assignment.outfit?.id ?? "-")")
+        }
         #expect(result.items.count(where: { $0.category == .shoes }) <= options.maxShoes)
         #expect(result.items.count(where: { $0.category == .outerwear }) <= options.maxOuterwear)
         for assignment in result.assignments where assignment.dayIndex >= 5 {

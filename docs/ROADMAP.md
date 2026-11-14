@@ -104,6 +104,9 @@ Goal: at least 70% of top-5 suggestions rated "I'd wear that" over two weeks.
   resetting wear).
 - [x] Warm editorial redesign across every screen, plus a menswear demo closet with AI product photos.
 - [x] "Swap one item" (2026-11-14): from an outfit's pieces on Today, swap any piece (or leave off a layer).
+- [x] Outfit quality pass, round 1 (2026-11-14): shoes, neutral-first color with a mood, whole-body weather, rain.
+- [ ] Outfit quality pass, round 2: formal and work dress codes, beach and sport kits, style coherence, the day's
+  temperature range, tagging warmth scale, fabric, rotation, a richer stylist brief.
 - [ ] Two weeks of daily use to measure the goal (Nadav).
 
 ## Phase 3: Trip packer (the differentiator)

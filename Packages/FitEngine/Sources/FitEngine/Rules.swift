@@ -41,11 +41,14 @@ public enum Rules {
             }
             return !(item.warmth >= 4 && t >= 16)
         case .bottom:
-            return !(item.warmth <= 1 && t < 16)
+            // Shorts from the low twenties (guides put them at 23° and up, with long sleeves a little lower).
+            return !(item.warmth <= 1 && t < 20) && !(item.warmth >= 4 && t >= 24)
         case .shoes:
-            return !(item.warmth <= 1 && (t < 15 || weather.isRainy))
+            // Sandals on warm dry days; boots for cool or wet ones.
+            return !(item.warmth <= 1 && (t < 20 || weather.isRainy))
+                && !(item.warmth >= 4 && t >= 24 && !weather.isRainy)
         case .top:
-            return !(item.warmth >= 3 && t >= 27)
+            return !(item.warmth >= 3 && t >= 24)
         case .onePiece:
             // A light dress leaves the legs bare, like shorts.
             return !(item.warmth >= 3 && t >= 27) && !(item.warmth <= 1 && t < 15)

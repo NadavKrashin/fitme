@@ -5,6 +5,30 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Weather for the whole outfit, and rain that counts
+
+- **Decision:**
+  - Every top, bottom and pair of shoes has a comfortable feels-like range by its warmth (tables in `OutfitScorer`):
+    shorts and sandals from 22°, jeans up to 27°, boots up to 22°, a tee from 18° (from 4° under a layer). The
+    weather score is multiplied by the fit of the least suitable piece, so one piece dressed for another season
+    drags the outfit down. Weather now weighs 0.18 (was 0.13).
+  - Hard limits move with it: shorts from 20° (was 16°), sandals from 20° and never in rain, boots (warmth 4+) not
+    on dry days from 24°, sweaters and hoodies not from 24° (was 27°).
+  - The beam judges each piece's weather while the outfit is assembled, and on rainy days whether the shoes keep
+    water out, so warm bases and boots aren't pruned before layers are added.
+  - Rain: a water-resistant jacket and shoes score 1; jacket only 0.75 below 15° (0.9 above); shoes only 0.6;
+    neither 0.35. On a trip, rainy days require a water-resistant jacket, and cold rainy days water-resistant shoes,
+    whenever the closet has them (not for formal events).
+  - What you've learned is no longer squeezed into the room left below 100: a like adds up to its full 8 points.
+    The app shows `matchPercent`, clamped to 0...100.
+- **Why:** the 720-suggestion analysis found dark jeans and chelsea boots at 32°, a linen shirt under a puffer with
+  sneakers at 0°, a cable-knit with shorts at 17–20°, and rain costing about 3 points. Only upper-body warmth was
+  scored. With good outfits all in the high 90s, a like on a near-top outfit could add under 3 points.
+- **Sources:** temperature dressing guides put shorts at roughly 23–28°C and up, long trousers below about 20°C, and
+  light fabrics in the heat ([Nike, layering by season](https://www.nike.com/a/how-to-layer-clothes),
+  [Proper Cloth, hot weather](https://propercloth.com/reference/how-to-dress-in-hot-weather-a-mens-summer-style-guide/),
+  [Proper Cloth, shorts](https://propercloth.com/reference/how-to-style-mens-shorts-a-modern-guide-for-summer/)).
+
 ### 2026-11-14: Neutrals first, color by mood
 
 - **Decision:**
