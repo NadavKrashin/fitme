@@ -229,6 +229,12 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
 - **Not verified:** the calendar fix on screen with three same-occasion events (covered by the test), and wear
   history across midnight (entries are grouped by the phone's calendar day).
 - **Compiler note:** Swift 6.4.2 crashes on `try #require(x)()` in a test; bind the result first, then call it.
+- **CI signing fix:** run 43544335491 failed to deploy because the account hit Apple's certificate limit. Every
+  runner had signed the archive with automatic signing, creating a new Apple Development certificate each time.
+  `deploy.sh` now archives unsigned and signs only at export (cloud-managed distribution). Run 43545495413
+  uploaded **Staging build 21**.
+- **For Nadav (optional):** the Apple Developer account still holds the old CI-made development certificates
+  ("Created via API"). They're unused; revoke them under Certificates if you want the slots back.
 
 ## Next steps, in order
 
