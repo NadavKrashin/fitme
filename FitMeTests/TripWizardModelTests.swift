@@ -9,8 +9,18 @@ struct TripWizardModelTests {
     let closet = try! DemoCloset.items()
     let container = try! Persistence.makeInMemoryContainer()
 
-    private func wizard(weather: FakeTripWeather = .init(), editing: TripRecord? = nil) -> TripWizardModel {
-        let model = TripWizardModel(existing: editing, weatherService: weather, planner: TripPlanner())
+    private func wizard(
+        weather: FakeTripWeather = .init(),
+        calendar: FakeCalendar = .init(access: .notAsked),
+        editing: TripRecord? = nil
+    ) -> TripWizardModel {
+        let model = TripWizardModel(
+            existing: editing,
+            weatherService: weather,
+            planner: TripPlanner(),
+            calendar: calendar,
+            dates: TripFixtures.calendar
+        )
         model.details.startDate = TripFixtures.day(1)
         return model
     }
@@ -91,5 +101,46 @@ struct TripWizardModelTests {
         let trips = try container.mainContext.fetch(FetchDescriptor<TripRecord>())
         #expect(trips.count == 1)
         #expect(trips.first?.details.days.count == 7)
+    }
+
+    // MARK: Calendar
+
+    /// A wedding on the third day makes that day formal, on top of what the day already had.
+    @Test func calendarEventsSetNewDaysOccasions() async {
+        let wedding = CalendarEvent(title: "Sam & Alex's wedding", start: TripFixtures.day(3), isAllDay: true)
+        let calendar = FakeCalendar(events: [wedding])
+        let model = wizard(calendar: calendar)
+        model.addStop(TripFixtures.lisbon)
+
+        await model.layOutDays()
+
+        #expect(model.details.days[2].occasions == [.casual, .formal])
+        #expect(model.hints(onDay: 2).map(\.title) == ["Sam & Alex's wedding"])
+        #expect(model.details.days[1].occasions == [.casual])
+    }
+
+    @Test func aRemovedCalendarOccasionStaysRemoved() async {
+        let wedding = CalendarEvent(title: "Wedding", start: TripFixtures.day(3), isAllDay: true)
+        let model = wizard(calendar: FakeCalendar(events: [wedding]))
+        model.addStop(TripFixtures.lisbon)
+        await model.layOutDays()
+
+        model.toggle(.formal, onDay: 2)
+        await model.layOutDays()
+
+        #expect(model.details.days[2].occasions == [.casual])
+    }
+
+    @Test func theWizardNeverReadsACalendarItWasntGiven() async {
+        let calendar = FakeCalendar(access: .notAsked, events: [
+            CalendarEvent(title: "Wedding", start: TripFixtures.day(3), isAllDay: true),
+        ])
+        let model = wizard(calendar: calendar)
+        model.addStop(TripFixtures.lisbon)
+
+        await model.layOutDays()
+
+        #expect(calendar.requestedRange == nil)
+        #expect(model.details.days[2].occasions == [.casual])
     }
 }

@@ -73,7 +73,7 @@ struct DemoClosetSection: View {
             Button("Load demo closet") { run("load") { try DemoCloset.load(into: $0) } }
             Button("Clear closet", role: .destructive) { run("clear", DemoCloset.clear) }
             if let errorMessage {
-                Text(errorMessage).foregroundStyle(.red)
+                Text(errorMessage).foregroundStyle(Theme.terracotta)
             }
         } header: {
             Text("Demo data")

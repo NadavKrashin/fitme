@@ -180,7 +180,8 @@ private struct DaysStep: View {
                     DayPlanCard(
                         day: model.details.days[index],
                         number: index + 1,
-                        place: model.details.stop(forDay: index)?.place.name ?? ""
+                        place: model.details.stop(forDay: index)?.place.name ?? "",
+                        hints: model.hints(onDay: index)
                     ) { model.toggle($0, onDay: index) }
                 }
             }
@@ -244,6 +245,8 @@ private struct DayPlanCard: View {
     let day: TripDayPlan
     let number: Int
     let place: String
+    /// Calendar events that added occasions to this day.
+    let hints: [CalendarHint]
     let onToggle: (Occasion) -> Void
 
     var body: some View {
@@ -264,6 +267,16 @@ private struct DayPlanCard: View {
             }
             .font(.footnote)
             .foregroundStyle(Theme.inkMuted)
+            if !hints.isEmpty {
+                Label {
+                    Text("From your calendar: " + hints.map { "\($0.title) (\($0.occasion.title))" }
+                        .joined(separator: ", "))
+                } icon: {
+                    Image(systemName: "calendar").foregroundStyle(Theme.terracotta)
+                }
+                .font(.footnote)
+                .foregroundStyle(Theme.ink)
+            }
             FlowLayout {
                 ForEach(Occasion.allCases, id: \.self) { occasion in
                     ChipButton(

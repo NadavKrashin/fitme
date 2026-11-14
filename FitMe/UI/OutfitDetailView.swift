@@ -2,12 +2,30 @@ import FitEngine
 import SwiftData
 import SwiftUI
 
-/// Every piece of an outfit, in the order you'd put them on, each opening its item.
+/// Every piece of an outfit, in the order you'd put them on, each opening its item. When `swapping` is given (on
+/// Today), each piece can be swapped for another from the closet.
 struct OutfitDetailView: View {
+    /// Where swap options come from and where a swap goes.
+    struct Swapping {
+        /// Versions of the outfit with this piece changed, best first.
+        let options: (_ piece: Item, _ outfit: Outfit) -> [ScoredOutfit]
+        /// Replaces `from` with the swapped version wherever the outfit came from.
+        let apply: (_ from: Outfit, _ to: ScoredOutfit) -> Void
+    }
+
     @Environment(\.dismiss) private var dismiss
     @Query private var records: [ItemRecord]
-    let outfit: Outfit
     var occasion: Occasion?
+    var swapping: Swapping?
+    @State private var outfit: Outfit
+    /// The piece whose replacements are showing.
+    @State private var swappingPiece: Item?
+
+    init(outfit: Outfit, occasion: Occasion? = nil, swapping: Swapping? = nil) {
+        _outfit = State(initialValue: outfit)
+        self.occasion = occasion
+        self.swapping = swapping
+    }
 
     var body: some View {
         let recordsByID = Dictionary(uniqueKeysWithValues: records.map { ($0.itemID, $0) })
@@ -30,9 +48,13 @@ struct OutfitDetailView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         ForEach(Self.wearingOrder(outfit)) { item in
                             pieceRow(item, record: recordsByID[item.id])
+                            if let swapping, swappingPiece == item {
+                                swapOptions(for: item, swapping: swapping, recordsByID: recordsByID)
+                            }
                         }
                     }
                     .card()
+                    .animation(.spring(duration: 0.3), value: swappingPiece)
                 }
                 .padding(Theme.gutter)
             }
@@ -47,7 +69,6 @@ struct OutfitDetailView: View {
         }
     }
 
-    @ViewBuilder
     private func pieceRow(_ item: Item, record: ItemRecord?) -> some View {
         let row = HStack(spacing: 14) {
             ItemThumbnail(item: item, image: record?.cutout, size: 64)
@@ -63,21 +84,79 @@ struct OutfitDetailView: View {
                     .foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: 8)
-            if record != nil {
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.inkMuted)
-            }
         }
         .padding(.vertical, 6)
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
 
-        if let record {
-            NavigationLink { ItemDetailView(record: record) } label: { row }
-                .buttonStyle(.plain)
+        // The swap button sits beside the link, not inside it, or the link would take its taps.
+        return HStack(spacing: 8) {
+            if let record {
+                NavigationLink { ItemDetailView(record: record) } label: { row }
+                    .buttonStyle(.plain)
+            } else {
+                row
+            }
+            if swapping != nil {
+                let isOpen = swappingPiece == item
+                Button(isOpen ? "Close" : "Swap") {
+                    swappingPiece = isOpen ? nil : item
+                }
+                .font(.footnote.weight(.semibold))
+                .buttonStyle(.pill(.quiet))
+                .accessibilityLabel(isOpen ? "Close swaps" : "Swap \(item.name)")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func swapOptions(for piece: Item, swapping: Swapping, recordsByID: [String: ItemRecord]) -> some View {
+        let options = swapping.options(piece, outfit)
+        if options.isEmpty {
+            Text("Nothing else in your closet works here today.")
+                .font(.footnote)
+                .foregroundStyle(Theme.inkMuted)
+                .padding(.vertical, 8)
         } else {
-            row
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 12) {
+                    ForEach(options) { option in
+                        let replacement = option.outfit.items.first { $0.category == piece.category }
+                        Button {
+                            swapping.apply(outfit, option)
+                            outfit = option.outfit
+                            swappingPiece = nil
+                        } label: {
+                            VStack(spacing: 6) {
+                                if let replacement {
+                                    ItemThumbnail(
+                                        item: replacement,
+                                        image: recordsByID[replacement.id]?.cutout,
+                                        size: 84
+                                    )
+                                } else {
+                                    Image(systemName: "minus.circle")
+                                        .font(.title)
+                                        .foregroundStyle(Theme.inkMuted)
+                                        .frame(width: 84, height: 84)
+                                        .background(Theme.photoTile, in: .rect(cornerRadius: 17))
+                                }
+                                Text(replacement?.name ?? "Without it")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.ink)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.center)
+                                Text("\(Int(option.score.rounded()))% match")
+                                    .font(.caption2)
+                                    .foregroundStyle(Theme.inkMuted)
+                            }
+                            .frame(width: 96)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
         }
     }
 
@@ -143,6 +222,7 @@ struct OutfitDetailView: View {
 struct OutfitSelection: Identifiable {
     let outfit: Outfit
     var occasion: Occasion?
+    var swapping: OutfitDetailView.Swapping?
 
     var id: String {
         outfit.id

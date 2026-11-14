@@ -19,6 +19,10 @@ enum Theme {
     static let butter = dynamic(light: 0xF3E3C3, dark: 0x3D3220)
     static let butterInk = dynamic(light: 0x6B4F24, dark: 0xEBD3A6)
     static let shadow = Color.black.opacity(0.06)
+    /// Behind a single clothing cutout, and behind a flat-lay. The same as card and canvas in light mode; lighter than
+    /// both in dark mode, or black and navy pieces disappear into the background.
+    static let photoTile = dynamic(light: 0xFFFDF9, dark: 0x4A443D)
+    static let photoBackdrop = dynamic(light: 0xF6F1E9, dark: 0x3D3833)
 
     // MARK: Type
 

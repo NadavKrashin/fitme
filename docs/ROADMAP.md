@@ -64,7 +64,8 @@ Goal: catalog about 100 items in **under 60–90 minutes**, with at least 85% of
 - [x] `ItemThumbnail` shows the cutout when one exists, including in Today's suggestions.
 - [ ] **In-app batch camera.** Not built. Today's flow is to shoot items in the Camera app, then multi-select them in
   FitMe.
-- [ ] Closet filters by color and formality (only category and search exist).
+- [x] Closet filters (2026-11-14): color, dress code and brand (brands come from Find online), plus search by name or
+  brand.
 - [x] **Find online** (2026-11-14): from the review screen, type the brand and what you know (or paste a link),
   browse to the product page in the app, pick a photo; the item is re-cut and re-tagged from the shop's listing.
 - [x] Find online from closet items too (2026-11-14), with Undo; wear history and laundry state are kept. A card
@@ -101,7 +102,7 @@ Goal: at least 70% of top-5 suggestions rated "I'd wear that" over two weeks.
 - [x] Saved outfits (♥), hide with Undo (✕), and a toast for every reaction. Separate worn state (fixes like
   resetting wear).
 - [x] Warm editorial redesign across every screen, plus a menswear demo closet with AI product photos.
-- [ ] "Swap one item" on a card. Not built.
+- [x] "Swap one item" (2026-11-14): from an outfit's pieces on Today, swap any piece (or leave off a layer).
 - [ ] Two weeks of daily use to measure the goal (Nadav).
 
 ## Phase 3: Trip packer (the differentiator)
@@ -128,7 +129,8 @@ Goal: on a real trip, wear at least 90% of what's packed, while packing noticeab
   lately worn), and the best next buy from a catalog of menswear staples, counted by new outfits.
 - [x] Saved favorite outfits (shipped in Phase 2).
 - [x] Calendar hints on Today: today's events suggest an occasion ("Dinner with Dana" → Date), on device.
-- [ ] Calendar hints in the trip wizard (prefill a day's occasions from its events).
+- [x] Calendar hints in the trip wizard (2026-11-14): new days get the occasions their events call for, once Today
+  was given calendar access.
 - [ ] Nadav checks insights and learning on his own closet.
 
 ## Phase 5: Virtual try-on (optional)

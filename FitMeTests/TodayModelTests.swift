@@ -122,6 +122,22 @@ struct TodayModelTests {
         #expect(recorder.wearEntry(for: outfit.id) == nil)
     }
 
+    /// "Swap" in an outfit's pieces replaces the suggestion where it was, so the list doesn't jump.
+    @Test func aSwapReplacesTheSuggestionInPlace() async throws {
+        let (model, _) = try await modelWithSuggestions()
+        let original = model.suggestions[1]
+        let shoes = try #require(original.outfit.shoes)
+        let swapped = try #require(
+            model.swaps(replacing: shoes, in: original.outfit, closet: closet, profile: StyleProfile()).first
+        )
+
+        model.replace(original.outfit, with: swapped)
+
+        #expect(model.suggestions[1] == swapped)
+        #expect(model.suggestions[1].outfit.shoes != shoes)
+        #expect(model.toast?.message == "Swapped")
+    }
+
     @Test func weatherFillsTemperatureAndRain() async {
         let model = makeTodayModel()
         await model.loadWeather()

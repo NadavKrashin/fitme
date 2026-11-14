@@ -49,7 +49,7 @@ private struct APIKeySection: View {
             Button("Save key", action: model.saveKey)
                 .disabled(!model.canSave)
             if let error = model.errorMessage {
-                Text(error).foregroundStyle(.red)
+                Text(error).foregroundStyle(Theme.terracotta)
             }
         } header: {
             Text("Claude API key")

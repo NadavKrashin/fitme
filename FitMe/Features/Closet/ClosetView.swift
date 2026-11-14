@@ -10,8 +10,8 @@ struct ClosetView: View {
     @Query private var drafts: [CaptureDraft]
     @State private var pickerSelection: [PhotosPickerItem] = []
     @State private var isShowingInbox = false
-    @State private var categoryFilter: ItemCategory?
-    @State private var searchText = ""
+    @State private var filter = ClosetFilter()
+    @State private var isShowingFilters = false
 
     private let columns = [GridItem(.adaptive(minimum: 100), spacing: 14, alignment: .top)]
 
@@ -38,6 +38,18 @@ struct ClosetView: View {
                     } else {
                         insightsLink
                         categoryChips
+                        if sections.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Nothing in the closet matches these filters.")
+                                    .font(.callout)
+                                    .foregroundStyle(Theme.inkMuted)
+                                Button("Clear filters") {
+                                    filter = ClosetFilter()
+                                }
+                                .buttonStyle(.pill(.quiet))
+                            }
+                            .card()
+                        }
                         ForEach(sections, id: \.category) { section in
                             categorySection(section.category, records: section.records)
                         }
@@ -58,7 +70,15 @@ struct ClosetView: View {
                 case .insights: InsightsView()
                 }
             }
-            .searchable(text: $searchText, prompt: "Search items")
+            .searchable(text: $filter.search, prompt: "Search items or brands")
+            .sheet(isPresented: $isShowingFilters) {
+                ClosetFilterSheet(
+                    filter: $filter,
+                    options: ClosetFilter.Options(records.map { ($0.item, $0.brand) }),
+                    matchingCount: visibleRecords.count
+                )
+                .presentationDetents([.medium, .large])
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     PhotosPicker(selection: $pickerSelection, matching: .images) {
@@ -143,9 +163,17 @@ struct ClosetView: View {
         let categories = ItemCategory.allCases.filter(present.contains)
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ChipButton(title: "All", isOn: categoryFilter == nil) { categoryFilter = nil }
+                ChipButton(
+                    title: filter.refinementCount == 0 ? "Filters" : "Filters · \(filter.refinementCount)",
+                    isOn: filter.refinementCount > 0,
+                    tint: (Theme.sage, Theme.sageInk)
+                ) {
+                    isShowingFilters = true
+                }
+                .accessibilityHint("Color, dress code and brand")
+                ChipButton(title: "All", isOn: filter.category == nil) { filter.category = nil }
                 ForEach(categories, id: \.self) { category in
-                    ChipButton(title: category.title, isOn: categoryFilter == category) { categoryFilter = category }
+                    ChipButton(title: category.title, isOn: filter.category == category) { filter.category = category }
                 }
             }
             .padding(.horizontal, Theme.gutter)
@@ -153,13 +181,12 @@ struct ClosetView: View {
         .padding(.horizontal, -Theme.gutter)
     }
 
+    private var visibleRecords: [ItemRecord] {
+        records.filter { filter.matches($0.item, brand: $0.brand) }
+    }
+
     private var sections: [(category: ItemCategory, records: [ItemRecord])] {
-        let query = searchText.trimmingCharacters(in: .whitespaces)
-        let visible = records.filter { record in
-            (categoryFilter == nil || record.category == categoryFilter)
-                && (query.isEmpty || record.name.localizedCaseInsensitiveContains(query))
-        }
-        return Dictionary(grouping: visible, by: \.category)
+        Dictionary(grouping: visibleRecords, by: \.category)
             .sorted { $0.key.layerOrder < $1.key.layerOrder }
             .map { ($0.key, $0.value) }
     }
@@ -192,7 +219,7 @@ struct ClosetView: View {
                             )
                             .frame(maxWidth: .infinity)
                             .padding(8)
-                            .background(Theme.card, in: .rect(cornerRadius: 18, style: .continuous))
+                            .background(Theme.photoTile, in: .rect(cornerRadius: 18, style: .continuous))
                             .shadow(color: Theme.shadow, radius: 8, y: 3)
                             Text(record.name)
                                 .font(.caption)

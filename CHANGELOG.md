@@ -50,3 +50,7 @@ User-visible changes per production release. Add entries under **Unreleased** as
   it back, and Saved → Worn lists what you wore, day by day.
 - Tap any outfit (or "See every piece") to see each piece in the order you'd put it on, with its colors, dress code,
   warmth and fit.
+- Filter the closet by color, dress code and brand, and search by brand.
+- Swap one piece of a suggestion on Today (or leave off a layer) from the outfit's pieces.
+- Planning a trip fills in occasions from your calendar, like a wedding on day 3, when you've allowed calendar access.
+- Dark mode: dark clothes now stand out on lighter photo tiles.

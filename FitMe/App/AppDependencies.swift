@@ -53,7 +53,7 @@ struct AppDependencies: Sendable {
 
     @MainActor
     func makeTripWizard(editing trip: TripRecord?) -> TripWizardModel {
-        TripWizardModel(existing: trip, weatherService: tripWeather, planner: tripPlanner)
+        TripWizardModel(existing: trip, weatherService: tripWeather, planner: tripPlanner, calendar: calendar)
     }
 
     @MainActor

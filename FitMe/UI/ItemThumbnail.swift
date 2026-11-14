@@ -30,7 +30,7 @@ struct ItemThumbnail: View {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFit()
-                .background(isFramed ? Theme.card : .clear)
+                .background(isFramed ? Theme.photoTile : .clear)
         } else {
             swatch
         }

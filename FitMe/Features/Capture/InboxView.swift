@@ -22,7 +22,7 @@ struct InboxView: View {
                     }
                 }
                 if let note = capture.lastImportNote {
-                    Text(note).font(.footnote).foregroundStyle(.secondary)
+                    Text(note).font(.footnote).foregroundStyle(Theme.inkMuted)
                 }
                 ForEach(drafts) { draft in
                     if draft.status == .processing {
@@ -150,7 +150,7 @@ struct DraftReviewView: View {
                 ItemThumbnail(item: item, image: draft.cutout, size: 220)
                     .frame(maxWidth: .infinity)
                 if let error = draft.errorMessage {
-                    Text(error).font(.footnote).foregroundStyle(.red)
+                    Text(error).font(.footnote).foregroundStyle(Theme.terracotta)
                 }
             }
             .listRowBackground(Color.clear)

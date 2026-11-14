@@ -275,6 +275,25 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
   dimmed back button on its first page.
 - **Known rough edges:** shop pop-ups (Everlane's "20% off") cover the page until closed.
 
+## Leftovers done (2026-11-14)
+
+- **Closet filters:** a Filters chip opens color, dress code and brand choices (only those the closet has; brands come
+  from Find online). Search also matches brands. Logic in `ClosetFilter` (`ClosetFilterTests`).
+- **Swap one item:** on Today, "See pieces or swap one" opens the pieces; each has Swap, which offers the closet's
+  alternatives for that slot (and "Without it" for a layer) and replaces the suggestion in place
+  (`OutfitGenerator.swaps`, `SwapTests`, `aSwapReplacesTheSuggestionInPlace`).
+- **Calendar hints in the trip planner:** new days get occasions from that day's events if calendar access was
+  already granted on Today; the day card says which event. A removed occasion isn't added back (`TripWizardModel`
+  calendar tests).
+- **Dark mode:** every tab checked in the simulator. Fixed: black and navy clothes vanished on dark photo tiles
+  (new `Theme.photoTile` and `Theme.photoBackdrop`, unchanged in light mode), and four error and note texts used
+  system red or grey instead of theme colors.
+- **Verified in the simulator:** filters (Navy + Dressy → 1 piece, "Filters · 2"), swapping a top and seeing the
+  Today card update, dark mode on Today, Closet, Filters, Insights, the outfit sheet, Trips, a trip and Settings.
+  62 engine tests and every app suite pass.
+- **Not verified:** the trip planner's calendar line on screen (covered by tests), brand filters with real brands (the
+  demo closet has none), and the Inbox, Find online and item edit screens in dark mode.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and
@@ -293,6 +312,5 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
    - per-day manual weather edits (today a failed fetch falls back to mild days with a warning)
    - the statement floral shirt still leads many casual and travel plans; it may need a gentler share of the plan
    - keyword coverage for calendar hints (titles that should map to an occasion but don't)
-4. **Leftovers:** calendar hints in the trip wizard, "swap one item" on a Today card (the engine's `alternatives` is
-   a start), closet filters by color and formality, the in-app batch camera, and a dark-mode pass.
+4. **Leftovers:** the in-app batch camera (needs a phone to verify; the simulator has no camera).
 5. **Phase 5** ([ROADMAP.md](ROADMAP.md#phase-5-virtual-try-on-optional)): evaluate virtual try-on, only if wanted.

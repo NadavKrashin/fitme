@@ -138,6 +138,20 @@ final class TodayModel {
         toast = Toast(symbol: "arrow.uturn.backward", message: "No longer today's outfit")
     }
 
+    // MARK: Swap one piece
+
+    /// Versions of an outfit with one piece changed, for today's occasion and weather.
+    func swaps(replacing piece: Item, in outfit: Outfit, closet: [Item], profile: StyleProfile) -> [ScoredOutfit] {
+        generator.swaps(replacing: piece, in: outfit, from: closet, context: context(profile: profile))
+    }
+
+    /// Puts a swapped version where the suggestion was.
+    func replace(_ original: Outfit, with swapped: ScoredOutfit) {
+        guard let index = suggestions.firstIndex(where: { $0.id == original.id }) else { return }
+        suggestions[index] = swapped
+        toast = Toast(symbol: "arrow.triangle.2.circlepath", message: "Swapped")
+    }
+
     // MARK: Weather
 
     /// Fills temperature and rain from the forecast for the user's location. Manual edits still win afterwards.

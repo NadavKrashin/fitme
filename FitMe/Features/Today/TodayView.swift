@@ -125,7 +125,9 @@ private struct OutfitPlanner: View {
             .animation(.spring(duration: 0.4), value: model.suggestions)
         }
         .toast(model.toast) { model.toast = nil }
-        .sheet(item: $selection) { OutfitDetailView(outfit: $0.outfit, occasion: $0.occasion) }
+        .sheet(item: $selection) {
+            OutfitDetailView(outfit: $0.outfit, occasion: $0.occasion, swapping: $0.swapping)
+        }
         .task {
             if model.weather == .idle {
                 await model.loadWeather()
@@ -205,7 +207,18 @@ private struct OutfitPlanner: View {
             onToggleSave: { model.toggleSaved(outfit, isSaved: isSaved, recorder: recorder) },
             onDismiss: reason == nil ? { model.dismiss(outfit, recorder: recorder) } : nil,
             onWear: { model.toggleWorn(outfit, recorder: recorder) },
-            onOpen: { selection = OutfitSelection(outfit: outfit.outfit, occasion: model.occasion) }
+            onOpen: {
+                selection = OutfitSelection(outfit: outfit.outfit, occasion: model.occasion, swapping: swapping)
+            },
+            openLabel: "See pieces or swap one"
+        )
+    }
+
+    /// Swaps on Today come from the whole closet and replace the suggestion in place.
+    private var swapping: OutfitDetailView.Swapping {
+        .init(
+            options: { piece, outfit in model.swaps(replacing: piece, in: outfit, closet: closet, profile: profile) },
+            apply: { from, swapped in model.replace(from, with: swapped) }
         )
     }
 

@@ -67,7 +67,7 @@ struct ItemDetailView: View {
             ItemThumbnail(item: item, image: record.cutout, size: 240, isFramed: record.cutout == nil)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Theme.card, in: .rect(cornerRadius: Theme.cardRadius, style: .continuous))
+                .background(Theme.photoTile, in: .rect(cornerRadius: Theme.cardRadius, style: .continuous))
             NavigationLink {
                 OutfitsWithItemView(item: item)
             } label: {

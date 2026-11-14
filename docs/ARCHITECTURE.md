@@ -178,7 +178,12 @@ DraftReviewView ─► FindOnlineView (brand, item, style number, notes, or a pa
   Worn lists every entry by day.
 - **Outfit detail:** `OutfitDetailView` (a sheet from any outfit card in Today, Saved, Worn or a trip day) lists the
   pieces in wearing order with colors, dress code, warmth and fit, each linking to its item.
+- **Closet filters:** `ClosetFilter` (category, search, colors, dress codes, brands; any pick within a kind, all
+  kinds together) and `ClosetFilterSheet`.
+- **Swap one item:** `OutfitGenerator.swaps(replacing:in:from:context:)` (same slot, plus going without a layer);
+  `OutfitDetailView.Swapping` connects it to Today, which replaces the suggestion in place.
 - **Calendar hints:** `EventKitCalendar` (an actor around `EKEventStore`) reads the rest of today's events once the
   user taps "Use my calendar" on Today. `OccasionHint` maps titles to occasions with English and Hebrew keywords,
   most demanding dress code first, on device. Today shows up to three events with "Dress for it", which switches
-  the occasion. Nothing prompts for access until the user asks.
+  the occasion. Nothing prompts for access until the user asks. The trip wizard uses the same reader for new days, but
+  only when access was already granted.

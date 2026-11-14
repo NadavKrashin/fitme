@@ -23,7 +23,7 @@ struct OutfitCollage: View {
         .frame(maxWidth: .infinity)
         .frame(height: height)
         .padding(.vertical, 12)
-        .background(Theme.canvas, in: .rect(cornerRadius: 18, style: .continuous))
+        .background(Theme.photoBackdrop, in: .rect(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
@@ -55,6 +55,7 @@ struct OutfitCard: View {
     var onWear: () -> Void = {}
     /// Opens the outfit's pieces in detail.
     var onOpen: (() -> Void)?
+    var openLabel = "See every piece"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -79,7 +80,7 @@ struct OutfitCard: View {
                             .foregroundStyle(Theme.inkMuted)
                     }
                     if let onOpen {
-                        Button("See every piece", action: onOpen)
+                        Button(openLabel, action: onOpen)
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(Theme.terracotta)
                             .padding(.top, 2)

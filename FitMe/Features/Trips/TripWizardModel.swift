@@ -22,18 +22,35 @@ final class TripWizardModel {
     var details: TripDetails
     private(set) var weather: WeatherState = .idle
     private(set) var isPacking = false
+    /// Calendar events that set a day's occasions, by the day they fall on.
+    private(set) var calendarHints: [Date: [CalendarHint]] = [:]
 
     /// The trip being edited, if any.
     let existing: TripRecord?
     private let weatherService: any TripWeatherProviding
     private let planner: TripPlanner
+    private let calendar: any CalendarReading
+    private let dates: Calendar
+    /// Days already given their calendar occasions, so a removed one isn't added back on the next layout.
+    private var hintedDays: Set<Date>
 
-    init(existing: TripRecord? = nil, weatherService: any TripWeatherProviding, planner: TripPlanner) {
+    init(
+        existing: TripRecord? = nil,
+        weatherService: any TripWeatherProviding,
+        planner: TripPlanner,
+        calendar: any CalendarReading,
+        dates: Calendar = .current
+    ) {
         self.existing = existing
         self.weatherService = weatherService
         self.planner = planner
-        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: .now))
-        details = existing?.details ?? TripDetails(startDate: tomorrow ?? .now, stops: [])
+        self.calendar = calendar
+        self.dates = dates
+        let tomorrow = dates.date(byAdding: .day, value: 1, to: dates.startOfDay(for: .now))
+        let details = existing?.details ?? TripDetails(startDate: tomorrow ?? .now, stops: [])
+        self.details = details
+        // An existing trip's days were planned already.
+        hintedDays = Set(details.days.map { dates.startOfDay(for: $0.date) })
     }
 
     var canContinue: Bool {
@@ -52,9 +69,11 @@ final class TripWizardModel {
 
     // MARK: Days
 
-    /// Turns stops and dates into days, keeping plans that still apply, then fetches weather for new days.
+    /// Turns stops and dates into days, keeping plans that still apply, adds what the calendar says about new days,
+    /// then fetches weather for new days.
     func layOutDays() async {
-        details = details.laidOut()
+        details = details.laidOut(calendar: dates)
+        await addCalendarOccasions()
         await loadWeather()
     }
 
@@ -65,10 +84,42 @@ final class TripWizardModel {
             guard occasions.count > 1 else { return } // every day needs something to dress for
             occasions.remove(at: position)
         } else {
-            occasions.append(occasion)
-            occasions.sort { Occasion.allCases.firstIndex(of: $0) ?? 0 < Occasion.allCases.firstIndex(of: $1) ?? 0 }
+            occasions = Self.inOrder(occasions + [occasion])
         }
         details.days[index].occasions = occasions
+    }
+
+    /// Adds the occasions the calendar calls for (a wedding, a client dinner) to days not planned before. Only reads
+    /// the calendar if access was already given on Today; the wizard never asks.
+    private func addCalendarOccasions() async {
+        let newDays = details.days.indices.filter { !hintedDays.contains(dates.startOfDay(for: details.days[$0].date)) }
+        guard calendar.access == .granted, let first = newDays.first, let last = newDays.last,
+              let end = dates.date(byAdding: .day, value: 1, to: dates.startOfDay(for: details.days[last].date))
+        else { return }
+        let events = await calendar.events(from: dates.startOfDay(for: details.days[first].date), to: end)
+        let hints = events.compactMap { event in
+            OccasionHint.occasion(for: event.title).map {
+                CalendarHint(title: event.title, start: event.start, isAllDay: event.isAllDay, occasion: $0)
+            }
+        }
+        for index in newDays {
+            let day = dates.startOfDay(for: details.days[index].date)
+            let onDay = hints.filter { dates.isDate($0.start, inSameDayAs: day) }
+            hintedDays.insert(day)
+            guard !onDay.isEmpty else { continue }
+            calendarHints[day] = onDay
+            details.days[index].occasions = Self.inOrder(details.days[index].occasions + onDay.map(\.occasion))
+        }
+    }
+
+    /// The calendar events behind a day's occasions, if any.
+    func hints(onDay index: Int) -> [CalendarHint] {
+        details.days[safe: index].flatMap { calendarHints[dates.startOfDay(for: $0.date)] } ?? []
+    }
+
+    /// Unique, in the order the chips show them.
+    private static func inOrder(_ occasions: [Occasion]) -> [Occasion] {
+        Occasion.allCases.filter(occasions.contains)
     }
 
     /// Fetches weather for each stop's days that don't have it yet.
