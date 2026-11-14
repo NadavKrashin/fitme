@@ -253,8 +253,15 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
   - J.Crew, Uniqlo, COS, Levi's or Ralph Lauren pages in the app browser (they refused plain requests; a real
     browser may well get through, but untested)
   - on a phone
+- **Closet items (later the same day):** item detail has the same flow, with Undo in the toast. A card replaces the
+  bare button: unmatched it says "Use the shop's photo" and what that means; matched it says "Matched to <brand>"
+  with "View page" and "Change". Verified: 136 app tests (4 new for closet items: history kept, exact Undo, tagging
+  failure, failed download); in the simulator, both card states and the sheet's new explanation. Not run end to end
+  on a closet item in the simulator (the unit tests cover applying it).
+- **Gotcha found:** a button in the same list row as a `NavigationLink` never fires (the row takes the tap); the
+  card has its own row.
 - **Known rough edges:** shop pop-ups (Everlane's "20% off") cover the page until closed; some listed photos fail
-  to load in the grid; Find online isn't on closet items yet.
+  to load in the grid.
 
 ## Next steps, in order
 

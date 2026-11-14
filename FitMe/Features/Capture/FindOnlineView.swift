@@ -1,7 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// Find a draft's product page online: the owner says what they know, browses to the page, and picks a photo.
+/// Find an item's product page online: the owner says what they know, browses to the page, and picks a photo.
+/// Used for new items in the Inbox and for items already in the closet.
 struct FindOnlineView: View {
     private enum Step: Hashable {
         case browse(URL)
@@ -10,21 +11,26 @@ struct FindOnlineView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Query private var records: [ItemRecord]
-    let draft: CaptureDraft
-    /// Called once the draft has taken the product's photo and tags.
-    let onApplied: (ProductPage) -> Void
+    /// Applies the chosen photo from the chosen page; the sheet closes once it succeeds.
+    let apply: @MainActor (URL, ProductPage) async throws -> Void
     @State private var query: ProductQuery
     @State private var path: [Step] = []
 
-    init(draft: CaptureDraft, onApplied: @escaping (ProductPage) -> Void) {
-        self.draft = draft
-        self.onApplied = onApplied
-        _query = State(initialValue: ProductQuery(brand: draft.brand ?? "", itemDescription: draft.tags?.name ?? ""))
+    init(brand: String?, itemDescription: String, apply: @escaping @MainActor (URL, ProductPage) async throws -> Void) {
+        self.apply = apply
+        _query = State(initialValue: ProductQuery(brand: brand ?? "", itemDescription: itemDescription))
     }
 
     var body: some View {
         NavigationStack(path: $path) {
             Form {
+                Section {} footer: {
+                    Text(
+                        "Tell FitMe what you know about this item and it searches the web. You open the product's "
+                            + "page and pick its photo; nothing changes until you do."
+                    )
+                    .font(.subheadline)
+                }
                 Section {
                     TextField("Brand, e.g. J.Crew", text: $query.brand)
                         .autocorrectionDisabled()
@@ -68,7 +74,7 @@ struct FindOnlineView: View {
             .editorialRow()
             .tint(Theme.terracotta)
             .editorialCanvas()
-            .navigationTitle("Find online")
+            .navigationTitle("Find it online")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -81,8 +87,8 @@ struct FindOnlineView: View {
                 case let .browse(url):
                     ProductBrowserView(start: url) { path.append(.pick(query.applyingBrand(to: $0))) }
                 case let .pick(page):
-                    ProductPickView(page: page, draft: draft) {
-                        onApplied(page)
+                    ProductPickView(page: page) { photo in
+                        try await apply(photo, page)
                         dismiss()
                     }
                 }
@@ -114,8 +120,7 @@ struct FindOnlineView: View {
 
 #if DEBUG
 #Preview {
-    FindOnlineView(draft: PreviewData.productDraft) { _ in }
-        .environment(PreviewData.captureModel)
+    FindOnlineView(brand: nil, itemDescription: "Navy t-shirt") { _, _ in }
         .modelContainer(PreviewData.container)
 }
 #endif

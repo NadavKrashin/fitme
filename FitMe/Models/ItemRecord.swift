@@ -68,6 +68,27 @@ final class ItemRecord {
         isAvailable = item.isAvailable
     }
 
+    /// Everything a product photo replaces, so it can be put back.
+    struct Snapshot {
+        let item: Item
+        let photo: Data?
+        let cutout: Data?
+        let brand: String?
+        let productURL: URL?
+    }
+
+    var snapshot: Snapshot {
+        Snapshot(item: item, photo: photo, cutout: cutout, brand: brand, productURL: productURL)
+    }
+
+    func restore(_ snapshot: Snapshot) {
+        update(from: snapshot.item)
+        photo = snapshot.photo
+        cutout = snapshot.cutout
+        brand = snapshot.brand
+        productURL = snapshot.productURL
+    }
+
     var item: Item {
         Item(
             id: itemID,

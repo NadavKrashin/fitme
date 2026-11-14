@@ -2,10 +2,9 @@ import SwiftUI
 
 /// Confirm a product page as the item and choose which of its photos to use.
 struct ProductPickView: View {
-    @Environment(CaptureModel.self) private var capture
     let page: ProductPage
-    let draft: CaptureDraft
-    let onApplied: () -> Void
+    /// Applies the chosen photo to the item being matched.
+    let apply: @MainActor (URL) async throws -> Void
     @State private var selected: URL?
     @State private var isApplying = false
     @State private var errorMessage: String?
@@ -77,8 +76,7 @@ struct ProductPickView: View {
         isApplying = true
         defer { isApplying = false }
         do {
-            try await capture.useProductPhoto(at: selection, from: page, for: draft)
-            onApplied()
+            try await apply(selection)
         } catch let error as ProductImportError {
             errorMessage = error.userMessage
         } catch {
@@ -127,10 +125,8 @@ private struct PhotoChoice: View {
 #Preview {
     NavigationStack {
         if let page = PreviewData.productPage {
-            ProductPickView(page: page, draft: PreviewData.productDraft) {}
+            ProductPickView(page: page) { _ in }
         }
     }
-    .environment(PreviewData.captureModel)
-    .modelContainer(PreviewData.container)
 }
 #endif

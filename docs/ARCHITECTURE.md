@@ -105,6 +105,10 @@ DraftReviewView ─► FindOnlineView (brand, item, style number, notes, or a pa
 - **Parsing is in Swift** (`ProductPage`), so it is unit-tested; the page script only collects raw data.
 - **The shop's listing is sent to the tagger as text** and is trusted over the photo for type, material and fit.
 - **The original photo is kept** (`originalImage`); brand and product URL are stored on the draft and the item.
+- **Closet items** use the same sheet. `CaptureModel.useProductPhoto(…for: ItemRecord)` keeps the item's id, wear
+  history and laundry state, and returns an `ItemRecord.Snapshot` for Undo.
+- **`ProductMatchCard`** (`UI/`) is the one entry point on both screens: it explains the feature when unmatched and
+  shows the brand, "View page" and "Change" once matched.
 
 ## Daily outfits (Phase 2)
 

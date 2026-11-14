@@ -67,7 +67,8 @@ Goal: catalog about 100 items in **under 60–90 minutes**, with at least 85% of
 - [ ] Closet filters by color and formality (only category and search exist).
 - [x] **Find online** (2026-11-14): from the review screen, type the brand and what you know (or paste a link),
   browse to the product page in the app, pick a photo; the item is re-cut and re-tagged from the shop's listing.
-- [ ] Find online from an item already in the closet (today only from the Inbox review screen).
+- [x] Find online from closet items too (2026-11-14), with Undo; wear history and laundry state are kept. A card
+  explains it ("Use the shop's photo") and, once matched, shows "Matched to <brand>" with View page and Change.
 - [ ] Real-world hit rate: try Find online on 10 real items across brands (J.Crew, Uniqlo, Levi's, COS…).
 - [x] First real trial (Nadav, about 10 photos, 2026-11-06): tags fine and flow fast. Fixed:
   - worn photos kept the face and legs → crop to Claude's item box

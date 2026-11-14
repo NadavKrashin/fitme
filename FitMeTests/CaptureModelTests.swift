@@ -221,4 +221,88 @@ struct CaptureModelTests {
         #expect(draft.proposedItem.name == "Broken-in tee")
         #expect(draft.status == .failed)
     }
+
+    // MARK: Product photos for closet items
+
+    /// A closet item that has been worn, put in the laundry, and edited by hand.
+    private func wornRecord() -> ItemRecord {
+        var item = Item(
+            id: "tee",
+            name: "My navy tee",
+            category: .top,
+            colors: [ItemColor(hex: "#222222")],
+            formality: 2,
+            warmth: 2
+        )
+        item.wearCount = 4
+        item.lastWorn = Date(timeIntervalSince1970: 1_790_000_000)
+        item.isAvailable = false
+        let record = ItemRecord(item: item, photo: Data("old-photo".utf8), cutout: Data("old-cutout".utf8))
+        container.mainContext.insert(record)
+        return record
+    }
+
+    @Test func aClosetItemTakesTheProductPhotoAndTagsButKeepsItsHistory() async throws {
+        let record = wornRecord()
+        let page = Self.productPage
+
+        let change = try await model().useProductPhoto(at: page.imageURLs[0], from: page, for: record)
+
+        #expect(record.cutout == Data("cutout".utf8) + Data("product-image".utf8))
+        #expect(record.photo == Data("photo".utf8) + Data("product-image".utf8))
+        #expect(record.colors.map(\.hex) == ["#1F2A44"])
+        #expect(record.name == "Tagged from the listing")
+        #expect(record.brand == "J.Crew")
+        #expect(record.productURL == page.url)
+        #expect(record.itemID == "tee")
+        #expect(record.wearCount == 4)
+        #expect(record.lastWorn == Date(timeIntervalSince1970: 1_790_000_000))
+        #expect(record.isAvailable == false)
+        #expect(change.taggingMessage == nil)
+    }
+
+    @Test func undoPutsTheClosetItemBackExactly() async throws {
+        let record = wornRecord()
+        let before = record.item
+        let page = Self.productPage
+        let capture = model()
+
+        let change = try await capture.useProductPhoto(at: page.imageURLs[0], from: page, for: record)
+        capture.restore(record, to: change.previous)
+
+        #expect(record.name == "My navy tee")
+        #expect(record.colors.map(\.hex) == ["#222222"])
+        #expect(record.cutout == Data("old-cutout".utf8))
+        #expect(record.photo == Data("old-photo".utf8))
+        #expect(record.brand == nil)
+        #expect(record.productURL == nil)
+        #expect(record.isAvailable == before.isAvailable)
+        #expect(record.wearCount == 4)
+    }
+
+    @Test func whenRetaggingAClosetItemFailsItKeepsItsTagsAndTakesThePhoto() async throws {
+        let record = wornRecord()
+        let page = Self.productPage
+
+        let change = try await model(tagger: FakeTagger(error: ClaudeError.missingAPIKey))
+            .useProductPhoto(at: page.imageURLs[0], from: page, for: record)
+
+        #expect(record.name == "My navy tee")
+        #expect(record.cutout == Data("cutout".utf8) + Data("product-image".utf8))
+        #expect(record.colors.map(\.hex) == ["#1F2A44"], "colors follow the photo the closet now shows")
+        #expect(change.taggingMessage == ClaudeError.missingAPIKey.userMessage)
+    }
+
+    @Test func aFailedDownloadLeavesTheClosetItemAlone() async {
+        let record = wornRecord()
+        let page = Self.productPage
+
+        await #expect(throws: ProductImportError.downloadFailed) {
+            try await model(transport: RecordingTransport(status: 404, body: ""))
+                .useProductPhoto(at: page.imageURLs[0], from: page, for: record)
+        }
+        #expect(record.cutout == Data("old-cutout".utf8))
+        #expect(record.name == "My navy tee")
+        #expect(record.productURL == nil)
+    }
 }

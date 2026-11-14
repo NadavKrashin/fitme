@@ -17,6 +17,13 @@ enum ProductImportError: Error, Equatable {
     }
 }
 
+/// What applying a product photo to a closet item changed, so it can be undone.
+struct ProductPhotoChange {
+    let previous: ItemRecord.Snapshot
+    /// Set when the photo was applied but Claude couldn't re-tag it.
+    let taggingMessage: String?
+}
+
 /// Turns imported photos into reviewed closet items: photo → draft → processed and tagged → confirmed.
 ///
 /// Lives for the whole app session so processing continues while the user browses elsewhere.
@@ -115,13 +122,7 @@ final class CaptureModel {
     /// Replaces the draft's photo with one from its product page and re-tags it with what the shop states.
     /// The owner's original photo is kept. If only the tagging fails, the new photo stays with the old tags.
     func useProductPhoto(at imageURL: URL, from page: ProductPage, for draft: CaptureDraft) async throws {
-        inFlight += 1
-        defer { inFlight -= 1 }
-        let image = try await download(imageURL)
-        let job = Job(draftID: draft.draftID, image: image, listing: page.listingText)
-        let outcome = await Self.run(job, processor: processor, tagger: tagger)
-        guard let photo = outcome.photo else { throw ProductImportError.unreadablePhoto }
-
+        let (photo, outcome) = try await productPhoto(at: imageURL, from: page, id: draft.draftID)
         draft.photo = photo.photoJPEG
         draft.cutout = photo.cutoutPNG
         draft.colors = photo.colors.map(StoredColor.init)
@@ -132,6 +133,46 @@ final class CaptureModel {
         draft.brand = page.brand
         draft.productURL = page.url
         save()
+    }
+
+    /// Gives a closet item the shop's photo and tags. Wear history and availability stay as they are.
+    /// If only the tagging fails, the item keeps its tags and takes the new photo and colors.
+    /// - Returns: What the item was before, for Undo, and why it wasn't re-tagged, if it wasn't.
+    func useProductPhoto(at imageURL: URL, from page: ProductPage, for record: ItemRecord) async throws
+        -> ProductPhotoChange {
+        let (photo, outcome) = try await productPhoto(at: imageURL, from: page, id: record.itemID)
+        let previous = record.snapshot
+        var item = outcome.tags?.item(id: record.itemID, colors: photo.colors) ?? record.item
+        item.colors = photo.colors
+        item.isAvailable = record.isAvailable
+        record.update(from: item)
+        record.photo = photo.photoJPEG
+        record.cutout = photo.cutoutPNG
+        record.brand = page.brand
+        record.productURL = page.url
+        save()
+        return ProductPhotoChange(previous: previous, taggingMessage: outcome.errorMessage)
+    }
+
+    func restore(_ record: ItemRecord, to snapshot: ItemRecord.Snapshot) {
+        record.restore(snapshot)
+        save()
+    }
+
+    /// Downloads, cuts out and tags one product photo. Throws when there is no usable photo; a tagging failure
+    /// is reported in the outcome instead, because the photo alone is still worth having.
+    private func productPhoto(at imageURL: URL, from page: ProductPage, id: String) async throws
+        -> (ProcessedPhoto, Outcome) {
+        inFlight += 1
+        defer { inFlight -= 1 }
+        let image = try await download(imageURL)
+        let outcome = await Self.run(
+            Job(id: id, image: image, listing: page.listingText),
+            processor: processor,
+            tagger: tagger
+        )
+        guard let photo = outcome.photo else { throw ProductImportError.unreadablePhoto }
+        return (photo, outcome)
     }
 
     /// With no tags at all, the shop's name for the product still beats an empty field.
@@ -151,21 +192,21 @@ final class CaptureModel {
     // MARK: Processing
 
     private struct Job: Sendable {
-        let draftID: String
+        let id: String
         let image: Data
         /// The shop's description, when the image came from a product page.
         var listing: String?
     }
 
     private struct Outcome: Sendable {
-        let draftID: String
+        let id: String
         let photo: ProcessedPhoto?
         let tags: ItemTags?
         let errorMessage: String?
     }
 
     private func process(_ drafts: [CaptureDraft]) async {
-        let jobs = drafts.map { Job(draftID: $0.draftID, image: $0.originalImage) }
+        let jobs = drafts.map { Job(id: $0.draftID, image: $0.originalImage) }
         guard !jobs.isEmpty else { return }
         inFlight += jobs.count
         defer { inFlight -= jobs.count }
@@ -196,22 +237,22 @@ final class CaptureModel {
         do {
             photo = try await processor.process(job.image)
         } catch {
-            return Outcome(draftID: job.draftID, photo: nil, tags: nil, errorMessage: "Couldn't read this photo.")
+            return Outcome(id: job.id, photo: nil, tags: nil, errorMessage: "Couldn't read this photo.")
         }
         let tagged: TaggedPhoto
         do {
             tagged = try await tagger.tag(jpeg: photo.taggingJPEG, listing: job.listing)
         } catch {
-            return Outcome(draftID: job.draftID, photo: photo, tags: nil, errorMessage: message(for: error))
+            return Outcome(id: job.id, photo: photo, tags: nil, errorMessage: message(for: error))
         }
         if let box = tagged.itemBox, let cropped = try? await processor.crop(photo, to: box) {
             photo = cropped
         }
-        return Outcome(draftID: job.draftID, photo: photo, tags: tagged.tags, errorMessage: nil)
+        return Outcome(id: job.id, photo: photo, tags: tagged.tags, errorMessage: nil)
     }
 
     private func apply(_ outcome: Outcome) {
-        let id = outcome.draftID
+        let id = outcome.id
         guard let draft = try? context.fetch(FetchDescriptor<CaptureDraft>(predicate: #Predicate { $0.draftID == id }))
             .first
         else { return } // discarded while processing

@@ -152,21 +152,15 @@ struct DraftReviewView: View {
                 if let error = draft.errorMessage {
                     Text(error).font(.footnote).foregroundStyle(.red)
                 }
-                Button {
-                    isFindingOnline = true
-                } label: {
-                    Label(
-                        draft.productURL == nil ? "Find online" : "Find a different one",
-                        systemImage: "magnifyingglass"
-                    )
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.pill(.quiet))
             }
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
 
-            ProductSourceSection(brand: draft.brand, productURL: draft.productURL)
+            Section {
+                ProductMatchCard(brand: draft.brand, productURL: draft.productURL) { isFindingOnline = true }
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
 
             ItemEditorSections(item: $item)
         }
@@ -194,7 +188,8 @@ struct DraftReviewView: View {
         }
         .toast(toast) { toast = nil }
         .sheet(isPresented: $isFindingOnline) {
-            FindOnlineView(draft: draft) { page in
+            FindOnlineView(brand: draft.brand, itemDescription: item.name) { photo, page in
+                try await capture.useProductPhoto(at: photo, from: page, for: draft)
                 item = draft.proposedItem
                 toast = Toast(symbol: "checkmark.circle.fill", message: "Now using the photo from \(page.sourceName)")
             }
