@@ -16,6 +16,16 @@ extension Occasion {
     }
 }
 
+extension Palette {
+    var title: String {
+        switch self {
+        case .neutral: "Neutral"
+        case .balanced: "Mixed"
+        case .colorful: "Colorful"
+        }
+    }
+}
+
 extension ItemCategory {
     var title: String {
         switch self {

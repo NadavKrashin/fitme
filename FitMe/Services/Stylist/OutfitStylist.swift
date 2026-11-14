@@ -66,9 +66,13 @@ struct ClaudeStylist: OutfitStylist {
         var lines = [
             "Occasion: \(context.occasion.title).",
             "Feels like \(Int(weather.feelsLikeC.rounded()))°C\(weather.isRainy ? ", rain likely" : "").",
-            "",
-            "Candidates:",
         ]
+        switch context.palette {
+        case .neutral: lines.append("Color: keep it neutral.")
+        case .colorful: lines.append("Color: in the mood for color.")
+        case .balanced: break
+        }
+        lines += ["", "Candidates:"]
         for (label, candidate) in zip(labels, candidates) {
             lines.append("\(label): " + candidate.outfit.items.map(describe).joined(separator: " + "))
         }

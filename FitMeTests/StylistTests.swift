@@ -49,6 +49,16 @@ struct StylistTests {
         #expect(!brief.contains("D: "))
     }
 
+    @Test func briefPassesOnTheColorMood() throws {
+        let options = try candidates(2)
+        let neutral = OutfitContext(occasion: .casual, palette: .neutral)
+        let colorful = OutfitContext(occasion: .casual, palette: .colorful)
+
+        #expect(ClaudeStylist.brief(candidates: options, context: neutral).contains("Color: keep it neutral."))
+        #expect(ClaudeStylist.brief(candidates: options, context: colorful).contains("Color: in the mood for color."))
+        #expect(!ClaudeStylist.brief(candidates: options, context: OutfitContext(occasion: .casual)).contains("Color:"))
+    }
+
     @Test func schemaOnlyAllowsTheGivenLabels() throws {
         let data = try JSONEncoder().encode(ClaudeStylist.schema(labels: ["A", "B"]))
         let text = try #require(String(data: data, encoding: .utf8))

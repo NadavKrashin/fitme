@@ -185,6 +185,19 @@ private struct OutfitPlanner: View {
             Slider(value: $model.feelsLikeC, in: TodayModel.temperatureRange, step: 1)
                 .tint(Theme.terracotta)
                 .accessibilityLabel("Feels-like temperature")
+            HStack(spacing: 8) {
+                Text("Color")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.inkMuted)
+                Spacer()
+                ForEach(Palette.allCases, id: \.self) { palette in
+                    ChipButton(title: palette.title, isOn: model.palette == palette) {
+                        model.palette = palette
+                    }
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Color mood")
         }
         .card()
     }
@@ -300,6 +313,7 @@ private struct OutfitPlanner: View {
         let occasion: Occasion
         let feelsLikeC: Double
         let isRainy: Bool
+        let palette: Palette
         let itemIDs: [String]
 
         @MainActor
@@ -307,6 +321,7 @@ private struct OutfitPlanner: View {
             occasion = model.occasion
             feelsLikeC = model.feelsLikeC
             isRainy = model.isRainy
+            palette = model.palette
             itemIDs = closet.map(\.id)
         }
     }

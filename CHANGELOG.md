@@ -59,3 +59,6 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - On a mild, dry day outfits no longer add a jacket or mid layer you don't need, like a rain shell over a hoodie.
 - Shoes now suit the outfit: brown with navy and earth tones, black for charcoal and formal wear, sneakers kept
   casual. Outfits that tie take turns day to day instead of always picking the same pair.
+- Neutral outfits come first; color shows up when it really works. A new Color choice on Today (Neutral, Mixed,
+  Colorful) sets the mood for the day.
+- Trip packing no longer plans the same trousers more than three times between washes.

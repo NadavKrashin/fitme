@@ -47,7 +47,7 @@ public struct OutfitScorer: Sendable {
         let core = outfit.coreItems
         let w = weights
         var b = ScoreBreakdown(
-            color: Self.colorHarmony(outfit),
+            color: Self.colorHarmony(outfit, palette: context.palette),
             pattern: Self.patternBalance(core),
             formality: Self.formalityCohesion(core),
             occasion: Self.occasionFit(core, occasion: context.occasion),
@@ -72,44 +72,61 @@ public struct OutfitScorer: Sendable {
 
     // MARK: Components
 
-    /// Neutrals go with anything; one accent color family is the safest win; several families must relate by hue.
-    public static func colorHarmony(_ outfit: Outfit) -> Double {
-        let chromatic = outfit.coreItems
-            .flatMap(\.significantColors)
-            .map(\.lch)
-            .filter { $0.neutrality == .chromatic }
-
-        // Colors within ~25° of hue read as one family (tonal / monochrome dressing).
-        var families: [OKLCH] = []
-        for color in chromatic where !families.contains(where: { OKLCH.hueDistance($0.h, color.h) <= 25 }) {
-            families.append(color)
-        }
-
-        var score: Double
-        switch families.count {
-        case 0:
-            score = 0.85
-        case 1:
-            score = 0.95
-        default:
-            var pairs: [Double] = []
-            for i in 0 ..< families.count {
-                for j in (i + 1) ..< families.count {
-                    pairs.append(huePairScore(families[i], families[j]))
-                }
-            }
-            score = pairs.reduce(0, +) / Double(pairs.count) - 0.12 * Double(families.count - 2)
-        }
-
-        // Different hues at the same lightness between top and bottom look muddy.
-        if let upper = (outfit.top ?? outfit.onePiece)?.primaryColor?.lch,
-           let lower = outfit.bottom?.primaryColor?.lch,
-           upper.neutrality != .neutral, lower.neutrality != .neutral,
-           abs(upper.L - lower.L) < 0.06,
-           OKLCH.hueDistance(upper.h, lower.h) > 30 {
+    /// Color, after menswear color guides: outfits are built on neutrals (black, grey, white, navy, denim, beige,
+    /// brown, camel, khaki, olive). An accent color is a choice, not a requirement, and several accents must relate
+    /// by hue. About three colors read as deliberate; more looks busy. `palette` is how much color the user is in the
+    /// mood for.
+    public static func colorHarmony(_ outfit: Outfit, palette: Palette = .balanced) -> Double {
+        let colors = outfit.coreItems.flatMap(\.significantColors)
+        var score = accentScore(accentFamilies(colors.map(\.lch)), palette: palette)
+        score -= 0.05 * Double(max(0, Set(colors.map(\.family)).count - 3))
+        if isMuddy(outfit) {
             score -= 0.1
         }
         return min(max(score, 0), 1)
+    }
+
+    /// Chromatic colors grouped by hue: within ~25° they read as one family (tonal dressing).
+    static func accentFamilies(_ colors: [OKLCH]) -> [OKLCH] {
+        var families: [OKLCH] = []
+        for color in colors where color.neutrality == .chromatic {
+            if !families.contains(where: { OKLCH.hueDistance($0.h, color.h) <= 25 }) {
+                families.append(color)
+            }
+        }
+        return families
+    }
+
+    static func accentScore(_ accents: [OKLCH], palette: Palette) -> Double {
+        guard accents.count > 1 else {
+            switch (palette, accents.first) {
+            case (.colorful, nil): return 0.8
+            case (_, nil), (.colorful, _): return 1
+            case (.balanced, _): return 0.95
+            case let (.neutral, accent?): return accent.C < 0.13 ? 0.75 : 0.6
+            }
+        }
+        var pairs: [Double] = []
+        for i in 0 ..< accents.count {
+            for j in (i + 1) ..< accents.count {
+                pairs.append(huePairScore(accents[i], accents[j]))
+            }
+        }
+        let harmony = pairs.reduce(0, +) / Double(pairs.count) - 0.12 * Double(accents.count - 2)
+        switch palette {
+        case .neutral: return harmony * 0.5
+        case .balanced: return harmony
+        case .colorful: return min(1, harmony + 0.05)
+        }
+    }
+
+    /// Different hues at the same lightness between top and bottom look muddy.
+    static func isMuddy(_ outfit: Outfit) -> Bool {
+        guard let upper = (outfit.top ?? outfit.onePiece)?.primaryColor?.lch,
+              let lower = outfit.bottom?.primaryColor?.lch,
+              upper.neutrality != .neutral, lower.neutrality != .neutral
+        else { return false }
+        return abs(upper.L - lower.L) < 0.06 && OKLCH.hueDistance(upper.h, lower.h) > 30
     }
 
     static func huePairScore(_ a: OKLCH, _ b: OKLCH) -> Double {

@@ -91,14 +91,16 @@ struct PackingHistoryTests {
 
     /// A shirt that came home unworn from three trips stays home when the closet has an equal alternative.
     @Test func itemsThatCameHomeUnwornStayHome() {
+        // A plain chambray shirt: the closet's other casual shirts can stand in for it.
+        let shirt = Fixtures.item("t10")
         let before = PackingOptimizer().pack(closet: Fixtures.closet, trip: trip)
-        #expect(before.items.contains(Fixtures.item("t16")))
+        #expect(before.items.contains(shirt))
 
         var options = PackingOptions()
-        options.packedUnworn = ["t16": 3]
+        options.packedUnworn = [shirt.id: 3]
         let after = PackingOptimizer(options: options).pack(closet: Fixtures.closet, trip: trip)
 
-        #expect(!after.items.contains(Fixtures.item("t16")))
+        #expect(!after.items.contains(shirt))
         #expect(after.uncovered.isEmpty, "\(after.summary)")
     }
 

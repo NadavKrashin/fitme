@@ -20,12 +20,6 @@ struct ScorerTests {
         #expect(good.total > bad.total + 10)
     }
 
-    @Test func oneAccentColorBeatsAllNeutrals() {
-        let accent = Fixtures.outfit("t13", "b05", "s01") // rust polo, navy chinos
-        let allNeutral = Fixtures.outfit("t07", "b05", "s01")
-        #expect(OutfitScorer.colorHarmony(accent) > OutfitScorer.colorHarmony(allNeutral))
-    }
-
     @Test func twoBoldPatternsArePenalizedUnlessTheyShareAColor() {
         let floral = makeItem("floral", .top, ["#F1E6D2", "#C2463E"], pattern: .floral)
         let check = makeItem("check", .bottom, ["#2E6B4F", "#1F2A44"], pattern: .check)

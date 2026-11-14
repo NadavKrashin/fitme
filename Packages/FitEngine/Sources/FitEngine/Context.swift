@@ -83,17 +83,35 @@ public struct Weather: Codable, Hashable, Sendable {
     }
 }
 
+/// How much color the user is in the mood for.
+public enum Palette: String, Codable, CaseIterable, Sendable {
+    /// Neutrals only, unless nothing else works.
+    case neutral
+    /// Neutrals first; an accent when it earns its place.
+    case balanced
+    /// An accent color first.
+    case colorful
+}
+
 /// Everything about "now" that outfit choice depends on.
 public struct OutfitContext: Sendable {
     public var occasion: Occasion
     public var weather: Weather
     public var date: Date
     public var profile: StyleProfile?
+    public var palette: Palette
 
-    public init(occasion: Occasion, weather: Weather = .mild, date: Date = Date(), profile: StyleProfile? = nil) {
+    public init(
+        occasion: Occasion,
+        weather: Weather = .mild,
+        date: Date = Date(),
+        profile: StyleProfile? = nil,
+        palette: Palette = .balanced
+    ) {
         self.occasion = occasion
         self.weather = weather
         self.date = date
         self.profile = profile
+        self.palette = palette
     }
 }

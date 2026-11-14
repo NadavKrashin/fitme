@@ -137,12 +137,12 @@ public struct PackingOptimizer: Sendable {
         Array(Set([outfit.baseKey] + outfit.items.filter(\.isStatement).map(\.id))).sorted()
     }
 
-    /// Keeps the best outfit per once-per-cycle combination, so a base's version without a statement piece survives
-    /// alongside the one with it.
+    /// Keeps the best outfit per once-per-cycle combination and bottom, so a base's version without a statement piece
+    /// survives alongside the one with it, and so does its version with other trousers once one pair is worn out.
     private func merged(_ state: [String: ScoredOutfit], with outfits: [ScoredOutfit]) -> [String: ScoredOutfit] {
         var result = state
         for outfit in outfits {
-            let key = Self.oncePerCycle(outfit.outfit).joined(separator: "|")
+            let key = (Self.oncePerCycle(outfit.outfit) + [outfit.outfit.bottom?.id ?? ""]).joined(separator: "|")
             if let current = result[key], !OutfitGenerator.ranking(outfit, current) {
                 continue
             }
@@ -151,13 +151,15 @@ public struct PackingOptimizer: Sendable {
         return result
     }
 
-    /// Gives each slot its own base (and statement pieces) within a laundry cycle, scarcest groups first.
-    /// Coverage dominates (1 per filled slot); quality breaks ties (up to 0.5 more each).
+    /// Gives each slot its own base (and statement pieces) within a laundry cycle, scarcest groups first, wearing no
+    /// bottom more often than the day plan allows. Coverage dominates (1 per filled slot); quality breaks ties (up to
+    /// 0.5 more each).
     private func match(_ states: GroupStates, plan: TripPlan) -> (value: Double, unfilled: [Int: Int]) {
         var value = 0.0
         var unfilled: [Int: Int] = [:]
         for cycle in plan.cycles {
             var used = Set<String>()
+            var bottomWears: [String: Int] = [:]
             let scarcestFirst = cycle.sorted {
                 (states[plan.slots[$0].group].count, $0) < (states[plan.slots[$1].group].count, $1)
             }
@@ -165,9 +167,15 @@ public struct PackingOptimizer: Sendable {
                 let group = plan.slots[slotIndex].group
                 let pick = states[group].values
                     .filter { used.isDisjoint(with: Self.oncePerCycle($0.outfit)) }
+                    .filter {
+                        $0.outfit.bottom.map { bottomWears[$0.id, default: 0] < options.maxWearsPerBottom } ?? true
+                    }
                     .max { OutfitGenerator.ranking($1, $0) }
                 if let pick {
                     used.formUnion(Self.oncePerCycle(pick.outfit))
+                    if let bottom = pick.outfit.bottom {
+                        bottomWears[bottom.id, default: 0] += 1
+                    }
                     value += 1 + 0.5 * pick.score / 100
                 } else {
                     unfilled[group, default: 0] += 1

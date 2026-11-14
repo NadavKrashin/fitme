@@ -5,6 +5,24 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Neutrals first, color by mood
+
+- **Decision:**
+  - Color scoring follows menswear color guides: an all-neutral outfit (black, grey, white, navy, denim, beige,
+    brown, camel, khaki, olive) scores full marks; one accent scores a little less, so it wins only when it makes the
+    outfit better on other counts or your taste favors it. Two or more accents must relate by hue, as before. More
+    than three color groups in one outfit costs 0.05 each (the "rule of three").
+  - A color mood on Today (`Palette`: Neutral, Mixed, Colorful; Mixed by default) shifts this: Neutral pushes accents
+    well back, Colorful puts an outfit with one accent ahead of an all-neutral one. "Ask the stylist" is told the mood.
+  - Packing now counts bottom wears in its coverage check, the same limit the day plan applies.
+- **Why:** the engine scored a lone accent above an all-neutral outfit (0.95 against 0.85), so the green polo, rust
+  polo and floral shirt led nearly every list. Nadav doesn't always want color: only when it looks good or he's in the
+  mood. The packing change surfaced here: with neutrals preferred, one pair of jeans covered six outfits on a five-day
+  trip, above the three-wear limit the day plan enforces, because capsule selection never checked that limit.
+- **Sources:** [Real Men Real Style, 3-color outfits](https://www.realmenrealstyle.com/3-color-outfits/),
+  [The VOU, three-colour rule](https://thevou.com/blog/three-colour-rule-style-guide-men/),
+  [Westwood Hart, classic menswear palette](https://westwoodhart.com/blogs/westwood-hart/mens-wardrobe-color-combinations-classic-menswear-palette).
+
 ### 2026-11-14: Shoes are scored, and ties rotate by day
 
 - **Decision:**

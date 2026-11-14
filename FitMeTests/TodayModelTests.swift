@@ -183,4 +183,11 @@ struct TodayModelTests {
         model.isRainy = true
         #expect(model.context().weather.isRainy)
     }
+
+    @Test func colorMoodReachesTheEngine() {
+        let model = makeTodayModel()
+        #expect(model.context().palette == .balanced)
+        model.palette = .neutral
+        #expect(model.context().palette == .neutral)
+    }
 }

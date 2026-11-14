@@ -37,6 +37,8 @@ final class TodayModel {
     var occasion: Occasion = .casual
     var feelsLikeC = 20.0
     var isRainy = false
+    /// How much color the user is in the mood for; neutrals first by default.
+    var palette: Palette = .balanced
     private(set) var suggestions: [ScoredOutfit] = []
     /// Outfits hidden with 👎 this session.
     private(set) var dismissed: Set<String> = []
@@ -74,7 +76,8 @@ final class TodayModel {
             occasion: occasion,
             weather: Weather(feelsLikeC: feelsLikeC, precipitationChance: isRainy ? Self.rainyChance : 0),
             date: date,
-            profile: profile
+            profile: profile,
+            palette: palette
         )
     }
 
