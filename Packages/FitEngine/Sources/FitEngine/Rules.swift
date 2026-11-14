@@ -35,7 +35,7 @@ public enum Rules {
             return false
         }
 
-        let weather = context.weather
+        let weather = context.dressingWeather
         let legs = weather.legsC
         switch item.category {
         case .midLayer:
@@ -47,8 +47,10 @@ public enum Rules {
             }
             return !(item.warmth >= 4 && weather.coolestC >= 16)
         case .bottom:
-            // Shorts from the low twenties (guides put them at 23° and up, with long sleeves a little lower).
-            return !(item.warmth <= 1 && legs < 20) && !(item.warmth >= 4 && legs >= 24)
+            // Shorts from the low twenties (guides put them at 23° and up, with long sleeves a little lower); runners
+            // wear them on much cooler days.
+            let shortsFrom = context.occasion == .sport ? 14.0 : 20
+            return !(item.warmth <= 1 && legs < shortsFrom) && !(item.warmth >= 4 && legs >= 24)
         case .shoes:
             // Sandals on warm dry days; boots for cool or wet ones.
             return !(item.warmth <= 1 && (legs < 20 || weather.isRainy))
@@ -77,7 +79,7 @@ public enum Rules {
         if count(.midLayer) > 1 || count(.outerwear) > 1 {
             result.append(.structure("too many layers"))
         }
-        if count(.midLayer) == 1, count(.outerwear) == 1, !context.weather.allowsStackedLayers {
+        if count(.midLayer) == 1, count(.outerwear) == 1, !context.dressingWeather.allowsStackedLayers {
             result.append(.tooManyLayers)
         }
         if !partial, count(.shoes) != 1 {
@@ -115,7 +117,7 @@ public enum Rules {
     }
 
     private static func weatherViolations(of outfit: Outfit, context: OutfitContext) -> [Violation] {
-        let weather = context.weather
+        let weather = context.dressingWeather
         let cool = Weather.warmthTarget(at: weather.coolestC)
         let warm = Weather.warmthTarget(at: weather.warmestC)
         var result: [Violation] = []

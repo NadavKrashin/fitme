@@ -150,4 +150,16 @@ public struct OutfitContext: Sendable {
         self.profile = profile
         self.palette = palette
     }
+
+    /// The weather as the body feels it: a run or a workout warms you up, and running guides dress for about 6°
+    /// warmer than it is.
+    public var dressingWeather: Weather {
+        guard occasion == .sport else { return weather }
+        var warmer = weather
+        warmer.feelsLikeC += Self.exertionC
+        warmer.dayRange = weather.dayRange.map { ($0.lowerBound + Self.exertionC) ... ($0.upperBound + Self.exertionC) }
+        return warmer
+    }
+
+    private static let exertionC = 6.0
 }

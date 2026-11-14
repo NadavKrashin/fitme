@@ -32,8 +32,9 @@ struct RulesTests {
     /// belongs when rain is likely.
     @Test func aMildDayOnlyTakesALayerThatsNeeded() {
         let withShell = Fixtures.outfit("t19", "o06", "b16", "s04")
-        let dry = Fixtures.context(.sport, Weather(feelsLikeC: 21, precipitationChance: 0))
-        let wet = Fixtures.context(.sport, Weather(feelsLikeC: 21, precipitationChance: 0.6))
+        // Casual: on a run the effort makes any hoodie-and-shell too warm at 21°, which isn't what this checks.
+        let dry = Fixtures.context(.casual, Weather(feelsLikeC: 21, precipitationChance: 0))
+        let wet = Fixtures.context(.casual, Weather(feelsLikeC: 21, precipitationChance: 0.6))
         #expect(Rules.violations(of: withShell, context: dry).contains(.unneededLayer))
         #expect(Rules.isValid(withShell, context: wet))
         #expect(Rules.isValid(Fixtures.outfit("t19", "b16", "s04"), context: dry))

@@ -5,6 +5,17 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Runs dress for the effort; activity kit is a preference (supersedes part of "Hike is its own occasion")
+
+- **Decision:**
+  - Sport dresses for 6° warmer than it is (`OutfitContext.dressingWeather`), as running guides advise, and running
+    shorts are allowed from 14° as felt during the run (20° elsewhere).
+  - Hiking trousers and boots are no longer banned from Sport. `Rules.kitFit` scores the activity kit (sport: 0.3 per
+    hiking piece; hike: 0.7 without boots; beach: sandals 1, trainers 0.7, others 0.85), and the total is scaled by
+    `0.85 + 0.15 × kit`, so the wrong kit costs up to 15% and only fills in when the closet has nothing else.
+- **Why:** with the ban, the demo closet (whose only long sport trousers are hiking pants) had no Sport outfit at all
+  at 14° and below, and only 21 across 18 sport conditions.
+
 ### 2026-11-14: The stylist sees what the engine sees
 
 - **Decision:** "Ask the stylist" now describes each piece with its fabric, dress code, warmth and style tags, and

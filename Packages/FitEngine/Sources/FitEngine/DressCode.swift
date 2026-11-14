@@ -2,8 +2,8 @@ import Foundation
 
 /// Dress codes, after menswear dress-code guides. Formal (cocktail to business formal) is a dress shirt, tailored
 /// trousers, a tailored jacket and dress shoes. Work is business casual: collared shirts and fine knits, chinos, wool
-/// trousers or dark denim, leather shoes. Smart casual and dates are a step down, without gym or hiking gear. A run or
-/// the gym wants training kit, not hiking boots; the beach wants shorts, light tops and sandals.
+/// trousers or dark denim, leather shoes. Smart casual and dates are a step down, without gym or hiking gear. The
+/// beach leaves boots and hiking gear at home; activity preferences are scored in `kitFit`.
 extension Rules {
     /// Whether a piece belongs in the occasion's dress code at all.
     static func suitsDressCode(_ item: Item, context: OutfitContext) -> Bool {
@@ -17,15 +17,12 @@ extension Rules {
             return !(isCore && isGear) && suitsBusinessCasual(item)
         case .smartCasual, .date:
             return !(isCore && isGear) && !(item.category == .top && item.pattern == .graphic)
-        case .sport:
-            // Hiking boots and hiking trousers aren't for running.
-            return !([.bottom, .shoes].contains(item.category) && item.styleTags.contains(.outdoor))
         case .beach:
             guard !(isCore && item.styleTags.contains(.outdoor)) else { return false }
-            let warm = context.weather.legsC >= 22
+            let warm = context.dressingWeather.legsC >= 22
             return !(warm && item.category == .bottom && item.warmth >= 3)
                 && !(warm && item.category == .shoes && item.warmth >= 4)
-        case .casual, .hike, .travel:
+        case .casual, .sport, .hike, .travel:
             return true
         }
     }
@@ -60,12 +57,20 @@ extension Rules {
         occasion == .formal ? outfit.midLayer.flatMap { $0.formality >= 4 ? $0 : nil } : nil
     }
 
-    /// How well shoes suit an activity: boots for a hike, sandals for the beach. 1 for everything else.
-    static func kitFit(_ shoes: Item, occasion: Occasion) -> Double {
+    /// How well an outfit suits an activity: training kit for a run (hiking trousers and boots only when there's
+    /// nothing else), boots for a hike, sandals for the beach. 1 for everything else.
+    static func kitFit(_ outfit: Outfit, occasion: Occasion) -> Double {
         switch occasion {
-        case .hike: shoes.styleTags.contains(.outdoor) ? 1 : 0.7
-        case .beach: shoes.warmth <= 1 ? 1 : (shoes.styleTags.contains(.sporty) ? 0.7 : 0.85)
-        default: 1
+        case .sport:
+            [outfit.bottom, outfit.shoes].compactMap(\.self).reduce(1) { fit, piece in
+                fit * (piece.styleTags.contains(.outdoor) ? 0.3 : 1)
+            }
+        case .hike:
+            outfit.shoes.map { $0.styleTags.contains(.outdoor) ? 1 : 0.7 } ?? 1
+        case .beach:
+            outfit.shoes.map { $0.warmth <= 1 ? 1 : ($0.styleTags.contains(.sporty) ? 0.7 : 0.85) } ?? 1
+        default:
+            1
         }
     }
 

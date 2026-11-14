@@ -30,6 +30,8 @@ public struct ScoreBreakdown: Equatable, Sendable {
     public var weather: Double
     public var shoes: Double
     public var style: Double
+    /// Whether the outfit is the right kit for an activity (run, hike, beach); 1 elsewhere. Scales the whole total.
+    public var kit: Double
     public var fit: Double
     public var statement: Double
     public var affinity: Double
@@ -55,10 +57,11 @@ public struct OutfitScorer: Sendable {
             pattern: Self.patternBalance(core),
             formality: Self.formalityCohesion(core),
             occasion: Self.occasionFit(core, occasion: context.occasion),
-            weather: partial ? Self.partialWeatherFit(outfit, weather: context.weather)
+            weather: partial ? Self.partialWeatherFit(outfit, weather: context.dressingWeather)
                 : Self.weatherFit(outfit, context: context),
             shoes: Self.shoePairing(outfit, occasion: context.occasion),
             style: Self.styleCoherence(core),
+            kit: Rules.kitFit(outfit, occasion: context.occasion),
             fit: Self.fitBalance(outfit),
             statement: Self.statementBudget(core),
             affinity: context.profile?.affinityScore(core) ?? 0.5,
@@ -70,7 +73,8 @@ public struct OutfitScorer: Sendable {
             + w.statement * b.statement + w.novelty * b.novelty
         let sum = w.color + w.pattern + w.formality + w.occasion + w.weather + w.shoes + w.style + w.fit
             + w.statement + w.novelty
-        let blend = weighted / sum * 100
+        // The wrong kit for an activity (hiking boots for a run) costs up to 15% however good it looks otherwise.
+        let blend = weighted / sum * 100 * (0.85 + 0.15 * b.kit)
         b.total = blend + (2 * b.affinity - 1) * w.learnedPoints
         return b
     }
@@ -176,7 +180,7 @@ public struct OutfitScorer: Sendable {
     }
 
     public static func weatherFit(_ outfit: Outfit, context: OutfitContext) -> Double {
-        let weather = context.weather
+        let weather = context.dressingWeather
         let cool = Weather.warmthTarget(at: weather.coolestC)
         let warm = Weather.warmthTarget(at: weather.warmestC)
         let tooCold = cool.lowerBound - Rules.upperWarmth(of: outfit)
@@ -277,7 +281,7 @@ public struct OutfitScorer: Sendable {
         if occasion == .formal, tone != .black {
             color *= 0.7
         }
-        return dressCode * color * Rules.kitFit(shoes, occasion: occasion)
+        return dressCode * color
     }
 
     /// Balanced silhouettes (one loose piece, one fitted) read as intentional.
