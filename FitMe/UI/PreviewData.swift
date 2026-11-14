@@ -78,16 +78,45 @@ enum PreviewData {
         }
     }()
 
+    /// A draft waiting for review, and a product page it could be matched to.
+    static let productDraft: CaptureDraft = {
+        let draft = CaptureDraft(originalImage: Data())
+        draft.status = .ready
+        draft.tags = ItemTags(
+            name: "Navy t-shirt",
+            category: .top,
+            subcategory: "t-shirt",
+            pattern: .solid,
+            formality: 2,
+            warmth: 1,
+            fit: .regular,
+            isStatement: false,
+            styleTags: [],
+            waterResistant: false
+        )
+        container.mainContext.insert(draft)
+        return draft
+    }()
+
+    static let productPage = ProductPage(snapshot: PageSnapshot(
+        url: "https://example.com/p/broken-in-tee",
+        title: "Broken-in tee",
+        jsonLD: [],
+        meta: ["og:title": "Broken-in tee", "og:image": "https://example.com/tee.jpg", "og:description": "Soft."],
+        images: []
+    ))
+
     static let captureModel = CaptureModel(
         processor: ImagePipeline(),
         tagger: PreviewTaggingService(),
+        transport: URLSession.shared,
         context: container.mainContext
     )
 }
 
 /// Answers instantly with plausible tags, so previews never call the network.
 struct PreviewTaggingService: TaggingService {
-    func tag(jpeg _: Data) async throws -> TaggedPhoto {
+    func tag(jpeg _: Data, listing _: String?) async throws -> TaggedPhoto {
         var tags = ItemTags.blank
         tags.name = "Preview item"
         tags.subcategory = "t-shirt"

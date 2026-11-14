@@ -26,7 +26,7 @@ struct ItemThumbnail: View {
 
     @ViewBuilder
     private var content: some View {
-        if let image, let uiImage = dependencies.thumbnails.image(for: item.id, data: image) {
+        if let image, let uiImage = dependencies.thumbnails.image(for: "\(item.id)-\(image.count)", data: image) {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFit()

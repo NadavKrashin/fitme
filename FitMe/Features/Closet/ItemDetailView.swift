@@ -38,6 +38,8 @@ struct ItemDetailView: View {
 
             ItemEditorSections(item: $item)
 
+            ProductSourceSection(brand: record.brand, productURL: record.productURL)
+
             Section {
                 Toggle("Available (not in the laundry)", isOn: $item.isAvailable)
                     .tint(Theme.terracotta)

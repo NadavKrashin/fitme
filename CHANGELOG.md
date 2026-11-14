@@ -27,6 +27,9 @@ User-visible changes per production release. Add entries under **Unreleased** as
   every change, with Undo.
 - Swap any planned outfit for another from the bag, and see when a plan repeats a top before the next wash.
 - "Check my bag": Claude reviews the whole bag against your days and suggests changes you apply with one tap.
+- **Find online:** when reviewing a new item, tell FitMe the brand and what it is (or paste a product link), open the
+  product page in the app, and pick the shop's photo. FitMe cuts it out and re-tags it from the shop's description,
+  and remembers the brand and product page. Your own photo is kept.
 - Trip mode: Today links to the trip in progress, and "Wear this" logs the outfit.
 - After a trip, tell FitMe what you wore. Pieces that came home unworn are less likely to be packed next time.
 - Reactions now visibly change suggestions: one ✕ keeps an outfit out of the next day's picks, one ♥ brings a look

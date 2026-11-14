@@ -5,6 +5,18 @@ import Observation
 import os
 import SwiftData
 
+enum ProductImportError: Error, Equatable {
+    case downloadFailed
+    case unreadablePhoto
+
+    var userMessage: String {
+        switch self {
+        case .downloadFailed: "Couldn't download that photo. Try another one."
+        case .unreadablePhoto: "That photo couldn't be read. Try another one."
+        }
+    }
+}
+
 /// Turns imported photos into reviewed closet items: photo → draft → processed and tagged → confirmed.
 ///
 /// Lives for the whole app session so processing continues while the user browses elsewhere.
@@ -22,11 +34,18 @@ final class CaptureModel {
 
     private let processor: any PhotoProcessing
     private let tagger: any TaggingService
+    private let transport: any HTTPTransport
     private let context: ModelContext
 
-    init(processor: any PhotoProcessing, tagger: any TaggingService, context: ModelContext) {
+    init(
+        processor: any PhotoProcessing,
+        tagger: any TaggingService,
+        transport: any HTTPTransport,
+        context: ModelContext
+    ) {
         self.processor = processor
         self.tagger = tagger
+        self.transport = transport
         self.context = context
     }
 
@@ -81,6 +100,8 @@ final class CaptureModel {
     func confirm(_ draft: CaptureDraft, as item: Item) {
         let record = ItemRecord(item: item, photo: draft.photo, cutout: draft.cutout)
         record.sourceFingerprint = draft.fingerprint
+        record.brand = draft.brand
+        record.productURL = draft.productURL
         context.insert(record)
         context.delete(draft)
         save()
@@ -91,11 +112,49 @@ final class CaptureModel {
         save()
     }
 
+    /// Replaces the draft's photo with one from its product page and re-tags it with what the shop states.
+    /// The owner's original photo is kept. If only the tagging fails, the new photo stays with the old tags.
+    func useProductPhoto(at imageURL: URL, from page: ProductPage, for draft: CaptureDraft) async throws {
+        inFlight += 1
+        defer { inFlight -= 1 }
+        let image = try await download(imageURL)
+        let job = Job(draftID: draft.draftID, image: image, listing: page.listingText)
+        let outcome = await Self.run(job, processor: processor, tagger: tagger)
+        guard let photo = outcome.photo else { throw ProductImportError.unreadablePhoto }
+
+        draft.photo = photo.photoJPEG
+        draft.cutout = photo.cutoutPNG
+        draft.colors = photo.colors.map(StoredColor.init)
+        let tags = outcome.tags ?? draft.tags
+        draft.status = tags == nil ? .failed : .ready
+        draft.tags = tags ?? Self.untagged(named: page.name)
+        draft.errorMessage = outcome.errorMessage
+        draft.brand = page.brand
+        draft.productURL = page.url
+        save()
+    }
+
+    /// With no tags at all, the shop's name for the product still beats an empty field.
+    private static func untagged(named name: String) -> ItemTags {
+        var tags = ItemTags.blank
+        tags.name = name
+        return tags
+    }
+
+    private func download(_ url: URL) async throws -> Data {
+        guard let (data, response) = try? await transport.send(URLRequest(url: url)),
+              let http = response as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode), !data.isEmpty
+        else { throw ProductImportError.downloadFailed }
+        return data
+    }
+
     // MARK: Processing
 
     private struct Job: Sendable {
         let draftID: String
         let image: Data
+        /// The shop's description, when the image came from a product page.
+        var listing: String?
     }
 
     private struct Outcome: Sendable {
@@ -141,7 +200,7 @@ final class CaptureModel {
         }
         let tagged: TaggedPhoto
         do {
-            tagged = try await tagger.tag(jpeg: photo.taggingJPEG)
+            tagged = try await tagger.tag(jpeg: photo.taggingJPEG, listing: job.listing)
         } catch {
             return Outcome(draftID: job.draftID, photo: photo, tags: nil, errorMessage: message(for: error))
         }

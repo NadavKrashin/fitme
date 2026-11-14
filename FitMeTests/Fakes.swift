@@ -65,12 +65,12 @@ struct FakeTagger: TaggingService {
     var error: Error?
     var itemBox: ItemBox?
 
-    func tag(jpeg _: Data) async throws -> TaggedPhoto {
+    func tag(jpeg _: Data, listing: String?) async throws -> TaggedPhoto {
         if let error {
             throw error
         }
         var tags = ItemTags.blank
-        tags.name = "Navy crewneck sweater"
+        tags.name = listing == nil ? "Navy crewneck sweater" : "Tagged from the listing"
         tags.subcategory = "sweater"
         tags.formality = 3
         tags.warmth = 3

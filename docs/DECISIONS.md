@@ -5,6 +5,19 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Find online with a browser the owner drives
+
+- **Decision:**
+  - "Find online" opens a visible in-app browser (a DuckDuckGo search built from what the owner typed, or a pasted
+    link). The owner browses to the product page and taps "Use this page"; only then is the page read.
+  - The product is read from schema.org `Product` data, then Open Graph tags, then large images on the page.
+  - The chosen photo goes through the normal pipeline, and the shop's listing text goes to the tagger beside it.
+  - Brand and product URL are stored on `CaptureDraft` and `ItemRecord` (optional fields, so old stores migrate).
+- **Why:** J.Crew, Uniqlo, COS and Levi's refuse plain requests (403). A hidden web view posing as a phone browser
+  would be fragile and is the kind of bot-protection workaround we don't want. With a visible browser the owner
+  confirms the match by seeing the real page, and no paid search call runs. Rejected: a Claude web-search call that
+  returns candidates (costs a few cents per item and still can't read the blocked pages).
+
 ### 2026-11-13: One layer on mild days, and a wear history
 
 - **Decision:**

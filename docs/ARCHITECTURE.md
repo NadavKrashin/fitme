@@ -90,6 +90,22 @@ PhotosPicker ─► CaptureModel.importPhotos ─► CaptureDraft(.processing) s
 - **Drafts live in their own model** so unreviewed items never reach the closet or the engine.
 - **`CaptureModel` lives at app level,** so processing continues across screens and resumes after relaunch.
 
+### Find online
+
+```
+DraftReviewView ─► FindOnlineView (brand, item, style number, notes, or a pasted link)
+                     └─► ProductQuery.destination ─► ProductBrowserView (visible WKWebView, the owner browses)
+                            └─► "Use this page" ─► PageSnapshot (JS) ─► ProductPage (schema.org Product, og: tags, big images)
+                                   └─► ProductPickView ─► CaptureModel.useProductPhoto
+                                          ─► download ─► ImagePipeline ─► ClaudeTaggingService(listing:) ─► draft
+```
+
+- **The owner drives the browser.** Nothing is fetched from a shop except the page they open and the one photo they
+  pick, so there is no scraping and no bot protection to get around.
+- **Parsing is in Swift** (`ProductPage`), so it is unit-tested; the page script only collects raw data.
+- **The shop's listing is sent to the tagger as text** and is trusted over the photo for type, material and fit.
+- **The original photo is kept** (`originalImage`); brand and product URL are stored on the draft and the item.
+
 ## Daily outfits (Phase 2)
 
 - **`TodayModel`** owns the inputs (occasion, feels-like, rain), the suggestions, the session's reactions, and the

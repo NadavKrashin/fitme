@@ -20,6 +20,7 @@ struct FitMeApp: App {
         _capture = State(initialValue: CaptureModel(
             processor: dependencies.photoProcessor,
             tagger: dependencies.tagger,
+            transport: URLSession.shared,
             context: container.mainContext
         ))
     }

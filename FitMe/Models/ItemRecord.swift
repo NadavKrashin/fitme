@@ -27,6 +27,9 @@ final class ItemRecord {
     @Attribute(.externalStorage) var cutout: Data?
     /// SHA-256 of the photo this item was created from, so adding the same photo again is skipped.
     var sourceFingerprint: String?
+    /// Set when the item was matched to its product page online.
+    var brand: String?
+    var productURL: URL?
 
     init(item: Item, photo: Data? = nil, cutout: Data? = nil, addedAt: Date = .now) {
         itemID = item.id

@@ -26,6 +26,9 @@ final class CaptureDraft {
     var tags: ItemTags?
     /// SHA-256 of the original image, to skip photos that were already added.
     var fingerprint: String?
+    /// Set when the photo and tags came from the item's product page instead of the owner's photo.
+    var brand: String?
+    var productURL: URL?
 
     init(originalImage: Data, fingerprint: String? = nil, createdAt: Date = .now) {
         draftID = UUID().uuidString

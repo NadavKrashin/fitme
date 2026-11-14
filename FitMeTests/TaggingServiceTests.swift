@@ -48,7 +48,7 @@ struct TaggingServiceTests {
         let transport = RecordingTransport(body: messagesResponse(text: Self.validJSON))
         let service = ClaudeTaggingService(client: ClaudeClient(apiKey: { "sk-test" }, transport: transport))
 
-        let tagged = try await service.tag(jpeg: Data([0xFF, 0xD8]))
+        let tagged = try await service.tag(jpeg: Data([0xFF, 0xD8]), listing: nil)
 
         #expect(tagged.tags.name == "Navy chinos")
         let body = try #require(await transport.requests.first?.httpBody)
@@ -71,5 +71,19 @@ struct TaggingServiceTests {
         var tags = ItemTags.blank
         tags.subcategory = "denim jacket"
         #expect(tags.item(id: "x", colors: []).name == "Denim Jacket")
+    }
+
+    @Test func theShopListingIsSentBetweenThePhotoAndTheRequest() async throws {
+        let transport = RecordingTransport(body: messagesResponse(text: Self.validJSON))
+        let service = ClaudeTaggingService(client: ClaudeClient(apiKey: { "sk-test" }, transport: transport))
+
+        _ = try await service.tag(jpeg: Data([0xFF, 0xD8]), listing: "Material: 100% merino")
+
+        let body = try #require(await transport.requests.first?.httpBody)
+        let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        let messages = try #require(json["messages"] as? [[String: Any]])
+        let content = try #require(messages.first?["content"] as? [[String: Any]])
+        #expect(content.map { $0["type"] as? String } == ["image", "text", "text"])
+        #expect(content[1]["text"] as? String == "The shop's listing for this item:\nMaterial: 100% merino")
     }
 }

@@ -3,7 +3,7 @@
 **Read this first.** It's the single source of truth for "where are we and what's next". Whoever ends a work
 session (person or agent) updates it before the final commit.
 
-_Last updated: 2026-11-13._
+_Last updated: 2026-11-14._
 
 ## Current state
 
@@ -236,7 +236,30 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
 - **For Nadav (optional):** the Apple Developer account still holds the old CI-made development certificates
   ("Created via API"). They're unused; revoke them under Certificates if you want the slots back.
 
+## Find online (2026-11-14)
+
+- **What it does:** Inbox → review a draft → **Find online** → type brand, item, style number or notes (or paste a
+  link) → browse to the product page in the app → **Use this page** → pick a photo → the draft gets the shop's photo,
+  re-cut and re-tagged with the shop's listing. Brand and product page show under "Found online" on the review and
+  item screens. Details in [ARCHITECTURE.md](ARCHITECTURE.md#find-online).
+- **Verified locally:** lint clean; 132 app tests and all engine tests pass (new `ProductQueryTests`,
+  `ProductPageTests`, and product-photo tests in `CaptureModelTests` and `TaggingServiceTests`).
+- **Verified in the simulator** (Debug, no API key): search form → DuckDuckGo results in the app → the search page
+  and a category page are refused with a hint → Everlane product page → name "The Essential Organic Crew | Deep
+  Navy" read → photo grid → flat shot downloaded, cut out, and shown on the review screen with "Found online" and a
+  toast. Found and fixed: the search results page itself was accepted as a product (`ProductQuery.isSearchPage`).
+- **Not verified yet:**
+  - re-tagging from the listing with a real Claude call (the simulator has no API key)
+  - J.Crew, Uniqlo, COS, Levi's or Ralph Lauren pages in the app browser (they refused plain requests; a real
+    browser may well get through, but untested)
+  - on a phone
+- **Known rough edges:** shop pop-ups (Everlane's "20% off") cover the page until closed; some listed photos fail
+  to load in the grid; Find online isn't on closet items yet.
+
 ## Next steps, in order
+
+0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and
+   judge the re-tags.
 
 1. **Confirm CI is green** and TestFlight got the build (`gh run list --limit 3`).
 2. **Nadav tries trips and insights on FitMe β:**

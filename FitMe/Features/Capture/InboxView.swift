@@ -135,6 +135,8 @@ struct DraftReviewView: View {
     let draft: CaptureDraft
     let onFinished: () -> Void
     @State private var item: Item
+    @State private var isFindingOnline = false
+    @State private var toast: Toast?
 
     init(draft: CaptureDraft, onFinished: @escaping () -> Void) {
         self.draft = draft
@@ -150,8 +152,21 @@ struct DraftReviewView: View {
                 if let error = draft.errorMessage {
                     Text(error).font(.footnote).foregroundStyle(.red)
                 }
+                Button {
+                    isFindingOnline = true
+                } label: {
+                    Label(
+                        draft.productURL == nil ? "Find online" : "Find a different one",
+                        systemImage: "magnifyingglass"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.pill(.quiet))
             }
             .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
+            ProductSourceSection(brand: draft.brand, productURL: draft.productURL)
 
             ItemEditorSections(item: $item)
         }
@@ -176,6 +191,13 @@ struct DraftReviewView: View {
             .padding(.horizontal, Theme.gutter)
             .padding(.vertical, 12)
             .background(Theme.canvas)
+        }
+        .toast(toast) { toast = nil }
+        .sheet(isPresented: $isFindingOnline) {
+            FindOnlineView(draft: draft) { page in
+                item = draft.proposedItem
+                toast = Toast(symbol: "checkmark.circle.fill", message: "Now using the photo from \(page.sourceName)")
+            }
         }
     }
 }
