@@ -44,6 +44,28 @@ public struct OutfitGenerator: Sendable {
         return Self.diversified(others, limit: limit, avoiding: [current])
     }
 
+    /// The same outfit with one piece replaced by another from the closet, best first. For a layer, going without
+    /// it is offered too when the outfit still works.
+    public func swaps(
+        replacing piece: Item,
+        in outfit: Outfit,
+        from closet: [Item],
+        context: OutfitContext,
+        limit: Int = 8
+    ) -> [ScoredOutfit] {
+        let rest = outfit.items.filter { $0 != piece }
+        let replacements = closet
+            .filter { $0.category == piece.category && $0 != piece && Rules.isEligible($0, for: context) }
+            .map { Outfit(items: rest + [$0]) }
+        let withoutLayer = [ItemCategory.midLayer, .outerwear].contains(piece.category) ? [Outfit(items: rest)] : []
+        return (replacements + withoutLayer)
+            .filter { Rules.isValid($0, context: context) }
+            .map { ScoredOutfit(outfit: $0, breakdown: scorer.score($0, context: context)) }
+            .sorted(by: Self.ranking)
+            .prefix(limit)
+            .map(\.self)
+    }
+
     func build(from pool: [Item], context: OutfitContext, mustInclude: Item?, beam: Int?) -> [ScoredOutfit] {
         var eligible = pool.filter { Rules.isEligible($0, for: context) }
         if let must = mustInclude {

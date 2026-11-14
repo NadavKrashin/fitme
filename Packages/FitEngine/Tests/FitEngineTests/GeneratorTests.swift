@@ -85,3 +85,39 @@ struct LayeringTests {
         #expect(best.outfit.outerwear != nil)
     }
 }
+
+struct SwapTests {
+    let context = Fixtures.context(.casual, Weather(feelsLikeC: 12))
+
+    @Test func swappingShoesKeepsEverythingElse() throws {
+        let outfit = try #require(OutfitGenerator().suggest(from: Fixtures.closet, context: context, limit: 1).first)
+        let shoes = try #require(outfit.outfit.shoes)
+
+        let swaps = OutfitGenerator().swaps(
+            replacing: shoes,
+            in: outfit.outfit,
+            from: Fixtures.closet,
+            context: context
+        )
+
+        #expect(!swaps.isEmpty)
+        let others = Set(outfit.outfit.items.filter { $0 != shoes })
+        for swap in swaps {
+            #expect(Rules.isValid(swap.outfit, context: context), "\(swap.id)")
+            #expect(swap.outfit.shoes != shoes)
+            #expect(Set(swap.outfit.items.filter { $0.category != .shoes }) == others)
+        }
+        #expect(swaps.map(\.score) == swaps.map(\.score).sorted(by: >), "best first")
+    }
+
+    /// A jacket can be swapped for nothing at all, when the day allows it.
+    @Test func aLayerCanBeLeftOff() {
+        let mild = Fixtures.context(.casual, Weather(feelsLikeC: 20))
+        let outfit = Fixtures.outfit("t05", "o01", "b04", "s01")
+        let jacket = Fixtures.item("o01")
+
+        let swaps = OutfitGenerator().swaps(replacing: jacket, in: outfit, from: Fixtures.closet, context: mild)
+
+        #expect(swaps.contains { $0.outfit.outerwear == nil })
+    }
+}
