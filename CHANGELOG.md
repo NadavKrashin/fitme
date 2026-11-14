@@ -56,3 +56,4 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - Dark mode: dark clothes now stand out on lighter photo tiles.
 - Photograph your closet in one go: Closet → + → Take photos, shoot item after item, then Done sends them all to the
   inbox.
+- On a mild, dry day outfits no longer add a jacket or mid layer you don't need, like a rain shell over a hoodie.

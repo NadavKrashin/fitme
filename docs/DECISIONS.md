@@ -5,6 +5,16 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: On a mild day a layer must be needed
+
+- **Decision:** when the feels-like is 14° or warmer, a mid layer or jacket is a hard rule violation
+  (`unneededLayer`) if the outfit is already warm enough without it. The one exception is a water-resistant jacket
+  on a day that's likely to rain. Under 14° layering is left to the warmth target, as before.
+- **Why:** Nadav's trial: Sport at a dry 21° suggested a navy rain shell over a grey hoodie. The warmth sum (3 + 2)
+  was in range, so nothing stopped it, but the hoodie is enough on its own and nobody wears a rain shell in the sun.
+- **Trade-off:** the engine sees one temperature. On a day that runs 10–27°, it won't add a jacket for the cool
+  morning unless the slider is set to the morning temperature.
+
 ### 2026-11-14: Find online with a browser the owner drives
 
 - **Decision:**

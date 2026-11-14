@@ -79,6 +79,21 @@ struct LayeringTests {
         }
     }
 
+    /// On a dry mild day each layer has to earn its place: without it the outfit would be too cool.
+    @Test(arguments: [Occasion.casual, .sport, .smartCasual])
+    func dryMildDaysOnlyAddNeededLayers(occasion: Occasion) {
+        let weather = Weather(feelsLikeC: 21)
+        let context = Fixtures.context(occasion, weather)
+        let outfits = OutfitGenerator().suggest(from: Fixtures.closet, context: context, limit: 10)
+        #expect(!outfits.isEmpty)
+        for suggestion in outfits {
+            for layer in [suggestion.outfit.midLayer, suggestion.outfit.outerwear].compactMap(\.self) {
+                let without = Outfit(items: suggestion.outfit.items.filter { $0 != layer })
+                #expect(Rules.upperWarmth(of: without) < weather.upperWarmthTarget.lowerBound, "\(suggestion.id)")
+            }
+        }
+    }
+
     @Test func coldDaysStillLayerUp() throws {
         let context = Fixtures.context(.casual, Weather(feelsLikeC: 4))
         let best = try #require(OutfitGenerator().suggest(from: Fixtures.closet, context: context, limit: 1).first)

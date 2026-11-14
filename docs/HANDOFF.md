@@ -308,6 +308,18 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
 - **Not verified (needs the phone):** the live viewfinder, real shots, the permission prompt and its denied screen,
   and how camera photos cut out compared with library photos.
 
+## Rain shell on a dry day (2026-11-14)
+
+- **Trial report:** Sport at a dry 21° suggested a navy rain shell over a grey hoodie with hiking pants.
+- **Cause:** the only layering rules were the warmth sum (3 + 2 = 5, inside the 2–5 target at 17–22°) and "no jacket
+  over a mid layer". Nothing asked whether the shell was needed, and it scored the same as the hoodie alone.
+- **Fix:** new `Violation.unneededLayer` in `Rules`: at 14° and up, a layer is rejected if the outfit is warm enough
+  without it, unless it's a water-resistant jacket on a rainy day.
+- **Verified:** failing tests first (the exact trial outfit in `RulesTests`, and `dryMildDaysOnlyAddNeededLayers`
+  for casual, sport and smart casual), then green; a tee with a light layer at 18° stays valid.
+- **Not verified:** how often mild-day suggestions now come without any jacket on the phone, and whether that feels
+  too bare on days with a cold morning (the engine only sees the slider's temperature).
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and

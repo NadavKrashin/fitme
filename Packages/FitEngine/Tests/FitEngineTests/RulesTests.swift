@@ -27,6 +27,25 @@ struct RulesTests {
         #expect(!Rules.isEligible(Fixtures.item("t17"), for: hot), "sweater in the heat")
     }
 
+    /// From a trial: a rain shell over a hoodie on a dry 21° day. The hoodie is warm enough alone, so the shell only
+    /// belongs when rain is likely.
+    @Test func aMildDayOnlyTakesALayerThatsNeeded() {
+        let withShell = Fixtures.outfit("t19", "o06", "b16", "s04")
+        let dry = Fixtures.context(.sport, Weather(feelsLikeC: 21, precipitationChance: 0))
+        let wet = Fixtures.context(.sport, Weather(feelsLikeC: 21, precipitationChance: 0.6))
+        #expect(Rules.violations(of: withShell, context: dry).contains(.unneededLayer))
+        #expect(Rules.isValid(withShell, context: wet))
+        #expect(Rules.isValid(Fixtures.outfit("t19", "b16", "s04"), context: dry))
+    }
+
+    @Test func aLightLayerOverATeeIsStillFineOnAMildDay() {
+        let tee = Fixtures.item("t01")
+        let mild = Fixtures.context(.casual, Weather(feelsLikeC: 18))
+        let layered = Fixtures.closet.filter { $0.category == .outerwear || $0.category == .midLayer }
+            .map { Outfit(items: [tee, $0, Fixtures.item("b01"), Fixtures.item("s01")]) }
+        #expect(layered.contains { Rules.isValid($0, context: mild) })
+    }
+
     @Test func harsherWeatherTakesTheWorstOfBoth() {
         let combined = Weather(feelsLikeC: 12, precipitationChance: 0.1)
             .harsher(with: Weather(feelsLikeC: 18, precipitationChance: 0.7))

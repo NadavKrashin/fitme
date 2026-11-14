@@ -11,6 +11,8 @@ public enum Violation: Equatable, Sendable {
     case tooCold
     /// A jacket over a mid layer on a day too mild for both.
     case tooManyLayers
+    /// A layer the day doesn't call for: dry, and warm enough without it.
+    case unneededLayer
 }
 
 /// Hard constraints. Anything that passes here is ranked by `OutfitScorer`.
@@ -95,20 +97,40 @@ public enum Rules {
         }
 
         if !partial {
-            let target = context.weather.upperWarmthTarget
-            let warmth = upperWarmth(of: outfit)
-            if warmth < target.lowerBound - 1 {
-                result.append(.tooCold)
-            }
-            if warmth > target.upperBound + 1 {
-                result.append(.tooWarm)
-            }
+            result += weatherViolations(of: outfit, weather: context.weather)
+        }
+        return result
+    }
+
+    private static func weatherViolations(of outfit: Outfit, weather: Weather) -> [Violation] {
+        let target = weather.upperWarmthTarget
+        let warmth = upperWarmth(of: outfit)
+        var result: [Violation] = []
+        if warmth < target.lowerBound - 1 {
+            result.append(.tooCold)
+        }
+        if warmth > target.upperBound + 1 {
+            result.append(.tooWarm)
+        }
+        if hasUnneededLayer(outfit, weather: weather) {
+            result.append(.unneededLayer)
         }
         return result
     }
 
     public static func isValid(_ outfit: Outfit, context: OutfitContext) -> Bool {
         violations(of: outfit, context: context).isEmpty
+    }
+
+    /// On a day too mild to stack layers, a layer has to earn its place: the outfit would be too cool without it, or
+    /// it's the rain cover on a wet day. A rain shell over a hoodie on a dry 21° day does neither.
+    static func hasUnneededLayer(_ outfit: Outfit, weather: Weather) -> Bool {
+        guard !weather.allowsStackedLayers else { return false }
+        let warmth = upperWarmth(of: outfit)
+        return [outfit.midLayer, outfit.outerwear].compactMap(\.self).contains { layer in
+            let isRainCover = weather.isRainy && layer.category == .outerwear && layer.waterResistant
+            return !isRainCover && warmth - layer.warmth >= weather.upperWarmthTarget.lowerBound
+        }
     }
 
     static func upperWarmth(of outfit: Outfit) -> Int {
