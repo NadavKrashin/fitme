@@ -5,6 +5,16 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: One warmth scale for tagging and the engine
+
+- **Decision:** the tagging rubric's warmth examples now match the scale the engine's rules and the demo closet use:
+  1 t-shirt, polo, linen shirt, shorts, sandals; 2 oxford, chinos, sneakers, loafers, cardigan, blazer, denim jacket,
+  rain shell; 3 sweater, hoodie, fleece, jeans, wool trousers, leather or field jacket, trench; 4 heavy knit, boots,
+  lined jacket; 5 wool coat, puffer, parka. A test checks the rubric against these levels.
+- **Why:** the rubric called a tee "light (2)" and a light jacket 3, one step warmer than the engine assumes, so
+  photographed items were judged too warm for hot days and too thin as layers.
+- **Not done:** items tagged before this keep their warmth; there's no automatic re-tag.
+
 ### 2026-11-14: Dress for the rest of the day, not one temperature
 
 - **Decision:**

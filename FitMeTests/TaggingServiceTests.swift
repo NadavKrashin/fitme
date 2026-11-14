@@ -23,6 +23,23 @@ struct TaggingServiceTests {
         #expect(schema["additionalProperties"] as? Bool == false)
     }
 
+    /// The engine's warmth rules (shorts from 20°, sweaters off from 24°, boots under 24°) assume one scale, the
+    /// one the demo closet uses. The tagging rubric must put the same kinds of item at the same levels.
+    @Test(arguments: [
+        ("t-shirt", 1), ("polo", 1), ("linen", 1), ("shorts", 1), ("sandals", 1),
+        ("oxford", 2), ("chinos", 2), ("sneakers", 2), ("loafers", 2), ("cardigan", 2), ("denim jacket", 2),
+        ("rain shell", 2), ("sweater", 3), ("hoodie", 3), ("jeans", 3), ("fleece", 3), ("leather jacket", 3),
+        ("trench", 3), ("boots", 4), ("heavy knit", 4), ("wool coat", 5), ("puffer", 5),
+    ])
+    func warmthRubricMatchesTheEngineScale(kind: String, level: Int) throws {
+        let rubric = ClaudeTaggingService.systemPrompt
+        let start = try #require(rubric.range(of: "- warmth: "))
+        let line = rubric[start.upperBound...].prefix { $0 != "\n" }
+        let levels = line.components(separatedBy: "), ")
+        let entry = try #require(levels.first { $0.hasPrefix("\(level) ") }, "level \(level) in \(line)")
+        #expect(entry.contains(kind), "\(kind) should be warmth \(level): \(entry)")
+    }
+
     @Test func decodesValidTags() throws {
         let tagged = try ClaudeTaggingService.decode(Self.validJSON)
         #expect(tagged.itemBox == ItemBox(x0: 120, y0: 80, x1: 880, y1: 960))

@@ -74,3 +74,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - Pieces in an outfit share a style: no technical fleece over a floral shirt, no gym wear with tailoring.
 - Today dresses for the rest of the day: a light base for the warm afternoon and a layer for the cool morning or
   evening. The weather card shows the range from now until 11 pm.
+- New photos are tagged on the same warmth scale the outfit rules use, so a tee is light and a denim jacket a light
+  layer.

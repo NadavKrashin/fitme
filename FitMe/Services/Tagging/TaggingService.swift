@@ -127,8 +127,10 @@ struct ClaudeTaggingService: TaggingService {
     - pattern: solid, textured (visible knit or weave, single color), stripe, check, floral, graphic (print, \
     logo, artwork), print (other repeating print), or other.
     - formality: 1 gym or lounge, 2 casual, 3 smart casual, 4 dressy or business, 5 black tie.
-    - warmth: 1 very light (tank, shorts, sandals), 2 light (shirt, tee-weight knit, sneakers), 3 medium (sweater, \
-    jeans, light jacket), 4 warm (heavy knit, boots, lined jacket), 5 very warm (wool coat, puffer).
+    - warmth: 1 very light (t-shirt, polo, tank, linen or short-sleeve shirt, shorts, sandals), 2 light (oxford or \
+    other long-sleeve shirt, chinos, light trousers, sneakers, loafers, cardigan, blazer, denim jacket, rain shell), \
+    3 medium (sweater, hoodie, fleece, jeans, wool trousers, leather jacket, field jacket, trench), \
+    4 warm (heavy knit, boots, lined or quilted jacket), 5 very warm (wool coat, puffer, parka).
     - fit: slim, regular, relaxed, or oversized, judged from the cut.
     - isStatement: true only if it draws the eye on its own (bold color, loud print, unusual shape).
     - styleTags: zero to three that clearly apply.
