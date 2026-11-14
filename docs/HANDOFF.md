@@ -294,6 +294,20 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
 - **Not verified:** the trip planner's calendar line on screen (covered by tests), brand filters with real brands (the
   demo closet has none), and the Inbox, Find online and item edit screens in dark mode.
 
+## Batch camera (2026-11-14)
+
+- **What it does:** Closet's + is now a menu: Take photos or Choose from library. The camera is full screen and dark:
+  shoot item after item (a flash and a haptic confirm each shot), the last shot shows bottom left with a count and a
+  "Remove last photo" menu, Done · N sends every shot to the inbox through the usual pipeline. Closing with shots
+  asks whether to add or discard them. A batch stops at 40 shots so memory stays bounded.
+- **Code:** `CameraService` (an actor around `AVCaptureSession` and `AVCapturePhotoOutput`, HEIC when available),
+  `BatchCameraModel` (state, shots, limits), `BatchCameraView`. `@preconcurrency import AVFoundation` is needed
+  because `AVCaptureSession` isn't marked Sendable; the reason is in the file.
+- **Verified:** 7 `BatchCameraModelTests` with a fake camera (order, remove last, refused access, no camera, failed
+  shot, the 40 limit, stop). In the simulator: the + menu, and the "No camera here" screen with only the close button.
+- **Not verified (needs the phone):** the live viewfinder, real shots, the permission prompt and its denied screen,
+  and how camera photos cut out compared with library photos.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and
@@ -312,5 +326,6 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
    - per-day manual weather edits (today a failed fetch falls back to mild days with a warning)
    - the statement floral shirt still leads many casual and travel plans; it may need a gentler share of the plan
    - keyword coverage for calendar hints (titles that should map to an occasion but don't)
-4. **Leftovers:** the in-app batch camera (needs a phone to verify; the simulator has no camera).
+4. **Try the batch camera on the phone:** Closet → + → Take photos, shoot 5–10 items, Done, check they land in the inbox
+   and process. Check the permission prompt, the shutter feel, and that HEIC photos cut out well.
 5. **Phase 5** ([ROADMAP.md](ROADMAP.md#phase-5-virtual-try-on-optional)): evaluate virtual try-on, only if wanted.

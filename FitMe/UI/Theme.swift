@@ -23,6 +23,9 @@ enum Theme {
     /// both in dark mode, or black and navy pieces disappear into the background.
     static let photoTile = dynamic(light: 0xFFFDF9, dark: 0x4A443D)
     static let photoBackdrop = dynamic(light: 0xF6F1E9, dark: 0x3D3833)
+    /// The camera screen is dark in both modes, like the system camera, so the viewfinder reads true to color.
+    static let viewfinder = Color.black
+    static let onViewfinder = Color.white
 
     // MARK: Type
 

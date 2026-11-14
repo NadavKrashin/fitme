@@ -6,10 +6,15 @@ import SwiftUI
 
 struct ClosetView: View {
     @Environment(CaptureModel.self) private var capture
+    @Environment(\.dependencies) private var dependencies
     @Query(sort: \ItemRecord.name) private var records: [ItemRecord]
     @Query private var drafts: [CaptureDraft]
     @State private var pickerSelection: [PhotosPickerItem] = []
     @State private var isShowingInbox = false
+    @State private var isPickingPhotos = false
+    @State private var isShowingCamera = false
+    /// Shots from the camera, imported once its screen has closed so the inbox can open.
+    @State private var cameraShots: [@Sendable () async -> Data?] = []
     @State private var filter = ClosetFilter()
     @State private var isShowingFilters = false
 
@@ -81,15 +86,22 @@ struct ClosetView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    PhotosPicker(selection: $pickerSelection, matching: .images) {
+                    Menu {
+                        Button("Take photos", systemImage: "camera") { isShowingCamera = true }
+                        Button("Choose from library", systemImage: "photo.on.rectangle") { isPickingPhotos = true }
+                    } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Theme.onTerracotta)
                             .frame(width: 34, height: 34)
                             .background(Theme.terracotta, in: .circle)
                     }
-                    .accessibilityLabel("Add photos")
+                    .accessibilityLabel("Add clothes")
                 }
+            }
+            .photosPicker(isPresented: $isPickingPhotos, selection: $pickerSelection, matching: .images)
+            .fullScreenCover(isPresented: $isShowingCamera, onDismiss: importCameraShots) {
+                BatchCameraView(camera: dependencies.camera) { cameraShots = $0 }
             }
             .onChange(of: pickerSelection) { _, selection in
                 guard !selection.isEmpty else { return }
@@ -234,6 +246,14 @@ struct ClosetView: View {
     }
 
     // MARK: Import
+
+    private func importCameraShots() {
+        guard !cameraShots.isEmpty else { return }
+        let shots = cameraShots
+        cameraShots = []
+        isShowingInbox = true
+        Task { await capture.importPhotos(shots) }
+    }
 
     private static func loader(for item: PhotosPickerItem) -> @Sendable () async -> Data? {
         {

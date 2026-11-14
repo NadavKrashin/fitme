@@ -1,3 +1,4 @@
+import AVFoundation
 import CoreLocation
 import FitEngine
 import Foundation
@@ -144,6 +145,64 @@ final class FakeCalendar: CalendarReading {
     func events(from start: Date, to end: Date) async -> [CalendarEvent] {
         state.withLock { $0.requestedRange = start ... end }
         return stored
+    }
+}
+
+/// A camera with fixed access whose shots are numbered bytes, or fail when `failing`.
+final class FakeCamera: PhotoCapturing {
+    private struct State {
+        var access: CameraAccess
+        var shotsTaken = 0
+        var isRunning = false
+    }
+
+    private let state: OSAllocatedUnfairLock<State>
+    private let grantsOnRequest: Bool
+    private let hasCamera: Bool
+    private let failing: Bool
+
+    init(access: CameraAccess = .granted, grantsOnRequest: Bool = true, hasCamera: Bool = true, failing: Bool = false) {
+        state = OSAllocatedUnfairLock(initialState: State(access: access))
+        self.grantsOnRequest = grantsOnRequest
+        self.hasCamera = hasCamera
+        self.failing = failing
+    }
+
+    var access: CameraAccess {
+        state.withLock(\.access)
+    }
+
+    var previewSession: AVCaptureSession? {
+        nil
+    }
+
+    var isRunning: Bool {
+        state.withLock(\.isRunning)
+    }
+
+    func requestAccess() async -> Bool {
+        state.withLock { $0.access = grantsOnRequest ? .granted : .denied }
+        return grantsOnRequest
+    }
+
+    func start() async throws {
+        guard hasCamera else { throw CameraError.unavailable }
+        state.withLock { $0.isRunning = true }
+    }
+
+    func stop() async {
+        state.withLock { $0.isRunning = false }
+    }
+
+    func capturePhoto() async throws -> Data {
+        if failing {
+            throw CameraError.captureFailed
+        }
+        let number = state.withLock { state in
+            state.shotsTaken += 1
+            return state.shotsTaken
+        }
+        return Data([UInt8(number)])
     }
 }
 

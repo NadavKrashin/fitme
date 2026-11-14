@@ -178,6 +178,8 @@ DraftReviewView ─► FindOnlineView (brand, item, style number, notes, or a pa
   Worn lists every entry by day.
 - **Outfit detail:** `OutfitDetailView` (a sheet from any outfit card in Today, Saved, Worn or a trip day) lists the
   pieces in wearing order with colors, dress code, warmth and fit, each linking to its item.
+- **Batch camera:** `CameraService` (actor, AVFoundation) behind `PhotoCapturing`; `BatchCameraModel` keeps the
+  shots and hands them to `CaptureModel.importPhotos` as loaders, so camera photos take the same path as library ones.
 - **Closet filters:** `ClosetFilter` (category, search, colors, dress codes, brands; any pick within a kind, all
   kinds together) and `ClosetFilterSheet`.
 - **Swap one item:** `OutfitGenerator.swaps(replacing:in:from:context:)` (same slot, plus going without a layer);

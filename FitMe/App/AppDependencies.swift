@@ -17,6 +17,7 @@ struct AppDependencies: Sendable {
     let tripPlanner: TripPlanner
     let closetAnalyzer: ClosetAnalyzer
     let calendar: any CalendarReading
+    let camera: any PhotoCapturing
     let thumbnails: ThumbnailCache
 
     static func live() -> AppDependencies {
@@ -36,6 +37,7 @@ struct AppDependencies: Sendable {
             tripPlanner: TripPlanner(),
             closetAnalyzer: ClosetAnalyzer(),
             calendar: EventKitCalendar(),
+            camera: CameraService(),
             thumbnails: ThumbnailCache()
         )
     }
@@ -81,6 +83,7 @@ struct AppDependencies: Sendable {
             tripPlanner: TripPlanner(),
             closetAnalyzer: ClosetAnalyzer(),
             calendar: PreviewCalendar(),
+            camera: PreviewCamera(),
             thumbnails: ThumbnailCache()
         )
     }

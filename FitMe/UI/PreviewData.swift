@@ -1,7 +1,9 @@
 #if DEBUG
+import AVFoundation
 import FitEngine
 import Foundation
 import SwiftData
+import UIKit
 
 /// A tiny closet for SwiftUI previews. Debug builds only; separate from the staging demo closet so previews stay
 /// fast and stable.
@@ -128,6 +130,32 @@ struct PreviewTaggingService: TaggingService {
 struct PreviewWeatherService: WeatherProviding {
     func forecastHere() async throws -> DayForecast {
         DayForecast(feelsLikeNowC: 17, feelsLikeMinC: 12, feelsLikeMaxC: 21, precipitationChance: 0.2)
+    }
+}
+
+/// A camera with no viewfinder whose every shot is a plain grey square.
+struct PreviewCamera: PhotoCapturing {
+    var access: CameraAccess {
+        .granted
+    }
+
+    var previewSession: AVCaptureSession? {
+        nil
+    }
+
+    func requestAccess() async -> Bool {
+        true
+    }
+
+    func start() async throws {}
+
+    func stop() async {}
+
+    func capturePhoto() async throws -> Data {
+        UIGraphicsImageRenderer(size: CGSize(width: 8, height: 8)).pngData { context in
+            UIColor.gray.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
+        }
     }
 }
 

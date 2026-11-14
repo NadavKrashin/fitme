@@ -62,8 +62,9 @@ Goal: catalog about 100 items in **under 60–90 minutes**, with at least 85% of
 - [x] Item detail and edit (saved on leaving the screen), delete, laundry toggle. Closet filters by category, plus
   name search.
 - [x] `ItemThumbnail` shows the cutout when one exists, including in Today's suggestions.
-- [ ] **In-app batch camera.** Not built. Today's flow is to shoot items in the Camera app, then multi-select them in
-  FitMe.
+- [x] **In-app batch camera** (2026-11-14): Closet → + → Take photos. Shoot one item after another (up to 40), remove
+  the last shot, then Done sends them all to the inbox. Verified only by tests and the simulator's no-camera screen.
+- [ ] Try the batch camera on the phone (Nadav).
 - [x] Closet filters (2026-11-14): color, dress code and brand (brands come from Find online), plus search by name or
   brand.
 - [x] **Find online** (2026-11-14): from the review screen, type the brand and what you know (or paste a link),

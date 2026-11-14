@@ -54,3 +54,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - Swap one piece of a suggestion on Today (or leave off a layer) from the outfit's pieces.
 - Planning a trip fills in occasions from your calendar, like a wedding on day 3, when you've allowed calendar access.
 - Dark mode: dark clothes now stand out on lighter photo tiles.
+- Photograph your closet in one go: Closet → + → Take photos, shoot item after item, then Done sends them all to the
+  inbox.
