@@ -1,0 +1,78 @@
+# Launch plan: FitMe on the App Store
+
+Goal: FitMe (App Store name **FitForMe**) is free on the App Store. Nadav pays for Claude, with a monthly allowance
+per user. Written 2026-11-14; tick items off as they land and log choices in [DECISIONS.md](DECISIONS.md).
+
+## Where we start
+
+- A production pipeline already exists: `make release VERSION=x.y.z` tags `main`, CI builds Release (no demo data,
+  checked), waits for Nadav's approval, and uploads to TestFlight "FitMe". See [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
+- Everything is on the device (SwiftData). There are no accounts and no server.
+- Claude is called straight from the app with **the user's own API key** from Settings. That's fine for Nadav and
+  impossible for the public: nobody has a key, and shipping Nadav's key inside the app would leak it.
+- Every Claude call (tagging, stylist, bag review) uses `claude-opus-5-5`.
+
+## The shape of v1.0 (proposed)
+
+| Question | Proposal | Why |
+|---|---|---|
+| Accounts | **None in v1.** The closet stays on the device and in its iCloud backup. | No sign-up wall, no passwords, and no account-deletion requirement. Sync across devices can come later with CloudKit (the user's own iCloud, free for us). |
+| Who calls Claude | **A small proxy** holds Nadav's Anthropic key; the app never sees it. | The only way to pay for users' Claude use without leaking the key. |
+| Proxy host | **Cloudflare Workers**, with Durable Objects counting each device's usage. | Cheap at this scale, keeps secrets server-side, and Durable Objects count exactly (Cloudflare's built-in rate limiter is approximate by design). |
+| Who may call the proxy | **App Attest**: Apple vouches that the request comes from a genuine FitMe install. | Stops scripts from spending the budget, with no account. |
+| Limits | Per-device monthly allowance (photos tagged, stylist asks, bag reviews), a global daily spend cap, and a kill switch. Over the limit, the app still works without AI (tags by hand). | Caps what Nadav can be charged. |
+| AI consent | A clear screen before the first photo goes to Claude, with an explicit "Allow" (not pre-checked); revocable in Settings. | Required by App Review guideline 5.1.2(i) since Nov 2025: apps must disclose and get permission before sending personal data to a third-party AI. |
+| Models | Measure cost in the beta; move tagging (and maybe the stylist) to a cheaper model only if a quality check shows it's as good. | Opus on every photo is the biggest cost driver. |
+
+## Milestones
+
+### M1: Claude through a proxy (engineering)
+- [ ] Cloudflare Worker: one endpoint per feature (tag, stylist, bag review, product match), model and `max_tokens`
+      allowlisted, no client-chosen tools. Anthropic key in Worker secrets.
+- [ ] App Attest: attest a key on first launch, assert on each request; the Worker verifies and records the key.
+- [ ] Durable Object per device: monthly allowance, reset on the 1st; global daily spend cap; kill switch.
+- [ ] App: `ClaudeClient` talks to the proxy in Release and Staging; the API-key field stays only in Debug.
+- [ ] Friendly states for "allowance used up", "AI paused" and offline; manual tagging always available.
+- [ ] Tests: fake proxy in app tests; Worker unit tests; staging Worker separate from production.
+
+### M2: Privacy and consent
+- [ ] AI consent screen (what's sent: the photo and the item's tags; to whom: Anthropic; why), stored choice,
+      withdraw in Settings.
+- [ ] Privacy policy and support page on GitHub Pages (the repo is public).
+- [ ] `PrivacyInfo.xcprivacy` (required-reason APIs such as UserDefaults and file timestamps).
+- [ ] App Privacy answers for App Store Connect: photos and closet data sent to Anthropic for processing; coarse
+      location to Open-Meteo; calendar read on the device only; no tracking, no ads.
+- [ ] `ITSAppUsesNonExemptEncryption = NO` (HTTPS only).
+
+### M3: A first run for strangers
+- [ ] Onboarding: what FitMe does, consent, then straight into "photograph your closet".
+- [ ] Empty states everywhere for a new user (no demo closet in Release).
+- [ ] Accessibility pass (Dynamic Type at the largest sizes, VoiceOver labels), dark mode check on every screen.
+- [ ] Crash and hang reports via Xcode Organizer / MetricKit (no third-party SDK).
+
+### M4: Store presence
+- [ ] Listing: subtitle, description, keywords, category (Lifestyle), support and privacy URLs.
+- [ ] Screenshots (6.9" iPhone) from a real closet, and the age rating questionnaire.
+- [ ] Review notes: how to try the AI without a closet (photograph any shirt), and what the proxy limits are.
+
+### M5: External TestFlight beta
+- [ ] 10–20 people via a public TestFlight link, for two weeks.
+- [ ] Measure: Claude cost per user per month, suggestions rated "I'd wear that", crashes.
+- [ ] Set the allowance and model choices from those numbers.
+
+### M6: Release 1.0
+- [ ] `make release VERSION=1.0.0`, approve, submit for review, release.
+
+## Only Nadav can do these
+- Create the Cloudflare account and give the agent a scoped API token (or deploy with `wrangler` yourself).
+- Create a production Anthropic API key with a monthly spend limit set in the Anthropic Console.
+- In App Store Connect: App Privacy answers, age rating, EU trader status (Digital Services Act), listing text approval,
+  and the final "Submit for Review".
+- Read the privacy policy before it goes live (it's a legal statement in your name).
+
+## Risks
+- **Cost:** a heavy user photographing 150 items is the expensive case; the allowance and a cheaper tagging model
+  are the levers.
+- **App Review:** AI consent (5.1.2(i)) is the most likely rejection; the consent screen must come before any upload.
+- **App Attest:** fails on the Simulator and occasionally in production (Apple outages); the app needs a graceful
+  "try again" path, and Staging can allow unattested calls under a tight limit.

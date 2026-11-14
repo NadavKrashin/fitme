@@ -141,6 +141,8 @@ Goal: on a real trip, wear at least 90% of what's packed, while packing noticeab
 
 - [ ] Evaluate try-on APIs for cost, latency and accuracy, then add an optional "see it on me".
 
-## Phase 6: Only if going public
+## Phase 6: Going public (started 2026-11-14)
 
-- [ ] API key proxy with per-user limits, Sign in with Apple, CloudKit sync, privacy policy, App Store listing.
+Nadav chose a public App Store launch, with Claude paid by him within per-user limits. The milestones are in
+[LAUNCH_PLAN.md](LAUNCH_PLAN.md): Claude through a proxy, privacy and consent, a first run for strangers, store
+presence, an external TestFlight beta, then 1.0.
