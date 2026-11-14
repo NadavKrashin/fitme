@@ -66,3 +66,22 @@ struct AlternativesTests {
         #expect(alternatives.first?.outfit.baseKey != current.baseKey)
     }
 }
+
+struct LayeringTests {
+    /// At a feels-like of 20° a shirt with one layer is plenty; a jacket over a cardigan over a shirt is too much.
+    @Test(arguments: [16.0, 20, 24])
+    func mildDaysNeverStackAJacketOverALayer(feelsLike: Double) {
+        let context = Fixtures.context(.casual, Weather(feelsLikeC: feelsLike))
+        let outfits = OutfitGenerator().suggest(from: Fixtures.closet, context: context, limit: 10)
+        #expect(!outfits.isEmpty)
+        for outfit in outfits {
+            #expect(outfit.outfit.midLayer == nil || outfit.outfit.outerwear == nil, "\(outfit.id)")
+        }
+    }
+
+    @Test func coldDaysStillLayerUp() throws {
+        let context = Fixtures.context(.casual, Weather(feelsLikeC: 4))
+        let best = try #require(OutfitGenerator().suggest(from: Fixtures.closet, context: context, limit: 1).first)
+        #expect(best.outfit.outerwear != nil)
+    }
+}

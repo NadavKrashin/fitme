@@ -9,6 +9,8 @@ public enum Violation: Equatable, Sendable {
     case missingStyle(StyleTag)
     case tooWarm
     case tooCold
+    /// A jacket over a mid layer on a day too mild for both.
+    case tooManyLayers
 }
 
 /// Hard constraints. Anything that passes here is ranked by `OutfitScorer`.
@@ -62,6 +64,9 @@ public enum Rules {
         }
         if count(.midLayer) > 1 || count(.outerwear) > 1 {
             result.append(.structure("too many layers"))
+        }
+        if count(.midLayer) == 1, count(.outerwear) == 1, !context.weather.allowsStackedLayers {
+            result.append(.tooManyLayers)
         }
         if !partial, count(.shoes) != 1 {
             result.append(.structure("needs one pair of shoes"))

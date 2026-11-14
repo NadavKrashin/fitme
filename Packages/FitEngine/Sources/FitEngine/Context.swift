@@ -51,6 +51,12 @@ public struct Weather: Codable, Hashable, Sendable {
         feelsLikeC < 22 || isRainy
     }
 
+    /// A jacket over a mid layer (over a shirt) only when it's properly cold; on a mild day one layer is plenty, even
+    /// if three light pieces add up to the right warmth.
+    public var allowsStackedLayers: Bool {
+        feelsLikeC < 14
+    }
+
     /// Target total warmth of the upper-body pieces (top or one-piece + mid layer + outerwear).
     public var upperWarmthTarget: ClosedRange<Int> {
         switch feelsLikeC {
