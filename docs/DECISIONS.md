@@ -5,6 +5,22 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Shoes are scored, and ties rotate by day
+
+- **Decision:**
+  - A new score component, `shoes` (weight 0.12), rates how the shoes suit the outfit: their formality against the
+    rest of the outfit, and their color against the trousers, as menswear shoe guides pair them. Brown goes with
+    navy, grey, denim and earth tones; black goes with black and charcoal and is the formal choice; brown with black
+    trousers is the classic miss. The table lives in `ShoeTone.pairings`.
+  - Outfits with exactly the same score are ordered by a hash of the outfit and the day (`ranking(on:)`), not by
+    item ID. Packing keeps the plain ID order where it compares outfits directly.
+- **Why:** an analysis of 720 suggestions from the demo closet found white sneakers in 81 of 90 casual outfits and
+  chelsea boots in 83 of 90 work outfits, from 0° to 32°. Shoes didn't move the score, so most outfits tied, and
+  ties went to the lowest item ID. Formal chose brown suede loafers more often than black oxfords.
+- **Sources:** [Bespoke Unit, trouser coordination](https://bespokeunit.com/shoes/trouser-coordination/),
+  [FashionBeans, shoe colour combinations](https://www.fashionbeans.com/article/best-shoe-colour-combinations-men/),
+  [Panama Jack, pairing shoes and trousers](https://www.panamajack.es/en/blogs/news/how-to-pair-men-s-shoes-and-trousers-a-practical-guide-for-getting-it-right-every-time).
+
 ### 2026-11-14: On a mild day a layer must be needed
 
 - **Decision:** when the feels-like is 14° or warmer, a mid layer or jacket is a hard rule violation

@@ -57,3 +57,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - Photograph your closet in one go: Closet → + → Take photos, shoot item after item, then Done sends them all to the
   inbox.
 - On a mild, dry day outfits no longer add a jacket or mid layer you don't need, like a rain shell over a hoodie.
+- Shoes now suit the outfit: brown with navy and earth tones, black for charcoal and formal wear, sneakers kept
+  casual. Outfits that tie take turns day to day instead of always picking the same pair.

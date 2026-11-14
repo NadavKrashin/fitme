@@ -6,6 +6,7 @@ public struct ScoreWeights: Equatable, Sendable {
     public var formality = 0.15
     public var occasion = 0.12
     public var weather = 0.13
+    public var shoes = 0.12
     public var fit = 0.06
     public var statement = 0.06
     public var novelty = 0.03
@@ -25,6 +26,7 @@ public struct ScoreBreakdown: Equatable, Sendable {
     public var formality: Double
     public var occasion: Double
     public var weather: Double
+    public var shoes: Double
     public var fit: Double
     public var statement: Double
     public var affinity: Double
@@ -50,6 +52,7 @@ public struct OutfitScorer: Sendable {
             formality: Self.formalityCohesion(core),
             occasion: Self.occasionFit(core, occasion: context.occasion),
             weather: partial ? 1 : Self.weatherFit(outfit, weather: context.weather),
+            shoes: Self.shoePairing(outfit, occasion: context.occasion),
             fit: Self.fitBalance(outfit),
             statement: Self.statementBudget(core),
             affinity: context.profile?.affinityScore(core) ?? 0.5,
@@ -57,9 +60,10 @@ public struct OutfitScorer: Sendable {
             total: 0
         )
         let weighted = w.color * b.color + w.pattern * b.pattern + w.formality * b.formality
-            + w.occasion * b.occasion + w.weather * b.weather + w.fit * b.fit
+            + w.occasion * b.occasion + w.weather * b.weather + w.shoes * b.shoes + w.fit * b.fit
             + w.statement * b.statement + w.novelty * b.novelty
-        let sum = w.color + w.pattern + w.formality + w.occasion + w.weather + w.fit + w.statement + w.novelty
+        let sum = w.color + w.pattern + w.formality + w.occasion + w.weather + w.shoes + w.fit + w.statement
+            + w.novelty
         let blend = weighted / sum * 100
         let opinion = 2 * b.affinity - 1
         b.total = blend + opinion * min(w.learnedPoints, opinion > 0 ? 100 - blend : blend)
@@ -173,6 +177,27 @@ public struct OutfitScorer: Sendable {
         return score
     }
 
+    /// How well the shoes suit the rest of the outfit, after menswear shoe-and-trouser guides: they should match its
+    /// dress code, and their color should follow the trousers. 1 when there are no shoes yet.
+    public static func shoePairing(_ outfit: Outfit, occasion: Occasion) -> Double {
+        guard let shoes = outfit.shoes else { return 1 }
+        let rest = outfit.coreItems.filter { $0.category != .shoes }
+        guard !rest.isEmpty else { return 1 }
+        let mean = Double(rest.map(\.formality).reduce(0, +)) / Double(rest.count)
+        let dressCode = switch abs(Double(shoes.formality) - mean) {
+        case ...0.75: 1.0
+        case ...1.5: 0.85
+        case ...2.5: 0.5
+        default: 0.2
+        }
+        let tone = ShoeTone(shoes)
+        var color = (outfit.bottom.map(TrouserTone.init)).map { tone.pairing(with: $0) } ?? 1
+        if occasion == .formal, tone != .black {
+            color *= 0.7
+        }
+        return dressCode * color
+    }
+
     /// Balanced silhouettes (one loose piece, one fitted) read as intentional.
     public static func fitBalance(_ outfit: Outfit) -> Double {
         guard let top = outfit.top, let bottom = outfit.bottom else { return 1 }
@@ -216,5 +241,58 @@ public struct OutfitScorer: Sendable {
             return 1
         }
         return values.reduce(0, +) / Double(values.count)
+    }
+}
+
+/// Shoe colors as shoe guides group them.
+enum ShoeTone: Equatable {
+    case black, brown, light, navy, colorful
+
+    init(_ shoes: Item) {
+        switch shoes.primaryColor?.family {
+        case .black, .charcoal: self = .black
+        case .brown, .camel, .khaki, .beige, .olive, .red, .orange: self = .brown
+        case .white, .grey, nil: self = .light
+        case .navy, .denim: self = .navy
+        default: self = .colorful
+        }
+    }
+
+    /// How well these shoes go with trousers of a tone, 0...1.
+    func pairing(with trousers: TrouserTone) -> Double {
+        Self.pairings[self]?[trousers] ?? 0.85
+    }
+
+    /// Brown is the versatile choice (navy, grey, denim, earth tones); black belongs with black and charcoal and is
+    /// contested with navy; brown shoes with black trousers is the classic miss; white sneakers suit denim best.
+    private static let pairings: [ShoeTone: [TrouserTone: Double]] = [
+        .black: [.dark: 1, .grey: 0.9, .denim: 0.9, .navy: 0.75, .earth: 0.55, .light: 0.8, .colorful: 0.8],
+        .brown: [.dark: 0.5, .grey: 1, .navy: 1, .denim: 1, .earth: 1, .light: 1, .colorful: 0.9],
+        .light: [.dark: 0.75, .grey: 0.9, .navy: 0.9, .denim: 1, .earth: 0.9, .light: 0.85, .colorful: 0.9],
+        .navy: [.dark: 0.7, .grey: 0.85, .navy: 0.85, .denim: 0.85, .earth: 0.95, .light: 0.95, .colorful: 0.85],
+        .colorful: [.dark: 0.85, .grey: 0.85, .navy: 0.85, .denim: 0.85, .earth: 0.85, .light: 0.85, .colorful: 0.7],
+    ]
+}
+
+/// Trouser colors as shoe guides group them.
+enum TrouserTone: Equatable {
+    case dark, grey, navy, denim, earth, light, colorful
+
+    init(_ trousers: Item) {
+        guard let color = trousers.primaryColor else {
+            self = .grey
+            return
+        }
+        // Mid-grey wool reads as grey, not charcoal: only truly dark neutrals call for black shoes.
+        if color.lch.neutrality == .neutral {
+            self = color.lch.L < 0.42 ? .dark : (color.lch.L > 0.9 ? .light : .grey)
+            return
+        }
+        switch color.family {
+        case .navy: self = .navy
+        case .denim, .blue: self = .denim
+        case .beige, .brown, .camel, .khaki, .olive: self = .earth
+        default: self = .colorful
+        }
     }
 }

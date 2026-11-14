@@ -61,7 +61,7 @@ public struct OutfitGenerator: Sendable {
         return (replacements + withoutLayer)
             .filter { Rules.isValid($0, context: context) }
             .map { ScoredOutfit(outfit: $0, breakdown: scorer.score($0, context: context)) }
-            .sorted(by: Self.ranking)
+            .sorted(by: Self.ranking(on: context.date))
             .prefix(limit)
             .map(\.self)
     }
@@ -106,7 +106,7 @@ public struct OutfitGenerator: Sendable {
             .map(Outfit.init(items:))
             .filter { Rules.isValid($0, context: context) }
             .map { ScoredOutfit(outfit: $0, breakdown: scorer.score($0, context: context)) }
-            .sorted(by: Self.ranking)
+            .sorted(by: Self.ranking(on: context.date))
     }
 
     private func extend(_ partials: [[Item]], with options: [Item], optional: Bool) -> [[Item]] {
@@ -124,13 +124,34 @@ public struct OutfitGenerator: Sendable {
             .map(Outfit.init(items:))
             .filter { Rules.violations(of: $0, context: context, partial: true).isEmpty }
             .map { ScoredOutfit(outfit: $0, breakdown: scorer.score($0, context: context, partial: true)) }
-            .sorted(by: Self.ranking)
+            .sorted(by: Self.ranking(on: context.date))
         let kept = beam.map { Array(scored.prefix($0)) } ?? scored
         return kept.map(\.outfit.items)
     }
 
+    /// Best score first, ties by ID. Stable, for packing, where the same inputs must give the same bag.
     static func ranking(_ a: ScoredOutfit, _ b: ScoredOutfit) -> Bool {
         a.score != b.score ? a.score > b.score : a.id < b.id
+    }
+
+    /// Best score first, ties shuffled by the day: outfits that score the same take turns from one day to the next,
+    /// instead of the lowest item IDs (often the same pair of shoes) winning every tie.
+    static func ranking(on date: Date) -> @Sendable (ScoredOutfit, ScoredOutfit) -> Bool {
+        let day = Int((date.timeIntervalSince1970 / 86400).rounded(.down))
+        return { a, b in
+            guard a.score == b.score else { return a.score > b.score }
+            let (keyA, keyB) = (tieBreakKey(a.id, day: day), tieBreakKey(b.id, day: day))
+            return keyA != keyB ? keyA < keyB : a.id < b.id
+        }
+    }
+
+    /// FNV-1a over the day and the outfit: the same on every launch, unlike `Hasher`.
+    static func tieBreakKey(_ id: String, day: Int) -> UInt64 {
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+        for byte in "\(day)|\(id)".utf8 {
+            hash = (hash ^ UInt64(byte)) &* 0x100_0000_01B3
+        }
+        return hash
     }
 
     /// Greedy max-marginal-relevance: trade a little score for outfits that don't repeat the same pieces,
