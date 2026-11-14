@@ -349,8 +349,9 @@ found 14 problems. Fixed so far, each with failing tests first:
 - **Fix 12, fabric:** an optional `Fabric` on items, tagged and editable; demo items have one. Items tagged
   earlier have none until edited or re-tagged.
 
-**Still open, in order:** rotation is weak (13); the stylist doesn't get dress code, warmth or
-style (14).
+- **Fix 13, rotation:** freshness of the top and trousers, weight 0.12.
+
+**Still open, in order:** the stylist doesn't get dress code, warmth or style (14).
 
 **Testing note:** Xcode, open on the Mac for 8 days, holds a file lock on `FitMe.xcodeproj`, and `xcodebuild` waits
 on it forever. App tests ran from a scratch copy of the project generated with XcodeGen (`--project` into the

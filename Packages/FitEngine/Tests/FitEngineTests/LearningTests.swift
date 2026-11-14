@@ -117,3 +117,43 @@ struct ColorFamilyTests {
         #expect(ItemColor(hex: hex).family == expected)
     }
 }
+
+/// Rotation, after closet-rotation advice: don't wear the same shirt two days running, trousers can come back after a
+/// day, and shoes and jackets repeat freely.
+struct RotationTests {
+    private let context = Fixtures.context(.casual, Weather(feelsLikeC: 20))
+    private var yesterday: Date {
+        Fixtures.startDate.addingTimeInterval(-86400)
+    }
+
+    private func wornYesterday(_ ids: Set<String>) -> [Item] {
+        Fixtures.closet.map { item in
+            var item = item
+            if ids.contains(item.id) {
+                item.lastWorn = yesterday
+            }
+            return item
+        }
+    }
+
+    @Test func yesterdaysTopStepsBack() throws {
+        let before = try #require(OutfitGenerator().suggest(from: Fixtures.closet, context: context).first)
+        let top = try #require(before.outfit.top ?? before.outfit.onePiece)
+        let after = OutfitGenerator().suggest(from: wornYesterday([top.id]), context: context)
+
+        #expect(after.first?.outfit.contains(top) == false, "\(after.first?.id ?? "-")")
+        let rescored = OutfitScorer().score(Outfit(items: before.outfit.items.map { item in
+            wornYesterday([top.id]).first { $0.id == item.id } ?? item
+        }), context: context)
+        #expect(before.score - rescored.total >= 5)
+    }
+
+    @Test func yesterdaysShoesBarelyMatter() throws {
+        let before = try #require(OutfitGenerator().suggest(from: Fixtures.closet, context: context).first)
+        let shoes = try #require(before.outfit.shoes)
+        let rescored = OutfitScorer().score(Outfit(items: before.outfit.items.map { item in
+            wornYesterday([shoes.id]).first { $0.id == item.id } ?? item
+        }), context: context)
+        #expect(before.score - rescored.total < 1)
+    }
+}

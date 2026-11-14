@@ -5,6 +5,14 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Rotation by piece
+
+- **Decision:** novelty weighs 0.12 (was 0.03) and is the stalest of the top and the trousers: a top worn in the
+  last 2 days scores 0.2, in 4 days 0.6, in a week 0.85; trousers worn today 0.6, yesterday 0.85. Shoes and layers
+  don't count.
+- **Why:** a top worn yesterday cost about 2 points, so it came straight back. Closet-rotation advice is not to
+  repeat a shirt two days running, while trousers, shoes and jackets repeat.
+
 ### 2026-11-14: Fabric
 
 - **Decision:**

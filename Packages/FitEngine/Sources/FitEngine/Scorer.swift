@@ -10,7 +10,7 @@ public struct ScoreWeights: Equatable, Sendable {
     public var style = 0.10
     public var fit = 0.06
     public var statement = 0.06
-    public var novelty = 0.03
+    public var novelty = 0.12
     /// Most points your reactions can add to or take from the total. Added on top of the 0...100 blend, so an outfit
     /// scores the same with no profile as with a profile that has no opinion about it. Not capped at 100: good
     /// outfits all score in the high 90s, and a cap would leave a like almost no room to count. Displays clamp it
@@ -308,21 +308,21 @@ public struct OutfitScorer: Sendable {
         }
     }
 
-    /// Prefers items that haven't been worn in the last few days.
+    /// Rotation, after closet-rotation advice: the same top two days running reads as wearing the same outfit, trousers
+    /// can come back after a day, and shoes and layers repeat freely. The stalest of the top and trousers decides.
     public static func novelty(_ core: [Item], on date: Date) -> Double {
-        guard !core.isEmpty else { return 1 }
-        let values = core.map { item -> Double in
+        core.compactMap { item -> Double? in
             guard let worn = item.lastWorn else { return 1 }
             let days = date.timeIntervalSince(worn) / 86400
-            if days < 2 {
-                return 0.2
+            switch item.category {
+            case .top, .onePiece:
+                return days < 2 ? 0.2 : (days < 4 ? 0.6 : (days < 7 ? 0.85 : 1))
+            case .bottom:
+                return days < 1 ? 0.6 : (days < 2 ? 0.85 : 1)
+            default:
+                return nil
             }
-            if days < 7 {
-                return 0.6
-            }
-            return 1
-        }
-        return values.reduce(0, +) / Double(values.count)
+        }.min() ?? 1
     }
 }
 
