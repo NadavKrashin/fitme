@@ -351,7 +351,9 @@ found 14 problems. Fixed so far, each with failing tests first:
 
 - **Fix 13, rotation:** freshness of the top and trousers, weight 0.12.
 
-**Still open, in order:** the stylist doesn't get dress code, warmth or style (14).
+- **Fix 14, stylist brief:** fabric, dress code, warmth, style and the day's swing; a menswear-guidance prompt.
+
+All 14 are done. What's left is judging them on the phone (see "Not verified yet").
 
 **Testing note:** Xcode, open on the Mac for 8 days, holds a file lock on `FitMe.xcodeproj`, and `xcodebuild` waits
 on it forever. App tests ran from a scratch copy of the project generated with XcodeGen (`--project` into the

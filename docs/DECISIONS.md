@@ -5,6 +5,14 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: The stylist sees what the engine sees
+
+- **Decision:** "Ask the stylist" now describes each piece with its fabric, dress code, warmth and style tags, and
+  the brief mentions a day that swings ("Feels 12–27°C over the rest of the day"). The system prompt asks Claude to
+  judge as established menswear guidance does: color pairings, dress code, proportion and fit, fabric for the
+  season, and pieces that share a style.
+- **Why:** Claude saw only names, colors, pattern and fit, so it couldn't weigh the things the engine now scores.
+
 ### 2026-11-14: Rotation by piece
 
 - **Decision:** novelty weighs 0.12 (was 0.03) and is the stalest of the top and the trousers: a top worn in the

@@ -52,9 +52,10 @@ struct ClaudeStylist: OutfitStylist {
     }
 
     static let systemPrompt = """
-    You are a personal stylist. The user is getting dressed from their own closet. You get candidate outfits that \
-    already pass basic rules (weather, dress code); choose the ones that will genuinely look best together: color \
-    harmony, proportion and fit, texture, and how well the outfit suits the occasion.
+    You are a menswear stylist. The user is getting dressed from their own closet. You get candidate outfits that \
+    already pass basic rules (weather, dress code); choose the ones that will genuinely look best together, judging \
+    as established menswear guidance does: color pairings (neutrals with at most one or two related colors), the \
+    dress code of the occasion, proportion and fit, fabric and texture for the season, and pieces that share a style.
 
     Pick up to \(maxPicks), best first. For each, say in one short sentence why it works, in plain words the user \
     will act on (e.g. "The camel cardigan warms up the navy and echoes the loafers."). Never suggest items that \
@@ -67,6 +68,10 @@ struct ClaudeStylist: OutfitStylist {
             "Occasion: \(context.occasion.title).",
             "Feels like \(Int(weather.feelsLikeC.rounded()))°C\(weather.isRainy ? ", rain likely" : "").",
         ]
+        if let swing = weather.swing {
+            let low = Int(swing.lowerBound.rounded()), high = Int(swing.upperBound.rounded())
+            lines.append("Feels \(low)–\(high)°C over the rest of the day: a layer may come off later.")
+        }
         switch context.palette {
         case .neutral: lines.append("Color: keep it neutral.")
         case .colorful: lines.append("Color: in the mood for color.")
@@ -82,6 +87,14 @@ struct ClaudeStylist: OutfitStylist {
     static func describe(_ item: Item) -> String {
         let colors = item.significantColors.map { "\($0.name) \($0.hex)" }.joined(separator: " and ")
         var details = [colors, item.pattern.title.lowercased(), "\(item.fit.rawValue) fit"]
+        if let fabric = item.fabric {
+            details.append(fabric.title.lowercased())
+        }
+        details.append("\(ScaleLabels.formality(item.formality).lowercased()) dress code")
+        details.append("\(ScaleLabels.warmth(item.warmth).lowercased()) warmth")
+        if !item.styleTags.isEmpty {
+            details.append(item.styleTags.map(\.rawValue).sorted().joined(separator: ", ") + " style")
+        }
         if item.isStatement {
             details.append("statement piece")
         }

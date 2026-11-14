@@ -49,6 +49,27 @@ struct StylistTests {
         #expect(!brief.contains("D: "))
     }
 
+    /// The stylist judges dress code, weight, fabric and style the way the engine does, so it needs them.
+    @Test func briefDescribesEachPieceFully() {
+        var item = Item(
+            id: "x", name: "Navy crewneck sweater", category: .top, colors: [ItemColor(hex: "#22304D")],
+            pattern: .textured, formality: 3, warmth: 3, styleTags: [.classic, .minimal]
+        )
+        item.fabric = .wool
+        let line = ClaudeStylist.describe(item)
+        #expect(line.contains("smart casual dress code"), "\(line)")
+        #expect(line.contains("medium warmth"), "\(line)")
+        #expect(line.contains("wool"), "\(line)")
+        #expect(line.contains("classic, minimal style"), "\(line)")
+    }
+
+    @Test func briefMentionsADayThatSwings() throws {
+        let options = try candidates(2)
+        let context = OutfitContext(occasion: .casual, weather: Weather(feelsLikeC: 21, dayRange: 12 ... 27))
+        let brief = ClaudeStylist.brief(candidates: options, context: context)
+        #expect(brief.contains("Feels 12–27°C over the rest of the day"), "\(brief)")
+    }
+
     @Test func briefPassesOnTheColorMood() throws {
         let options = try candidates(2)
         let neutral = OutfitContext(occasion: .casual, palette: .neutral)

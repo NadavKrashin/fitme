@@ -79,3 +79,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - Items record their fabric (tagged from the photo or shop listing, editable): no linen in the cold, no corduroy in
   the heat, no suede in the rain, no denim at a formal event.
 - Yesterday's shirt steps back for a few days; trousers, shoes and jackets can repeat.
+- "Ask the stylist" now knows each piece's fabric, dress code, warmth and style, and how the day's temperature
+  swings.
