@@ -391,10 +391,11 @@ whether the Color chips fit next to large accessibility text sizes.
 - **Verified:** 176 app tests (5 new consent tests: nothing is sent unless allowed); in the simulator the sheet shows
   on first launch, "Not now" closes it, and Settings shows Use Claude off; the manifest is valid (`plutil`) and
   inside the built app.
-- **Not verified yet:** the pages online (GitHub Pages isn't turned on, so the links 404 for now), the policy text
-  read by Nadav (it's in his name), Allow on a real device, and large text sizes on the sheet.
-- **Waiting on Nadav:** turn on GitHub Pages (Settings → Pages → Source: GitHub Actions), then the agent adds
-  `.github/workflows/pages.yml`; and a support email if GitHub issues isn't the contact he wants.
+- **Published:** GitHub Pages is on (source: GitHub Actions); `.github/workflows/pages.yml` deploys `site/` on every
+  change, to https://nadavkrashin.github.io/fitme/.
+- **Not verified yet:** the policy text read by Nadav (it's in his name), Allow on a real device, and large text
+  sizes on the sheet.
+- **Waiting on Nadav:** a support email if GitHub issues isn't the contact he wants.
 
 ## Next steps, in order
 

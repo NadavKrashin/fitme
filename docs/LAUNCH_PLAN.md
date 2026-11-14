@@ -40,7 +40,8 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 ### M2: Privacy and consent
 - [x] AI consent screen (what's sent: the photo and the item's tags; to whom: Anthropic; why), stored choice,
       withdraw in Settings. Asked on first launch; every Claude request is refused until allowed.
-- [x] Privacy policy and support page (`site/`). Publishing waits for GitHub Pages to be turned on.
+- [x] Privacy policy and support page (`site/`), published by `.github/workflows/pages.yml` to
+      https://nadavkrashin.github.io/fitme/.
 - [x] `PrivacyInfo.xcprivacy`: UserDefaults (CA92.1), no tracking, four collected data types.
 - [x] App Privacy answers for App Store Connect, written up in [APP_PRIVACY.md](APP_PRIVACY.md): photos and closet data sent to Anthropic for processing; coarse
       location to Open-Meteo; calendar read on the device only; no tracking, no ads.
