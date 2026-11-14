@@ -4,11 +4,26 @@ import WebKit
 
 /// The web view behind `ProductBrowserView`, and the reading of whatever product page is on screen.
 @MainActor
-final class ProductBrowser {
+final class ProductBrowser: NSObject, WKUIDelegate {
     let webView = WKWebView()
 
-    init() {
+    override init() {
+        super.init()
         webView.allowsBackForwardNavigationGestures = true
+        webView.uiDelegate = self
+    }
+
+    /// Shops often open products in a new tab; there are no tabs here, so open them in place.
+    func webView(
+        _ webView: WKWebView,
+        createWebViewWith _: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures _: WKWindowFeatures
+    ) -> WKWebView? {
+        if navigationAction.targetFrame == nil {
+            webView.load(navigationAction.request)
+        }
+        return nil
     }
 
     /// Loads `url` unless a page is already open, so coming back to the browser keeps the owner's place.
@@ -41,6 +56,7 @@ struct ProductBrowserView: View {
     let onProduct: (ProductPage) -> Void
     @State private var browser = ProductBrowser()
     @State private var isLoading = false
+    @State private var canGoBack = false
     @State private var isReading = false
     @State private var foundNothing = false
 
@@ -56,6 +72,9 @@ struct ProductBrowserView: View {
             }
             .onAppear { browser.open(start) }
             .onReceive(browser.webView.publisher(for: \.isLoading)) { isLoading = $0 }
+            .onReceive(browser.webView.publisher(for: \.canGoBack)) { canGoBack = $0 }
+            // A new page deserves a fresh try; the warning was about the previous one.
+            .onReceive(browser.webView.publisher(for: \.url)) { _ in foundNothing = false }
     }
 
     private var controls: some View {
@@ -71,6 +90,8 @@ struct ProductBrowserView: View {
 
             HStack {
                 CircleIconButton(symbol: "chevron.backward", label: "Previous page", action: browser.goBack)
+                    .disabled(!canGoBack)
+                    .opacity(canGoBack ? 1 : 0.4)
                 Button {
                     Task { await useThisPage() }
                 } label: {

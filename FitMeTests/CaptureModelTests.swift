@@ -175,7 +175,7 @@ struct CaptureModelTests {
         let page = Self.productPage
 
         await #expect(throws: ProductImportError.downloadFailed) {
-            try await capture.useProductPhoto(at: page.imageURLs[0], from: page, for: draft)
+            _ = try await capture.useProductPhoto(at: page.imageURLs[0], from: page, for: draft)
         }
 
         #expect(draft.cutout == Data("cutout".utf8) + Data([9]))
@@ -190,7 +190,7 @@ struct CaptureModelTests {
         let page = Self.productPage
 
         await #expect(throws: ProductImportError.unreadablePhoto) {
-            try await model(processor: FakePhotoProcessor(fails: true))
+            _ = try await model(processor: FakePhotoProcessor(fails: true))
                 .useProductPhoto(at: page.imageURLs[0], from: page, for: draft)
         }
         #expect(draft.cutout == Data("cutout".utf8) + Data([9]))
@@ -298,11 +298,67 @@ struct CaptureModelTests {
         let page = Self.productPage
 
         await #expect(throws: ProductImportError.downloadFailed) {
-            try await model(transport: RecordingTransport(status: 404, body: ""))
+            _ = try await model(transport: RecordingTransport(status: 404, body: ""))
                 .useProductPhoto(at: page.imageURLs[0], from: page, for: record)
         }
         #expect(record.cutout == Data("old-cutout".utf8))
         #expect(record.name == "My navy tee")
         #expect(record.productURL == nil)
+    }
+
+    @Test func undoPutsTheDraftBackExactly() async throws {
+        let capture = model()
+        let draft = try await importedDraft(with: capture)
+        let page = Self.productPage
+
+        let change = try await capture.useProductPhoto(at: page.imageURLs[0], from: page, for: draft)
+        #expect(change.taggingMessage == nil)
+        capture.restore(draft, to: change.previous)
+
+        #expect(draft.cutout == Data("cutout".utf8) + Data([9]))
+        #expect(draft.tags?.name == "Navy crewneck sweater")
+        #expect(draft.colors.map(\.hex) == ["#1F2A44"])
+        #expect(draft.status == .ready)
+        #expect(draft.brand == nil)
+        #expect(draft.productURL == nil)
+    }
+
+    @Test func aFailedRetagIsReportedForDraftsToo() async throws {
+        let draft = try await importedDraft(with: model())
+        let page = Self.productPage
+
+        let change = try await model(tagger: FakeTagger(error: ClaudeError.missingAPIKey))
+            .useProductPhoto(at: page.imageURLs[0], from: page, for: draft)
+
+        #expect(change.taggingMessage == ClaudeError.missingAPIKey.userMessage)
+    }
+
+    @Test func editsSurviveARematchClaudeCouldNotRetag() {
+        var edited = Item(
+            id: "d",
+            name: "My tee",
+            category: .top,
+            colors: [ItemColor(hex: "#111111")],
+            formality: 4,
+            warmth: 2
+        )
+        let matched = Item(
+            id: "d",
+            name: "Shop tee",
+            category: .bottom,
+            colors: [ItemColor(hex: "#1F2A44")],
+            formality: 2,
+            warmth: 1
+        )
+
+        var kept = edited.keepingEdits(over: matched)
+        #expect(kept.name == "My tee")
+        #expect(kept.category == .top)
+        #expect(kept.formality == 4)
+        #expect(kept.colors.map(\.hex) == ["#1F2A44"])
+
+        edited.name = " "
+        kept = edited.keepingEdits(over: matched)
+        #expect(kept.name == "Shop tee", "an empty name takes the shop's")
     }
 }

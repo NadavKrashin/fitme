@@ -97,16 +97,25 @@ struct FindOnlineView: View {
     }
 
     private var searchButton: some View {
-        Button {
-            if let url = query.destination {
-                path.append(.browse(url))
+        VStack(spacing: 8) {
+            // Beside the button, not under the field: the keyboard covers the field's footer while typing.
+            if query.hasUnusableLink {
+                Text("That doesn't look like a web link. Copy the whole address from the shop's page.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.terracotta)
+                    .multilineTextAlignment(.center)
             }
-        } label: {
-            Label(query.link.isEmpty ? "Search" : "Open page", systemImage: "magnifyingglass")
-                .frame(maxWidth: .infinity)
+            Button {
+                if let url = query.destination {
+                    path.append(.browse(url))
+                }
+            } label: {
+                Label(query.link.isEmpty ? "Search" : "Open page", systemImage: "magnifyingglass")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.pill(.primary))
+            .disabled(query.destination == nil)
         }
-        .buttonStyle(.pill(.primary))
-        .disabled(query.destination == nil)
         .padding(.horizontal, Theme.gutter)
         .padding(.vertical, 12)
         .background(Theme.canvas)

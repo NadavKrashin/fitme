@@ -89,15 +89,9 @@ struct ItemDetailView: View {
     private func useProductPhoto(_ photo: URL, from page: ProductPage) async throws {
         let change = try await capture.useProductPhoto(at: photo, from: page, for: record)
         item = record.item
-        toast = Toast(
-            symbol: change.taggingMessage == nil ? "checkmark.circle.fill" : "exclamationmark.circle.fill",
-            message: change.taggingMessage == nil
-                ? "Now using the photo from \(page.sourceName)"
-                : "New photo in, but the tags weren't updated",
-            undo: {
-                capture.restore(record, to: change.previous)
-                item = record.item
-            }
-        )
+        toast = .productPhoto(from: page, isRetagged: change.taggingMessage == nil) {
+            capture.restore(record, to: change.previous)
+            item = record.item
+        }
     }
 }

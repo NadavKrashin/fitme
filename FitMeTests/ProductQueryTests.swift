@@ -66,4 +66,11 @@ struct ProductQueryTests {
     func anUnusableLinkOpensNothing(link: String) {
         #expect(ProductQuery(brand: "J.Crew", link: link).destination == nil)
     }
+
+    @Test func onlyAPastedLinkThatCantOpenIsFlagged() {
+        #expect(ProductQuery(link: "not a link").hasUnusableLink)
+        #expect(!ProductQuery(link: "jcrew.com/p/AG008").hasUnusableLink)
+        #expect(!ProductQuery(brand: "J.Crew").hasUnusableLink, "no link at all is fine")
+        #expect(!ProductQuery(link: "   ").hasUnusableLink)
+    }
 }

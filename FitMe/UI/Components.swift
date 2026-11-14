@@ -115,14 +115,7 @@ struct PillButtonStyle: ButtonStyle {
     var kind: Kind = .primary
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.subheadline.weight(.semibold))
-            .padding(.horizontal, 18)
-            .padding(.vertical, 11)
-            .foregroundStyle(foreground)
-            .background(background, in: .capsule)
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.spring(duration: 0.25), value: configuration.isPressed)
+        PillButton(configuration: configuration, foreground: foreground, background: background)
     }
 
     private var foreground: Color {
@@ -145,6 +138,27 @@ struct PillButtonStyle: ButtonStyle {
 extension ButtonStyle where Self == PillButtonStyle {
     static func pill(_ kind: PillButtonStyle.Kind = .primary) -> PillButtonStyle {
         PillButtonStyle(kind: kind)
+    }
+}
+
+/// The pill itself: a separate view so it can read whether the button is enabled.
+private struct PillButton: View {
+    @Environment(\.isEnabled) private var isEnabled
+    let configuration: ButtonStyleConfiguration
+    let foreground: Color
+    let background: Color
+
+    var body: some View {
+        configuration.label
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 18)
+            .padding(.vertical, 11)
+            .foregroundStyle(foreground)
+            .background(background, in: .capsule)
+            // A disabled pill must look it; otherwise taps seem to do nothing.
+            .opacity(isEnabled ? 1 : 0.4)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .animation(.spring(duration: 0.25), value: configuration.isPressed)
     }
 }
 

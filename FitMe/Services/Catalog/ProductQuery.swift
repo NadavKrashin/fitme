@@ -33,6 +33,11 @@ struct ProductQuery: Equatable {
         return components.url
     }
 
+    /// A link was pasted but can't be opened, so nothing will be.
+    var hasUnusableLink: Bool {
+        !link.trimmed.isEmpty && pastedURL == nil
+    }
+
     /// The brand the owner typed wins over whatever the page calls itself (often a parent company or a shop).
     func applyingBrand(to page: ProductPage) -> ProductPage {
         var page = page

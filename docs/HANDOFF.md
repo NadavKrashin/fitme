@@ -260,8 +260,20 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
   on a closet item in the simulator (the unit tests cover applying it).
 - **Gotcha found:** a button in the same list row as a `NavigationLink` never fires (the row takes the tap); the
   card has its own row.
-- **Known rough edges:** shop pop-ups (Everlane's "20% off") cover the page until closed; some listed photos fail
-  to load in the grid.
+- **Close-out pass (same day), fixed:**
+  - matching a new item when Claude couldn't re-tag reset the owner's edits in the review form; edits now stay and
+    only the colors follow the new photo (an empty name takes the shop's)
+  - new items had no Undo and always said "Now using the photo"; both screens now share one toast that says when
+    the tags weren't updated and offers Undo (`CaptureDraft.Snapshot`)
+  - a photo the shop wouldn't serve could be the default pick; broken photos are skipped and can't be picked
+  - links that open in a new tab did nothing in the browser; they now open in place
+  - the browser's back button was always on, and the "isn't a product page" warning stayed after navigating
+  - the sheet could be swiped away mid-download (which looked like cancelling but still applied)
+  - a pasted link that isn't one disabled the button silently; a message now says why
+  - **all pill buttons looked enabled when disabled** (design system); they now dim, app-wide
+- **Verified:** 140 app tests pass; in the simulator, the bad-link message with a dimmed button, and the browser's
+  dimmed back button on its first page.
+- **Known rough edges:** shop pop-ups (Everlane's "20% off") cover the page until closed.
 
 ## Next steps, in order
 

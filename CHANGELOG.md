@@ -30,6 +30,9 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - **Find online:** when reviewing a new item, tell FitMe the brand and what it is (or paste a product link), open the
   product page in the app, and pick the shop's photo. FitMe cuts it out and re-tags it from the shop's description,
   and remembers the brand and product page. Your own photo is kept.
+- Matching a new item online can be undone, keeps your edits if Claude can't re-tag it, and skips photos the shop
+  won't serve. Links that open in a new tab now work in the in-app browser.
+- Buttons that can't be used yet now look dimmed.
 - Find online works on items already in your closet too, with Undo. Each item says whether it's matched to a
   product page, with buttons to view the page or change the match.
 - Trip mode: Today links to the trip in progress, and "Wear this" logs the outfit.

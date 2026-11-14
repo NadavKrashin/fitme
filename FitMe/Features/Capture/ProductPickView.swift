@@ -8,6 +8,8 @@ struct ProductPickView: View {
     @State private var selected: URL?
     @State private var isApplying = false
     @State private var errorMessage: String?
+    /// Photos the shop wouldn't serve; never offered as the default and can't be picked.
+    @State private var broken: Set<URL> = []
 
     private static let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
@@ -26,7 +28,13 @@ struct ProductPickView: View {
                 SectionTitle(text: "Pick the photo that shows it best")
                 LazyVGrid(columns: Self.columns, spacing: 12) {
                     ForEach(page.imageURLs, id: \.self) { url in
-                        PhotoChoice(url: url, isSelected: url == selection) { selected = url }
+                        PhotoChoice(
+                            url: url,
+                            isSelected: url == selection,
+                            onFailure: { broken.insert(url) },
+                            action: { selected = url }
+                        )
+                        .disabled(broken.contains(url))
                     }
                 }
             }
@@ -36,10 +44,22 @@ struct ProductPickView: View {
         .navigationTitle("Is this it?")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) { controls }
+        // Leaving mid-download would look like cancelling, yet the photo would still be applied.
+        .interactiveDismissDisabled(isApplying)
+        .navigationBarBackButtonHidden(isApplying)
+    }
+
+    private var hint: String {
+        selection == nil
+            ? "None of these photos would load. Go back and try another page."
+            : "FitMe cuts the item out of this photo and asks Claude to tag it again."
     }
 
     private var selection: URL? {
-        selected ?? page.imageURLs.first
+        if let selected, !broken.contains(selected) {
+            return selected
+        }
+        return page.imageURLs.first { !broken.contains($0) }
     }
 
     private var facts: [String] {
@@ -48,7 +68,7 @@ struct ProductPickView: View {
 
     private var controls: some View {
         VStack(spacing: 8) {
-            Text(errorMessage ?? "FitMe cuts the item out of this photo and asks Claude to tag it again.")
+            Text(errorMessage ?? hint)
                 .font(.footnote)
                 .foregroundStyle(errorMessage == nil ? Theme.inkMuted : Theme.terracotta)
                 .multilineTextAlignment(.center)
@@ -75,6 +95,7 @@ struct ProductPickView: View {
         guard let selection else { return }
         isApplying = true
         defer { isApplying = false }
+        errorMessage = nil
         do {
             try await apply(selection)
         } catch let error as ProductImportError {
@@ -88,6 +109,7 @@ struct ProductPickView: View {
 private struct PhotoChoice: View {
     let url: URL
     let isSelected: Bool
+    let onFailure: () -> Void
     let action: () -> Void
 
     var body: some View {
@@ -95,7 +117,11 @@ private struct PhotoChoice: View {
             AsyncImage(url: url) { phase in
                 switch phase {
                 case let .success(image): image.resizable().scaledToFit()
-                case .failure: Image(systemName: "photo").foregroundStyle(Theme.inkMuted)
+                case .failure:
+                    Label("Couldn't load", systemImage: "photo")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.inkMuted)
+                        .onAppear(perform: onFailure)
                 default: ProgressView()
                 }
             }

@@ -188,11 +188,18 @@ struct DraftReviewView: View {
         }
         .toast(toast) { toast = nil }
         .sheet(isPresented: $isFindingOnline) {
-            FindOnlineView(brand: draft.brand, itemDescription: item.name) { photo, page in
-                try await capture.useProductPhoto(at: photo, from: page, for: draft)
-                item = draft.proposedItem
-                toast = Toast(symbol: "checkmark.circle.fill", message: "Now using the photo from \(page.sourceName)")
-            }
+            FindOnlineView(brand: draft.brand, itemDescription: item.name, apply: useProductPhoto)
+        }
+    }
+
+    private func useProductPhoto(_ photo: URL, from page: ProductPage) async throws {
+        let edited = item
+        let change = try await capture.useProductPhoto(at: photo, from: page, for: draft)
+        let isRetagged = change.taggingMessage == nil
+        item = isRetagged ? draft.proposedItem : edited.keepingEdits(over: draft.proposedItem)
+        toast = .productPhoto(from: page, isRetagged: isRetagged) {
+            capture.restore(draft, to: change.previous)
+            item = edited
         }
     }
 }

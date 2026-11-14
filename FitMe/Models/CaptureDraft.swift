@@ -39,6 +39,42 @@ final class CaptureDraft {
         colors = []
     }
 
+    /// Everything a product photo replaces, so it can be put back.
+    struct Snapshot {
+        let photo: Data?
+        let cutout: Data?
+        let colors: [StoredColor]
+        let tags: ItemTags?
+        let status: Status
+        let errorMessage: String?
+        let brand: String?
+        let productURL: URL?
+    }
+
+    var snapshot: Snapshot {
+        Snapshot(
+            photo: photo,
+            cutout: cutout,
+            colors: colors,
+            tags: tags,
+            status: status,
+            errorMessage: errorMessage,
+            brand: brand,
+            productURL: productURL
+        )
+    }
+
+    func restore(_ snapshot: Snapshot) {
+        photo = snapshot.photo
+        cutout = snapshot.cutout
+        colors = snapshot.colors
+        tags = snapshot.tags
+        status = snapshot.status
+        errorMessage = snapshot.errorMessage
+        brand = snapshot.brand
+        productURL = snapshot.productURL
+    }
+
     /// The item this draft would become, from whatever has been tagged so far.
     var proposedItem: Item {
         (tags ?? .blank).item(

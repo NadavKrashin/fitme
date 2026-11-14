@@ -18,8 +18,8 @@ enum ProductImportError: Error, Equatable {
 }
 
 /// What applying a product photo to a closet item changed, so it can be undone.
-struct ProductPhotoChange {
-    let previous: ItemRecord.Snapshot
+struct ProductPhotoChange<Snapshot> {
+    let previous: Snapshot
     /// Set when the photo was applied but Claude couldn't re-tag it.
     let taggingMessage: String?
 }
@@ -121,8 +121,12 @@ final class CaptureModel {
 
     /// Replaces the draft's photo with one from its product page and re-tags it with what the shop states.
     /// The owner's original photo is kept. If only the tagging fails, the new photo stays with the old tags.
-    func useProductPhoto(at imageURL: URL, from page: ProductPage, for draft: CaptureDraft) async throws {
+    /// - Returns: What the draft was before, for Undo, and why it wasn't re-tagged, if it wasn't.
+    @discardableResult
+    func useProductPhoto(at imageURL: URL, from page: ProductPage, for draft: CaptureDraft) async throws
+        -> ProductPhotoChange<CaptureDraft.Snapshot> {
         let (photo, outcome) = try await productPhoto(at: imageURL, from: page, id: draft.draftID)
+        let previous = draft.snapshot
         draft.photo = photo.photoJPEG
         draft.cutout = photo.cutoutPNG
         draft.colors = photo.colors.map(StoredColor.init)
@@ -133,13 +137,19 @@ final class CaptureModel {
         draft.brand = page.brand
         draft.productURL = page.url
         save()
+        return ProductPhotoChange(previous: previous, taggingMessage: outcome.errorMessage)
+    }
+
+    func restore(_ draft: CaptureDraft, to snapshot: CaptureDraft.Snapshot) {
+        draft.restore(snapshot)
+        save()
     }
 
     /// Gives a closet item the shop's photo and tags. Wear history and availability stay as they are.
     /// If only the tagging fails, the item keeps its tags and takes the new photo and colors.
     /// - Returns: What the item was before, for Undo, and why it wasn't re-tagged, if it wasn't.
     func useProductPhoto(at imageURL: URL, from page: ProductPage, for record: ItemRecord) async throws
-        -> ProductPhotoChange {
+        -> ProductPhotoChange<ItemRecord.Snapshot> {
         let (photo, outcome) = try await productPhoto(at: imageURL, from: page, id: record.itemID)
         let previous = record.snapshot
         var item = outcome.tags?.item(id: record.itemID, colors: photo.colors) ?? record.item

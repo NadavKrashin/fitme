@@ -16,7 +16,7 @@ struct ProductMatchCard: View {
                 .frame(width: 32)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 6) {
-                Text(title).font(Theme.title(18)).foregroundStyle(Theme.ink)
+                Text(title).font(Theme.title(18)).foregroundStyle(Theme.ink).lineLimit(2)
                 Text(detail).font(.subheadline).foregroundStyle(Theme.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
                 actions.padding(.top, 6)
