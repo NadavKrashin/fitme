@@ -39,10 +39,14 @@ public struct Weather: Codable, Hashable, Sendable {
     public var feelsLikeC: Double
     /// Chance of rain, 0...1.
     public var precipitationChance: Double
+    /// The feels-like span of the rest of the day. When it swings 6° or more, the outfit is a base for the warm end
+    /// and a layer to take off for the cool end; nil dresses for `feelsLikeC` alone.
+    public var dayRange: ClosedRange<Double>?
 
-    public init(feelsLikeC: Double, precipitationChance: Double = 0) {
+    public init(feelsLikeC: Double, precipitationChance: Double = 0, dayRange: ClosedRange<Double>? = nil) {
         self.feelsLikeC = feelsLikeC
         self.precipitationChance = precipitationChance
+        self.dayRange = dayRange
     }
 
     public static let mild = Weather(feelsLikeC: 20)
@@ -51,26 +55,53 @@ public struct Weather: Codable, Hashable, Sendable {
         precipitationChance >= 0.5
     }
 
-    /// Layers (mid layers, jackets) are only considered when it is cool enough, or when rain calls for a shell.
-    public var allowsLayers: Bool {
-        feelsLikeC < 22 || isRainy
+    /// The day's span, including now, when it swings enough to dress in layers that come off.
+    public var swing: ClosedRange<Double>? {
+        guard let range = dayRange else { return nil }
+        let span = min(range.lowerBound, feelsLikeC) ... max(range.upperBound, feelsLikeC)
+        return span.upperBound - span.lowerBound >= 6 ? span : nil
     }
 
-    /// A jacket over a mid layer (over a shirt) only when it's properly cold; on a mild day one layer is plenty, even
-    /// if three light pieces add up to the right warmth.
+    /// What the base (top, trousers, shoes) must not be too warm for.
+    public var warmestC: Double {
+        swing?.upperBound ?? feelsLikeC
+    }
+
+    /// What the layers must cover.
+    public var coolestC: Double {
+        swing?.lowerBound ?? feelsLikeC
+    }
+
+    /// What trousers and shoes are judged at: they stay on all day.
+    public var legsC: Double {
+        swing.map { ($0.lowerBound + $0.upperBound) / 2 } ?? feelsLikeC
+    }
+
+    /// Layers (mid layers, jackets) are only considered when it is cool enough at some point, or when rain calls for a
+    /// shell.
+    public var allowsLayers: Bool {
+        coolestC < 22 || isRainy
+    }
+
+    /// A jacket over a mid layer (over a shirt) only when it's properly cold all day; on a mild day one layer is
+    /// plenty, even if three light pieces add up to the right warmth.
     public var allowsStackedLayers: Bool {
-        feelsLikeC < 14
+        coolestC < 14 && warmestC < 20
     }
 
     /// Target total warmth of the upper-body pieces (top or one-piece + mid layer + outerwear).
     public var upperWarmthTarget: ClosedRange<Int> {
-        switch feelsLikeC {
-        case 27...: return 1 ... 2
-        case 22 ..< 27: return 1 ... 3
-        case 17 ..< 22: return 2 ... 5
-        case 11 ..< 17: return 4 ... 7
-        case 5 ..< 11: return 6 ... 9
-        default: return 8 ... 12
+        Self.warmthTarget(at: feelsLikeC)
+    }
+
+    public static func warmthTarget(at feelsLike: Double) -> ClosedRange<Int> {
+        switch feelsLike {
+        case 27...: 1 ... 2
+        case 22 ..< 27: 1 ... 3
+        case 17 ..< 22: 2 ... 5
+        case 11 ..< 17: 4 ... 7
+        case 5 ..< 11: 6 ... 9
+        default: 8 ... 12
         }
     }
 

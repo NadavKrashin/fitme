@@ -177,24 +177,26 @@ public struct OutfitScorer: Sendable {
 
     public static func weatherFit(_ outfit: Outfit, context: OutfitContext) -> Double {
         let weather = context.weather
-        let target = weather.upperWarmthTarget
-        let distance = Rules.upperWarmth(of: outfit) < target.lowerBound
-            ? target.lowerBound - Rules.upperWarmth(of: outfit)
-            : max(0, Rules.dressedWarmth(of: outfit, context: context) - target.upperBound)
+        let cool = Weather.warmthTarget(at: weather.coolestC)
+        let warm = Weather.warmthTarget(at: weather.warmestC)
+        let tooCold = cool.lowerBound - Rules.upperWarmth(of: outfit)
+        let tooWarm = Rules.dressedWarmth(of: Rules.base(of: outfit, weather: weather), context: context)
+            - warm.upperBound
+        let distance = max(0, tooCold, tooWarm)
         var score = distance == 0 ? 1 : (distance == 1 ? 0.6 : 0.2)
         if weather.isRainy {
-            score *= rainCover(outfit, feelsLike: weather.feelsLikeC)
+            score *= rainCover(outfit, feelsLike: weather.coolestC)
         }
         let layered = outfit.midLayer != nil || outfit.outerwear != nil
-        return score * piecesFit(outfit, feelsLike: weather.feelsLikeC, layered: layered)
+        return score * piecesFit(outfit, weather: weather, layered: layered)
     }
 
     /// Weather for an outfit still being assembled: each piece on its own, and on a rainy day whether the shoes keep
     /// water out, so boots survive the shoe step before a jacket is chosen.
     static func partialWeatherFit(_ outfit: Outfit, weather: Weather) -> Double {
-        var score = piecesFit(outfit, feelsLike: weather.feelsLikeC, layered: weather.allowsLayers)
+        var score = piecesFit(outfit, weather: weather, layered: weather.allowsLayers)
         if weather.isRainy, let shoes = outfit.shoes, !shoes.waterResistant {
-            score *= weather.feelsLikeC < 15 ? 0.75 : 0.9
+            score *= weather.coolestC < 15 ? 0.75 : 0.9
         }
         return score
     }
@@ -211,8 +213,12 @@ public struct OutfitScorer: Sendable {
 
     /// How well the least suitable piece suits the temperature: one piece dressed for another season (shorts with a
     /// cable knit, jeans at 32°, sneakers at 0°) drags the whole outfit down.
-    static func piecesFit(_ outfit: Outfit, feelsLike: Double, layered: Bool) -> Double {
-        outfit.coreItems.map { pieceFit($0, feelsLike: feelsLike, layered: layered) }.min() ?? 1
+    static func piecesFit(_ outfit: Outfit, weather: Weather, layered: Bool) -> Double {
+        outfit.coreItems.map { item in
+            // The base top stays on all day; trousers and shoes see all of it.
+            let feelsLike = [.top, .onePiece].contains(item.category) ? weather.warmestC : weather.legsC
+            return pieceFit(item, feelsLike: feelsLike, layered: layered)
+        }.min() ?? 1
     }
 
     static func pieceFit(_ item: Item, feelsLike t: Double, layered: Bool) -> Double {

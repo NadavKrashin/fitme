@@ -27,7 +27,7 @@ extension Rules {
             return !([.bottom, .shoes].contains(item.category) && item.styleTags.contains(.outdoor))
         case .beach:
             guard !(isCore && item.styleTags.contains(.outdoor)) else { return false }
-            let warm = context.weather.feelsLikeC >= 22
+            let warm = context.weather.legsC >= 22
             return !(warm && item.category == .bottom && item.warmth >= 3)
                 && !(warm && item.category == .shoes && item.warmth >= 4)
         case .casual, .hike, .travel:

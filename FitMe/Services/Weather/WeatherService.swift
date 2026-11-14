@@ -3,6 +3,7 @@ import Foundation
 
 struct DayForecast: Equatable, Sendable {
     let feelsLikeNowC: Double
+    /// The rest of today, from now until 11 pm (the whole day when hourly data is missing).
     let feelsLikeMinC: Double
     let feelsLikeMaxC: Double
     /// Highest chance of rain today, 0...1.
@@ -57,6 +58,7 @@ struct OpenMeteoWeatherService: WeatherProviding {
             URLQueryItem(name: "latitude", value: rounded(coordinate.latitude)),
             URLQueryItem(name: "longitude", value: rounded(coordinate.longitude)),
             URLQueryItem(name: "current", value: "apparent_temperature"),
+            URLQueryItem(name: "hourly", value: "apparent_temperature"),
             URLQueryItem(
                 name: "daily",
                 value: "apparent_temperature_min,apparent_temperature_max,precipitation_probability_max"
@@ -76,18 +78,36 @@ struct OpenMeteoWeatherService: WeatherProviding {
               let max = response.daily.apparentTemperatureMax.first
         else { throw WeatherError.unavailable }
         let rainPercent = response.daily.precipitationProbabilityMax?.compactMap(\.self).first ?? 0
+        let rest = restOfDay(response)
         return DayForecast(
             feelsLikeNowC: response.current.apparentTemperature,
-            feelsLikeMinC: min,
-            feelsLikeMaxC: max,
+            feelsLikeMinC: rest.min() ?? min,
+            feelsLikeMaxC: rest.max() ?? max,
             precipitationChance: rainPercent / 100
         )
+    }
+
+    /// Feels-like temperatures from now until 11 pm, now included: the hours the user is likely out. The daily low
+    /// usually falls in the small hours, which says nothing about what to wear. Times are local ("yyyy-MM-ddTHH:mm").
+    private static func restOfDay(_ response: OpenMeteoResponse) -> [Double] {
+        guard let hourly = response.hourly else { return [] }
+        let thisHour = response.current.time.prefix(13) + ":00"
+        let later = zip(hourly.time, hourly.apparentTemperature)
+            .filter { time, _ in time >= thisHour && time.suffix(5) <= "23:00" }
+            .map(\.1)
+        return later.isEmpty ? [] : later + [response.current.apparentTemperature]
     }
 }
 
 private struct OpenMeteoResponse: Decodable {
     struct Current: Decodable {
+        let time: String
         let apparentTemperature: Double
+    }
+
+    struct Hourly: Decodable {
+        let time: [String]
+        let apparentTemperature: [Double]
     }
 
     struct Daily: Decodable {
@@ -98,6 +118,8 @@ private struct OpenMeteoResponse: Decodable {
     }
 
     let current: Current
+    /// Missing in older responses and test fixtures; the daily range stands in.
+    let hourly: Hourly?
     let daily: Daily
 }
 

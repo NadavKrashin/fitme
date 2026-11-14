@@ -37,8 +37,12 @@ final class TodayModel {
     var occasion: Occasion = .casual
     var feelsLikeC = 20.0
     var isRainy = false
-    /// How much color the user is in the mood for; neutrals first by default.
+    /// How much color the user is in the mood for; Mixed (judged on merit) by default.
     var palette: Palette = .balanced
+    /// The forecast's feels-like now and its range for the rest of the day. The range applies while the slider still
+    /// shows the forecast's "now"; a temperature set by hand is dressed for exactly.
+    private var forecastNowC: Double?
+    private var forecastRange: ClosedRange<Double>?
     private(set) var suggestions: [ScoredOutfit] = []
     /// Outfits hidden with 👎 this session.
     private(set) var dismissed: Set<String> = []
@@ -74,7 +78,11 @@ final class TodayModel {
     func context(profile: StyleProfile? = nil, date: Date = .now) -> OutfitContext {
         OutfitContext(
             occasion: occasion,
-            weather: Weather(feelsLikeC: feelsLikeC, precipitationChance: isRainy ? Self.rainyChance : 0),
+            weather: Weather(
+                feelsLikeC: feelsLikeC,
+                precipitationChance: isRainy ? Self.rainyChance : 0,
+                dayRange: feelsLikeC == forecastNowC ? forecastRange : nil
+            ),
             date: date,
             profile: profile,
             palette: palette
@@ -163,6 +171,9 @@ final class TodayModel {
         do {
             let forecast = try await weatherService.forecastHere()
             feelsLikeC = forecast.feelsLikeNowC.rounded().clamped(to: Self.temperatureRange)
+            forecastNowC = feelsLikeC
+            let (low, high) = (forecast.feelsLikeMinC, forecast.feelsLikeMaxC)
+            forecastRange = min(low, high) ... max(low, high)
             isRainy = Weather(feelsLikeC: forecast.feelsLikeNowC, precipitationChance: forecast.precipitationChance)
                 .isRainy
             weather = .loaded(forecast)

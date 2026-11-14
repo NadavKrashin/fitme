@@ -5,6 +5,20 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Dress for the rest of the day, not one temperature
+
+- **Decision:**
+  - `Weather.dayRange` carries the feels-like span of the rest of the day. When it swings 6° or more (`swing`), the
+    base (top) must suit the warm end (`warmestC`), trousers and shoes the middle (`legsC`), and the full outfit
+    with its layers the cool end (`coolestC`). A layer is "needed" when the base alone is too cool for the coolest
+    part. Stacked layers need the whole day under 20° and part of it under 14°. Old saved weather decodes without it.
+  - Today asks Open-Meteo for hourly feels-like and takes the range from now until 11 pm (the daily min was usually
+    at 3 am). The range applies while the slider shows the forecast's "now"; a temperature set by hand is dressed
+    for exactly. The card reads "Feels 18–27° rest of today".
+- **Why:** on a 10–27° day the engine only saw the current temperature, and the daily low it showed was from the
+  small hours. Guides on changeable weather say to dress a light base for the warm part and a layer that comes off
+  for the cool part.
+
 ### 2026-11-14: Style coherence from the pieces' style tags
 
 - **Decision:** a new score component, `style` (weight 0.10), rates whether the pieces' style tags mix

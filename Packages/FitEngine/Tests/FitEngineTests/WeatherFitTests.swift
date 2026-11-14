@@ -116,3 +116,41 @@ struct RainTests {
         #expect(covered.total > exposed.total + 8)
     }
 }
+
+/// A day that swings, after guides on dressing for changeable weather: a base for the warm part of the day and a
+/// layer you can take off for the cool part.
+struct DayRangeTests {
+    private func suggest(now: Double, range: ClosedRange<Double>?) -> [ScoredOutfit] {
+        var weather = Weather(feelsLikeC: now)
+        weather.dayRange = range
+        return OutfitGenerator().suggest(from: Fixtures.closet, context: Fixtures.context(.casual, weather))
+    }
+
+    @Test func aCoolMorningAndWarmAfternoonGetALayerOverALightBase() {
+        let suggestions = suggest(now: 21, range: 12 ... 27)
+        #expect(!suggestions.isEmpty)
+        for suggestion in suggestions {
+            let outfit = suggestion.outfit
+            #expect(outfit.midLayer != nil || outfit.outerwear != nil, "a layer for the morning: \(suggestion.id)")
+            #expect((outfit.top?.warmth ?? outfit.onePiece?.warmth ?? 0) <= 2, "a light base: \(suggestion.id)")
+        }
+    }
+
+    @Test func aCoolMorningNowStillKeepsTheBaseLightForLater() {
+        for suggestion in suggest(now: 13, range: 13 ... 28) {
+            #expect((suggestion.outfit.top?.warmth ?? suggestion.outfit.onePiece?.warmth ?? 0) <= 2, "\(suggestion.id)")
+        }
+    }
+
+    @Test func aSteadyDayIsDressedForItsTemperature() {
+        let steady = suggest(now: 21, range: 19 ... 23).map(\.id)
+        let plain = suggest(now: 21, range: nil).map(\.id)
+        #expect(steady == plain)
+    }
+
+    @Test func weatherSavedBeforeDayRangesStillDecodes() throws {
+        let json = Data(#"{"feelsLikeC": 18, "precipitationChance": 0.2}"#.utf8)
+        let weather = try JSONDecoder().decode(Weather.self, from: json)
+        #expect(weather.dayRange == nil)
+    }
+}

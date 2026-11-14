@@ -72,3 +72,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - New Hike occasion with boots and outdoor gear; Sport is now running and gym kit, and the beach leads with shorts
   and sandals. Calendar events like "hike" or "trail" pick Hike.
 - Pieces in an outfit share a style: no technical fleece over a floral shirt, no gym wear with tailoring.
+- Today dresses for the rest of the day: a light base for the warm afternoon and a layer for the cool morning or
+  evening. The weather card shows the range from now until 11 pm.

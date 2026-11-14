@@ -413,7 +413,7 @@ private struct WeatherCard: View {
             let low = Int(forecast.feelsLikeMinC.rounded())
             let high = Int(forecast.feelsLikeMaxC.rounded())
             let rain = Int((forecast.precipitationChance * 100).rounded())
-            return "Feels \(low)–\(high)° today · \(rain)% chance of rain"
+            return "Feels \(low)–\(high)° rest of today · \(rain)% chance of rain"
         case let .failed(message): return message
         case .idle, .loading: return "Using your approximate location"
         }

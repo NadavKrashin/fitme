@@ -150,6 +150,16 @@ struct TodayModelTests {
         }
     }
 
+    /// The forecast's range for the rest of the day reaches the engine, until the user sets a temperature by hand.
+    @Test func theDaysRangeHoldsUntilTheSliderMoves() async {
+        let model = makeTodayModel()
+        await model.loadWeather()
+        #expect(model.context().weather.dayRange == 5 ... 12)
+
+        model.feelsLikeC = 15
+        #expect(model.context().weather.dayRange == nil)
+    }
+
     @Test func weatherFailureKeepsManualValues() async {
         let model = makeTodayModel(weather: FakeWeather(result: .failure(.locationDenied)))
         model.feelsLikeC = 25

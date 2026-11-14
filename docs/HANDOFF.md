@@ -341,7 +341,9 @@ found 14 problems. Fixed so far, each with failing tests first:
 
 - **Fix 9, style coherence:** a `style` score from the pieces' style tags.
 
-**Still open, in order:** Today dresses for one temperature, not the day's range (10); the tagging rubric
+- **Fix 10, day range:** Today passes the rest-of-day span; base for the warm end, a layer for the cool end.
+
+**Still open, in order:** the tagging rubric
 calls a tee warmth 2 while the engine treats it as 1 (11); no fabric field (12); rotation is weak (13); the stylist
 doesn't get dress code, warmth or style (14).
 

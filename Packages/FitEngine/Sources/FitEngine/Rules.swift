@@ -36,28 +36,29 @@ public enum Rules {
         }
 
         let weather = context.weather
-        let t = weather.feelsLikeC
+        let legs = weather.legsC
         switch item.category {
         case .midLayer:
             // Formal wears its tailored jacket in any weather.
-            return context.occasion == .formal || (weather.allowsLayers && t < 22)
+            return context.occasion == .formal || (weather.allowsLayers && weather.coolestC < 22)
         case .outerwear:
-            if t >= 22 {
+            if weather.coolestC >= 22 {
                 return weather.isRainy && item.waterResistant && item.warmth <= 2
             }
-            return !(item.warmth >= 4 && t >= 16)
+            return !(item.warmth >= 4 && weather.coolestC >= 16)
         case .bottom:
             // Shorts from the low twenties (guides put them at 23° and up, with long sleeves a little lower).
-            return !(item.warmth <= 1 && t < 20) && !(item.warmth >= 4 && t >= 24)
+            return !(item.warmth <= 1 && legs < 20) && !(item.warmth >= 4 && legs >= 24)
         case .shoes:
             // Sandals on warm dry days; boots for cool or wet ones.
-            return !(item.warmth <= 1 && (t < 20 || weather.isRainy))
-                && !(item.warmth >= 4 && t >= 24 && !weather.isRainy)
+            return !(item.warmth <= 1 && (legs < 20 || weather.isRainy))
+                && !(item.warmth >= 4 && legs >= 24 && !weather.isRainy)
         case .top:
-            return !(item.warmth >= 3 && t >= 24)
+            // The base stays on all day, so it must suit the warmest part of it.
+            return !(item.warmth >= 3 && weather.warmestC >= 24)
         case .onePiece:
             // A light dress leaves the legs bare, like shorts.
-            return !(item.warmth >= 3 && t >= 27) && !(item.warmth <= 1 && t < 15)
+            return !(item.warmth >= 3 && weather.warmestC >= 27) && !(item.warmth <= 1 && legs < 15)
         case .bag, .accessory:
             return false
         }
@@ -115,12 +116,15 @@ public enum Rules {
 
     private static func weatherViolations(of outfit: Outfit, context: OutfitContext) -> [Violation] {
         let weather = context.weather
-        let target = weather.upperWarmthTarget
+        let cool = Weather.warmthTarget(at: weather.coolestC)
+        let warm = Weather.warmthTarget(at: weather.warmestC)
         var result: [Violation] = []
-        if upperWarmth(of: outfit) < target.lowerBound - 1 {
+        if upperWarmth(of: outfit) < cool.lowerBound - 1 {
             result.append(.tooCold)
         }
-        if dressedWarmth(of: outfit, context: context) > target.upperBound + 1 {
+        let tooWarmWhenCool = weather.swing != nil && dressedWarmth(of: outfit, context: context) > cool.upperBound + 1
+        if dressedWarmth(of: base(of: outfit, weather: weather), context: context) > warm.upperBound + 1
+            || tooWarmWhenCool {
             result.append(.tooWarm)
         }
         let jacket = dressCodeJacket(in: outfit, occasion: context.occasion)
@@ -128,6 +132,12 @@ public enum Rules {
             result.append(.unneededLayer)
         }
         return result
+    }
+
+    /// What stays on all day: on a day that swings, the outfit without the layers that come off.
+    static func base(of outfit: Outfit, weather: Weather) -> Outfit {
+        guard weather.swing != nil else { return outfit }
+        return Outfit(items: outfit.items.filter { $0.category != .midLayer && $0.category != .outerwear })
     }
 
     /// Upper-body warmth as worn, judged against the heat: a formal event's tailored jacket doesn't count, since the
@@ -140,14 +150,15 @@ public enum Rules {
         violations(of: outfit, context: context).isEmpty
     }
 
-    /// On a day too mild to stack layers, a layer has to earn its place: the outfit would be too cool without it, or
-    /// it's the rain cover on a wet day. A rain shell over a hoodie on a dry 21° day does neither.
+    /// On a day too mild to stack layers, a layer has to earn its place: the outfit would be too cool without it at the
+    /// coolest part of the day, or it's the rain cover on a wet day. A rain shell over a hoodie on a dry 21° day does
+    /// neither.
     static func hasUnneededLayer(_ outfit: Outfit, weather: Weather) -> Bool {
         guard !weather.allowsStackedLayers else { return false }
         let warmth = upperWarmth(of: outfit)
         return [outfit.midLayer, outfit.outerwear].compactMap(\.self).contains { layer in
             let isRainCover = weather.isRainy && layer.category == .outerwear && layer.waterResistant
-            return !isRainCover && warmth - layer.warmth >= weather.upperWarmthTarget.lowerBound
+            return !isRainCover && warmth - layer.warmth >= Weather.warmthTarget(at: weather.coolestC).lowerBound
         }
     }
 
