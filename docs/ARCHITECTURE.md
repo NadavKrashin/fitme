@@ -45,7 +45,7 @@ FitMe is a local-first iOS app with two layers:
 | Stage | File | Role |
 |---|---|---|
 | Color | `ColorMath.swift` | Converts hex to perceptual OKLab/OKLCH. Classifies colors as neutral (black, white, grey), soft neutral (navy, denim, camel, khaki, olive) or chromatic. |
-| Hard rules | `Rules.swift` | Removes items or outfits that are never acceptable: structure, a formality spread of 3 or more, occasion formality, required sportswear, dress shoes for formal events, and warmth against temperature, rain or cold limits. |
+| Hard rules | `Rules.swift` | Removes items or outfits that are never acceptable: structure, a formality spread of 3 or more, occasion formality, required sportswear, dress shoes for formal events, warmth against temperature, rain or cold limits, and a jacket over a mid layer above 14° (`Weather.allowsStackedLayers`). |
 | Soft score | `Scorer.swift` | Weighted 0–100 score from color harmony, pattern balance, formality cohesion, occasion fit, weather fit, silhouette balance, statement-piece budget and novelty, then moved by up to `learnedPoints` (8) by learned taste, never past 0 or 100. The weights are in `ScoreWeights`. |
 | Generation | `OutfitGenerator.swift` | Beam search: bases (top+bottom or one-piece) → shoes → mid layer → outerwear, keeping the best partial outfits at each step. `suggest` picks a varied top N, each with a different top. `allOutfits` is exhaustive, for small pools. |
 | Packing | `PackingOptimizer.swift`, `Trip.swift` | Groups trip slots by occasion and weather band. Greedily adds the item with the best marginal gain per packing cost, falling back to injecting a whole outfit. Prunes redundant items, then assigns outfits to days. A top or one-piece is used once per laundry cycle. |
@@ -153,6 +153,11 @@ PhotosPicker ─► CaptureModel.importPhotos ─► CaptureDraft(.processing) s
   - workhorses
   - resting (never worn after 14 days, or not worn for 60)
   - your taste, with learned color pairings and "Forget what FitMe learned"
+- **Wear history:** `FeedbackRecorder.wear` writes a `WearEntry` (outfit, occasion, date, and each piece's earlier
+  `lastWorn`) and `unwear` reverses it exactly. Today shows today's entries and toggles "Wearing today"; Saved →
+  Worn lists every entry by day.
+- **Outfit detail:** `OutfitDetailView` (a sheet from any outfit card in Today, Saved, Worn or a trip day) lists the
+  pieces in wearing order with colors, dress code, warmth and fit, each linking to its item.
 - **Calendar hints:** `EventKitCalendar` (an actor around `EKEventStore`) reads the rest of today's events once the
   user taps "Use my calendar" on Today. `OccasionHint` maps titles to occasions with English and Hebrew keywords,
   most demanding dress code first, on device. Today shows up to three events with "Dress for it", which switches

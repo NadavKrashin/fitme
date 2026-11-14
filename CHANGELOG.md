@@ -35,3 +35,10 @@ User-visible changes per production release. Add entries under **Unreleased** as
   pieces, workhorses, pieces resting in the closet, and the color pairings FitMe learned. You can make FitMe forget
   what it learned.
 - Today can read your calendar (when you allow it) and offer to dress for today's events, like a dinner or the gym.
+- "Dress for it" marks only the event you tapped, even when several call for the same occasion.
+- Tapping a piece in Insights opens it straight away (it used to bounce back first).
+- No more jacket over a cardigan over a shirt on a mild day: a second layer is only suggested below about 14°.
+- "Wear this" now keeps a history. Today shows what you're wearing, tapping "Wearing today" again (or Undo) takes
+  it back, and Saved → Worn lists what you wore, day by day.
+- Tap any outfit (or "See every piece") to see each piece in the order you'd put it on, with its colors, dress code,
+  warmth and fit.

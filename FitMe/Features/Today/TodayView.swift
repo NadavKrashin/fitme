@@ -62,7 +62,8 @@ private struct OutfitPlanner: View {
     @Query(sort: \TripRecord.startDate) private var trips: [TripRecord]
     @Query private var profiles: [StyleProfileRecord]
     @Query private var savedOutfits: [SavedOutfit]
-    @AppStorage("calendarPromptDismissed") private var isCalendarPromptDismissed = false
+    @Query(sort: \WearEntry.wornOn, order: .reverse) private var wears: [WearEntry]
+    @State private var selection: OutfitSelection?
 
     private var closet: [Item] {
         records.map(\.item)
@@ -70,6 +71,10 @@ private struct OutfitPlanner: View {
 
     private var profile: StyleProfile {
         profiles.first?.profile ?? StyleProfile()
+    }
+
+    private var wornToday: [WearEntry] {
+        wears.filter { Calendar.current.isDateInToday($0.wornOn) }
     }
 
     var body: some View {
@@ -86,8 +91,13 @@ private struct OutfitPlanner: View {
                 if isToday, let trip = trips.first(where: { $0.details.phase() == .ongoing }) {
                     TripInProgressCard(trip: trip)
                 }
+                if isToday, !wornToday.isEmpty {
+                    wornTodayCard(recordsByID: recordsByID)
+                }
                 WeatherCard(state: model.weather) { Task { await model.loadWeather() } }
-                calendarCard
+                if isToday {
+                    CalendarHintsCard(model: model)
+                }
                 occasionChips
                 conditionsCard
 
@@ -115,6 +125,7 @@ private struct OutfitPlanner: View {
             .animation(.spring(duration: 0.4), value: model.suggestions)
         }
         .toast(model.toast) { model.toast = nil }
+        .sheet(item: $selection) { OutfitDetailView(outfit: $0.outfit, occasion: $0.occasion) }
         .task {
             if model.weather == .idle {
                 await model.loadWeather()
@@ -148,43 +159,6 @@ private struct OutfitPlanner: View {
             .padding(.horizontal, Theme.gutter)
         }
         .padding(.horizontal, -Theme.gutter)
-    }
-
-    @ViewBuilder
-    private var calendarCard: some View {
-        switch model.calendarHints {
-        case .notAsked where !isCalendarPromptDismissed:
-            VStack(alignment: .leading, spacing: 12) {
-                Label("Plans today?", systemImage: "calendar")
-                    .font(Theme.title(18))
-                    .foregroundStyle(Theme.ink)
-                Text("FitMe can look at today's calendar and pick the occasion for you. Event titles stay on your "
-                    + "phone.")
-                    .font(.callout)
-                    .foregroundStyle(Theme.inkMuted)
-                HStack(spacing: 10) {
-                    Button("Use my calendar") { Task { await model.connectCalendar() } }
-                        .buttonStyle(.pill(.accent))
-                    Button("Not now") { isCalendarPromptDismissed = true }
-                        .buttonStyle(.pill(.quiet))
-                }
-            }
-            .card()
-        case let .hints(hints) where !hints.isEmpty:
-            VStack(alignment: .leading, spacing: 12) {
-                Label("From your calendar", systemImage: "calendar")
-                    .font(Theme.title(18))
-                    .foregroundStyle(Theme.ink)
-                ForEach(hints) { hint in
-                    CalendarHintRow(hint: hint, isChosen: model.occasion == hint.occasion) {
-                        model.dress(for: hint)
-                    }
-                }
-            }
-            .card()
-        default:
-            EmptyView()
-        }
     }
 
     private var conditionsCard: some View {
@@ -227,11 +201,32 @@ private struct OutfitPlanner: View {
             image: image,
             reason: reason,
             isSaved: isSaved,
-            isWorn: model.worn.contains(outfit.id),
+            isWorn: wornToday.contains { $0.outfitID == outfit.id },
             onToggleSave: { model.toggleSaved(outfit, isSaved: isSaved, recorder: recorder) },
             onDismiss: reason == nil ? { model.dismiss(outfit, recorder: recorder) } : nil,
-            onWear: { model.wear(outfit, recorder: recorder) }
+            onWear: { model.toggleWorn(outfit, recorder: recorder) },
+            onOpen: { selection = OutfitSelection(outfit: outfit.outfit, occasion: model.occasion) }
         )
+    }
+
+    /// What's logged as worn today, with a way to take it back. Earlier days are in Saved → Worn.
+    private func wornTodayCard(recordsByID: [String: ItemRecord]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Today you're wearing", systemImage: "checkmark.circle.fill")
+                .font(Theme.title(18))
+                .foregroundStyle(Theme.ink)
+            ForEach(wornToday) { entry in
+                let outfit = Outfit(items: entry.itemIDs.compactMap { recordsByID[$0]?.item })
+                WornOutfitRow(
+                    entry: entry,
+                    outfit: outfit,
+                    image: { recordsByID[$0]?.cutout },
+                    onOpen: { selection = OutfitSelection(outfit: outfit, occasion: entry.occasion) },
+                    onRemove: { model.unwear(entry, recorder: FeedbackRecorder(context: modelContext)) }
+                )
+            }
+        }
+        .card()
     }
 
     private func emptyCard(_ message: String) -> some View {
@@ -301,40 +296,6 @@ private struct OutfitPlanner: View {
             isRainy = model.isRainy
             itemIDs = closet.map(\.id)
         }
-    }
-}
-
-/// One event, what it calls for, and a button to dress for it.
-private struct CalendarHintRow: View {
-    let hint: CalendarHint
-    let isChosen: Bool
-    let onDress: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(hint.title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(2)
-                HStack(spacing: 6) {
-                    Text(hint.isAllDay ? "All day" : hint.start.formatted(date: .omitted, time: .shortened))
-                        .font(.footnote)
-                        .foregroundStyle(Theme.inkMuted)
-                    Badge(text: hint.occasion.title, tint: Theme.tint(for: hint.occasion))
-                }
-            }
-            Spacer(minLength: 8)
-            if isChosen {
-                Label("Dressing for it", systemImage: "checkmark")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.sageInk)
-            } else {
-                Button("Dress for it", action: onDress)
-                    .buttonStyle(.pill(.quiet))
-            }
-        }
-        .accessibilityElement(children: .combine)
     }
 }
 

@@ -138,7 +138,7 @@ final class TripModel {
         commit(updated)
         let items = planned.itemIDs.compactMap { itemsByID[$0] }
         if !items.isEmpty {
-            FeedbackRecorder(context: context).record(.wore, for: Outfit(items: items), on: date)
+            FeedbackRecorder(context: context).wear(Outfit(items: items), occasion: planned.occasion, on: date)
         }
         toast = Toast(symbol: "checkmark.circle.fill", message: "Logged as worn")
     }

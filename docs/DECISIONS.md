@@ -5,6 +5,19 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-13: One layer on mild days, and a wear history
+
+- **Decision:**
+  - A jacket over a mid layer is a hard rule violation (`tooManyLayers`) unless the feels-like is under 14°.
+  - "Wear this" writes a `WearEntry` with each piece's previous wear date, so a wear can be taken back exactly,
+    and Saved → Worn can list the history. Wearing goes through `FeedbackRecorder.wear`; `record` is for likes and
+    dislikes only.
+- **Why:** Nadav's trial: at 20° the engine stacked a denim jacket over a cardigan over a linen shirt. The warmth
+  sum (1 + 2 + 2) was in range, but nobody dresses like that. "Worn today" was a session-only flag with no undo and
+  nowhere to see it, which confused him.
+
+---
+
 ### 2026-11-11: Learning that shows, and an honest gap finder
 
 - **Decision:**

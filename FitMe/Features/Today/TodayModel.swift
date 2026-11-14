@@ -40,13 +40,13 @@ final class TodayModel {
     private(set) var suggestions: [ScoredOutfit] = []
     /// Outfits hidden with 👎 this session.
     private(set) var dismissed: Set<String> = []
-    /// Outfits logged with "Wear this" this session. Independent of saving, so one never resets the other.
-    private(set) var worn: Set<String> = []
     /// The latest confirmation to show, if any.
     var toast: Toast?
     private(set) var weather: WeatherState = .idle
     private(set) var stylist: StylistState = .idle
     private(set) var calendarHints: CalendarState = .unavailable
+    /// The event chosen with "Dress for it"; other events may call for the same occasion.
+    private var dressedForHintID: String?
 
     /// When set, every suggestion is built around this item ("Outfits with this").
     let anchor: Item?
@@ -121,12 +121,21 @@ final class TodayModel {
         }
     }
 
-    /// "Wear this" logs the outfit for today, so its pieces rest for a few days.
-    func wear(_ outfit: ScoredOutfit, recorder: FeedbackRecorder) {
-        guard !worn.contains(outfit.id) else { return }
-        worn.insert(outfit.id)
-        recorder.record(.wore, for: outfit.outfit)
-        toast = Toast(symbol: "checkmark.circle.fill", message: "Logged as today's outfit")
+    /// "Wear this" logs the outfit as today's, so its pieces rest for a few days; tapping again takes it back.
+    func toggleWorn(_ outfit: ScoredOutfit, recorder: FeedbackRecorder, now: Date = .now) {
+        if let entry = recorder.wearEntry(for: outfit.id, on: now) {
+            unwear(entry, recorder: recorder)
+            return
+        }
+        let entry = recorder.wear(outfit.outfit, occasion: occasion, on: now)
+        toast = Toast(symbol: "checkmark.circle.fill", message: "Today's outfit. Find it in Saved → Worn.") {
+            recorder.unwear(entry)
+        }
+    }
+
+    func unwear(_ entry: WearEntry, recorder: FeedbackRecorder) {
+        recorder.unwear(entry)
+        toast = Toast(symbol: "arrow.uturn.backward", message: "No longer today's outfit")
     }
 
     // MARK: Weather
@@ -167,8 +176,14 @@ final class TodayModel {
 
     /// Switches the occasion to what an event calls for.
     func dress(for hint: CalendarHint) {
+        dressedForHintID = hint.id
         occasion = hint.occasion
         toast = Toast(symbol: "calendar", message: "Dressing for \(hint.title)")
+    }
+
+    /// True for the event last dressed for, while its occasion is still the one chosen.
+    func isDressing(for hint: CalendarHint) -> Bool {
+        dressedForHintID == hint.id && occasion == hint.occasion
     }
 
     // MARK: Stylist

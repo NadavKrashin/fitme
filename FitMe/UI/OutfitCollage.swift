@@ -51,11 +51,22 @@ struct OutfitCard: View {
     var isWorn = false
     var onToggleSave: () -> Void = {}
     var onDismiss: (() -> Void)?
+    /// Logs the outfit as worn today, or takes that back when it already is.
     var onWear: () -> Void = {}
+    /// Opens the outfit's pieces in detail.
+    var onOpen: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            OutfitCollage(outfit: outfit.outfit, image: image)
+            if let onOpen {
+                Button(action: onOpen) {
+                    OutfitCollage(outfit: outfit.outfit, image: image)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Shows every piece")
+            } else {
+                OutfitCollage(outfit: outfit.outfit, image: image)
+            }
 
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -66,6 +77,12 @@ struct OutfitCard: View {
                         Text(extras)
                             .font(.footnote)
                             .foregroundStyle(Theme.inkMuted)
+                    }
+                    if let onOpen {
+                        Button("See every piece", action: onOpen)
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Theme.terracotta)
+                            .padding(.top, 2)
                     }
                 }
                 Spacer(minLength: 0)
@@ -98,10 +115,10 @@ struct OutfitCard: View {
                 }
                 Spacer()
                 Button(action: onWear) {
-                    Label(isWorn ? "Worn today" : "Wear this", systemImage: isWorn ? "checkmark" : "tshirt")
+                    Label(isWorn ? "Wearing today" : "Wear this", systemImage: isWorn ? "checkmark" : "tshirt")
                 }
                 .buttonStyle(.pill(isWorn ? .quiet : .primary))
-                .allowsHitTesting(!isWorn)
+                .accessibilityHint(isWorn ? "Tap to take it back" : "Logs it as today's outfit")
             }
         }
         .card()

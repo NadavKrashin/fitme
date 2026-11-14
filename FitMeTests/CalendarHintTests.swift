@@ -83,4 +83,27 @@ struct TodayCalendarTests {
         #expect(model.occasion == .date)
         #expect(model.toast?.message == "Dressing for Dinner with Dana")
     }
+
+    /// Three meetings all call for work; dressing for one must not mark the other two.
+    @Test func onlyTheTappedEventIsMarked() async {
+        let meetings = (0 ..< 3).map {
+            CalendarEvent(
+                title: "Meeting \($0)",
+                start: TripFixtures.now.addingTimeInterval(Double($0) * 3600),
+                isAllDay: false
+            )
+        }
+        let model = makeTodayModel(calendar: FakeCalendar(events: meetings))
+        await model.loadCalendarHints()
+        guard case let .hints(hints) = model.calendarHints, hints.count == 3 else {
+            Issue.record("expected three hints")
+            return
+        }
+
+        model.dress(for: hints[1])
+
+        #expect(hints.map(model.isDressing(for:)) == [false, true, false])
+        model.occasion = .casual
+        #expect(!model.isDressing(for: hints[1]), "picking another occasion by hand clears it")
+    }
 }

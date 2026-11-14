@@ -51,10 +51,10 @@ struct TodayModelTests {
         let (model, recorder) = try await modelWithSuggestions()
         let outfit = model.suggestions[0]
 
-        model.wear(outfit, recorder: recorder)
+        model.toggleWorn(outfit, recorder: recorder)
         model.toggleSaved(outfit, isSaved: false, recorder: recorder)
 
-        #expect(model.worn.contains(outfit.id))
+        #expect(recorder.wearEntry(for: outfit.id) != nil)
     }
 
     @Test func dismissingHidesWithAnUndoThatRestoresIt() async throws {
@@ -91,18 +91,35 @@ struct TodayModelTests {
         #expect(recorder.profile().affinityScore(outfit.outfit.coreItems) == 0.5)
     }
 
-    @Test func wearingTwiceLogsOnce() async throws {
+    /// "Wear this" logs today's outfit; tapping it again takes the wear back, as the Undo does.
+    @Test func wearingAgainTakesItBack() async throws {
         let (model, recorder) = try await modelWithSuggestions()
         let outfit = model.suggestions[0]
         for item in outfit.outfit.items {
             container.mainContext.insert(ItemRecord(item: item))
         }
 
-        model.wear(outfit, recorder: recorder)
-        model.wear(outfit, recorder: recorder)
+        model.toggleWorn(outfit, recorder: recorder)
+        var records = try container.mainContext.fetch(FetchDescriptor<ItemRecord>())
+        #expect(records.allSatisfy { $0.wearCount == 1 && $0.lastWorn != nil })
+        #expect(try container.mainContext.fetchCount(FetchDescriptor<WearEntry>()) == 1)
 
-        let records = try container.mainContext.fetch(FetchDescriptor<ItemRecord>())
-        #expect(records.allSatisfy { $0.wearCount == 1 })
+        model.toggleWorn(outfit, recorder: recorder)
+        records = try container.mainContext.fetch(FetchDescriptor<ItemRecord>())
+        #expect(records.allSatisfy { $0.wearCount == 0 && $0.lastWorn == nil })
+        #expect(try container.mainContext.fetchCount(FetchDescriptor<WearEntry>()) == 0)
+        #expect(recorder.profile().isEmpty)
+    }
+
+    @Test func wearingOffersAnUndo() async throws {
+        let (model, recorder) = try await modelWithSuggestions()
+        let outfit = model.suggestions[0]
+
+        model.toggleWorn(outfit, recorder: recorder)
+        let undo = try #require(model.toast?.undo)
+        undo()
+
+        #expect(recorder.wearEntry(for: outfit.id) == nil)
     }
 
     @Test func weatherFillsTemperatureAndRain() async {

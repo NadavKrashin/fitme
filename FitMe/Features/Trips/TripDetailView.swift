@@ -225,12 +225,19 @@ private struct TripOutfitCard: View {
     let canWear: Bool
     let onSwap: () -> Void
     let onWear: () -> Void
+    @State private var selection: OutfitSelection?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Badge(text: planned.occasion.title, tint: Theme.tint(for: planned.occasion))
             if let scored = TripPlanner.scored(planned, in: details, itemsByID: itemsByID) {
-                OutfitCollage(outfit: scored.outfit, image: { recordsByID[$0]?.cutout }, height: 200)
+                Button {
+                    selection = OutfitSelection(outfit: scored.outfit, occasion: planned.occasion)
+                } label: {
+                    OutfitCollage(outfit: scored.outfit, image: { recordsByID[$0]?.cutout }, height: 200)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Shows every piece")
                 Text(OutfitCard.title(for: scored.outfit))
                     .font(Theme.title(17))
                     .foregroundStyle(Theme.ink)
@@ -260,6 +267,7 @@ private struct TripOutfitCard: View {
             }
         }
         .card()
+        .sheet(item: $selection) { OutfitDetailView(outfit: $0.outfit, occasion: $0.occasion) }
     }
 }
 

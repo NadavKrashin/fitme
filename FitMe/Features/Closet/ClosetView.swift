@@ -53,6 +53,11 @@ struct ClosetView: View {
                     ItemDetailView(record: record)
                 }
             }
+            .navigationDestination(for: Route.self) { route in
+                switch route {
+                case .insights: InsightsView()
+                }
+            }
             .searchable(text: $searchText, prompt: "Search items")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -105,8 +110,14 @@ struct ClosetView: View {
         .buttonStyle(.plain)
     }
 
+    /// Screens pushed from the closet besides item details (which are pushed by item id). Links must push values,
+    /// not views: an item pushed by value from a view pushed by destination pops that view instead.
+    private enum Route: Hashable {
+        case insights
+    }
+
     private var insightsLink: some View {
-        NavigationLink { InsightsView() } label: {
+        NavigationLink(value: Route.insights) {
             HStack(spacing: 14) {
                 Image(systemName: "lightbulb")
                     .font(.title3)

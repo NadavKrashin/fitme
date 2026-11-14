@@ -3,7 +3,7 @@
 **Read this first.** It's the single source of truth for "where are we and what's next". Whoever ends a work
 session (person or agent) updates it before the final commit.
 
-_Last updated: 2026-11-11._
+_Last updated: 2026-11-13._
 
 ## Current state
 
@@ -209,6 +209,26 @@ This Mac now has the iOS Simulator runtime, so `make test` runs everything local
 - **Simulator tip:** to test calendar hints, grant access with
   `xcrun simctl privacy <device> grant calendar io.github.nadavkrashin.fitme.staging`. The Calendar app's own
   first-run alerts can't be dismissed by taps, so seed events from a throwaway test in the app's test host instead.
+
+## Nadav's Phase 4 trial (2026-11-13) and fixes
+
+- **What he found, all fixed:**
+  1. "Dress for it" marked every event with the same occasion. The model now tracks the event that was tapped
+     (`TodayModel.isDressing(for:)`, test `onlyTheTappedEventIsMarked`).
+  2. A workhorse in Insights bounced back before opening. Insights was pushed by destination and the rows by value;
+     the Closet stack now pushes only values (`ClosetView.Route`). There is no UI test for this; it was checked in
+     the simulator.
+  3. "Worn today" was unclear, could not be undone, and wasn't shown anywhere. Wears are now stored
+     (`WearEntry`): Today shows "Today you're wearing", "Wearing today" toggles back, Undo is offered, and
+     Saved → Worn lists the history.
+  4. A jacket over a cardigan over a shirt at 20°. New rule: only one layer at 14° and above (`LayeringTests`
+     failed first, then passed).
+  5. No way to see an outfit's pieces. New detail sheet from any outfit card.
+- **Verified in the simulator:** a single layer at 20°, the detail sheet, wear → "Wearing today" with Undo,
+  Saved → Worn, and a workhorse opening the item in one tap. 60 engine tests and every app suite pass.
+- **Not verified:** the calendar fix on screen with three same-occasion events (covered by the test), and wear
+  history across midnight (entries are grouped by the phone's calendar day).
+- **Compiler note:** Swift 6.4.2 crashes on `try #require(x)()` in a test; bind the result first, then call it.
 
 ## Next steps, in order
 

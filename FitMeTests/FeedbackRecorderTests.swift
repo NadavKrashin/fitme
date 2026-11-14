@@ -20,11 +20,34 @@ struct FeedbackRecorderTests {
         }
         let day = Date(timeIntervalSince1970: 1_790_000_000)
 
-        FeedbackRecorder(context: container.mainContext).record(.wore, for: worn, on: day)
+        FeedbackRecorder(context: container.mainContext).wear(worn, occasion: .date, on: day)
 
         let records = try container.mainContext.fetch(FetchDescriptor<ItemRecord>())
         #expect(records.count == 3)
         #expect(records.allSatisfy { $0.wearCount == 1 && $0.lastWorn == day })
+        let entries = try container.mainContext.fetch(FetchDescriptor<WearEntry>())
+        #expect(entries.map(\.outfitID) == [worn.id])
+        #expect(entries.first?.occasion == .date)
+    }
+
+    /// Taking a wear back restores each piece's earlier wear date, unless it was worn again since.
+    @Test func unwearRestoresTheEarlierWear() throws {
+        let worn = try outfit(["t07", "b04", "s03"])
+        let earlier = Date(timeIntervalSince1970: 1_780_000_000)
+        let day = Date(timeIntervalSince1970: 1_790_000_000)
+        for item in worn.items {
+            let record = ItemRecord(item: item)
+            (record.wearCount, record.lastWorn) = (2, earlier)
+            container.mainContext.insert(record)
+        }
+        let recorder = FeedbackRecorder(context: container.mainContext)
+
+        let entry = recorder.wear(worn, occasion: nil, on: day)
+        recorder.unwear(entry)
+
+        let records = try container.mainContext.fetch(FetchDescriptor<ItemRecord>())
+        #expect(records.allSatisfy { $0.wearCount == 2 && $0.lastWorn == earlier })
+        #expect(try container.mainContext.fetchCount(FetchDescriptor<WearEntry>()) == 0)
     }
 
     @Test func likesPersistInTheProfile() throws {
