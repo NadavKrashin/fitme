@@ -7,6 +7,7 @@ public struct ScoreWeights: Equatable, Sendable {
     public var occasion = 0.12
     public var weather = 0.18
     public var shoes = 0.12
+    public var style = 0.10
     public var fit = 0.06
     public var statement = 0.06
     public var novelty = 0.03
@@ -28,6 +29,7 @@ public struct ScoreBreakdown: Equatable, Sendable {
     public var occasion: Double
     public var weather: Double
     public var shoes: Double
+    public var style: Double
     public var fit: Double
     public var statement: Double
     public var affinity: Double
@@ -56,6 +58,7 @@ public struct OutfitScorer: Sendable {
             weather: partial ? Self.partialWeatherFit(outfit, weather: context.weather)
                 : Self.weatherFit(outfit, context: context),
             shoes: Self.shoePairing(outfit, occasion: context.occasion),
+            style: Self.styleCoherence(core),
             fit: Self.fitBalance(outfit),
             statement: Self.statementBudget(core),
             affinity: context.profile?.affinityScore(core) ?? 0.5,
@@ -63,10 +66,10 @@ public struct OutfitScorer: Sendable {
             total: 0
         )
         let weighted = w.color * b.color + w.pattern * b.pattern + w.formality * b.formality
-            + w.occasion * b.occasion + w.weather * b.weather + w.shoes * b.shoes + w.fit * b.fit
+            + w.occasion * b.occasion + w.weather * b.weather + w.shoes * b.shoes + w.style * b.style + w.fit * b.fit
             + w.statement * b.statement + w.novelty * b.novelty
-        let sum = w.color + w.pattern + w.formality + w.occasion + w.weather + w.shoes + w.fit + w.statement
-            + w.novelty
+        let sum = w.color + w.pattern + w.formality + w.occasion + w.weather + w.shoes + w.style + w.fit
+            + w.statement + w.novelty
         let blend = weighted / sum * 100
         b.total = blend + (2 * b.affinity - 1) * w.learnedPoints
         return b

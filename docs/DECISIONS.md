@@ -5,6 +5,16 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Style coherence from the pieces' style tags
+
+- **Decision:** a new score component, `style` (weight 0.10), rates whether the pieces' style tags mix
+  (`StyleTag.compatibility`): classic with minimal or preppy, street with sporty or edgy, outdoor with street or
+  sporty, and boho with romantic all score 1. Technical sportswear or outdoor gear with classic tailoring, boho or
+  romantic pieces clashes (0.4–0.6), and unnamed pairs score 0.85. Each pair of tagged pieces takes its best-mixing
+  tags; the weakest pair counts as much as the average; untagged pieces go with anything.
+- **Why:** tags were only used to require sportswear for Sport. The analysis found a denim jacket over a green fleece
+  over a floral camp shirt, and a puffer over a shawl cardigan over a floral shirt with running shoes.
+
 ### 2026-11-14: Hike is its own occasion; sport and beach kits
 
 - **Decision:**

@@ -71,3 +71,4 @@ User-visible changes per production release. Add entries under **Unreleased** as
   only with its own trousers); work stays business casual, with no shorts, light-wash jeans or gym gear.
 - New Hike occasion with boots and outdoor gear; Sport is now running and gym kit, and the beach leads with shorts
   and sandals. Calendar events like "hike" or "trail" pick Hike.
+- Pieces in an outfit share a style: no technical fleece over a floral shirt, no gym wear with tailoring.
