@@ -32,10 +32,13 @@ auth=(
 archive="$work/FitMe.xcarchive"
 
 xcodegen generate --quiet
+# The archive is left unsigned and signed once, at export, with Apple's cloud-managed distribution certificate.
+# Signing the archive itself made every fresh CI runner create a new Apple Development certificate (its private key
+# dies with the runner) until the account hit Apple's certificate limit.
 xcodebuild -project FitMe.xcodeproj -scheme "$scheme" -configuration "$configuration" \
     -destination 'generic/platform=iOS' -archivePath "$archive" \
     DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-    "${auth[@]}" archive | xcbeautify
+    CODE_SIGNING_ALLOWED=NO archive | xcbeautify
 
 if [[ "$configuration" == "Release" ]]; then
     scripts/verify-release.sh "$archive/Products/Applications/FitMe.app"
