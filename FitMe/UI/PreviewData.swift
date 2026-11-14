@@ -114,6 +114,17 @@ enum PreviewData {
         transport: URLSession.shared,
         context: container.mainContext
     )
+
+    /// Previews skip onboarding.
+    static let onboardingDone = OnboardingModel(store: PreviewOnboarding(), alreadySetUp: true)
+}
+
+struct PreviewOnboarding: OnboardingStoring {
+    func isDone() -> Bool {
+        true
+    }
+
+    func markDone() {}
 }
 
 /// Answers instantly with plausible tags, so previews never call the network.

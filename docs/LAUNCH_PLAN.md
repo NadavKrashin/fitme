@@ -48,10 +48,12 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 - [x] `ITSAppUsesNonExemptEncryption = NO` (HTTPS only), already set.
 
 ### M3: A first run for strangers
-- [ ] Onboarding: what FitMe does, consent, then straight into "photograph your closet".
-- [ ] Empty states everywhere for a new user (no demo closet in Release).
-- [ ] Accessibility pass (Dynamic Type at the largest sizes, VoiceOver labels), dark mode check on every screen.
-- [ ] Crash and hang reports via Xcode Organizer / MetricKit (no third-party SDK).
+- [x] Onboarding: what FitMe does, consent, location (asked only on a tap), then straight into "photograph your
+      closet" (camera or library). People with clothes or an AI answer skip it.
+- [x] Empty states for a new user: Today and Closet offer Take photos / Choose from library; Trips already had one.
+- [x] Accessibility pass: serif titles scale with Dynamic Type (they were fixed sizes), icon columns scale,
+      decorative icons hidden from VoiceOver; checked at the largest text size and in dark mode on the new screens.
+- [x] Crash and hang reports: Xcode Organizer and TestFlight feedback, no code and no third-party SDK.
 
 ### M4: Store presence
 - [ ] Listing: subtitle, description, keywords, category (Lifestyle), support and privacy URLs.

@@ -35,8 +35,18 @@ enum Theme {
     }
 
     /// Section and card titles.
+    /// The serif display face at about `size` points, scaling with Dynamic Type like the text style nearest that
+    /// size, so titles stay larger than body text at every text size.
     static func title(_ size: CGFloat = 20) -> Font {
-        .system(size: size, weight: .medium, design: .serif)
+        .system(textStyle(near: size), design: .serif, weight: .medium)
+    }
+
+    /// The text style whose default size is closest: headline 17, title 3 20, title 2 22, title 28, large title 34.
+    static func textStyle(near size: CGFloat) -> Font.TextStyle {
+        let styles: [(size: CGFloat, style: Font.TextStyle)] = [
+            (17, .headline), (20, .title3), (22, .title2), (28, .title), (34, .largeTitle),
+        ]
+        return styles.min { abs($0.size - size) < abs($1.size - size) }?.style ?? .title3
     }
 
     // MARK: Shape
@@ -54,8 +64,11 @@ enum Theme {
         let inkColor = UIColor(ink)
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
-        appearance.largeTitleTextAttributes = [.font: serif(36, .regular), .foregroundColor: inkColor]
-        appearance.titleTextAttributes = [.font: serif(18, .medium), .foregroundColor: inkColor]
+        // Scaled for the text size at launch; UIKit appearances don't follow later changes until relaunch.
+        let largeTitle = UIFontMetrics(forTextStyle: .largeTitle).scaledFont(for: serif(36, .regular))
+        let title = UIFontMetrics(forTextStyle: .headline).scaledFont(for: serif(18, .medium))
+        appearance.largeTitleTextAttributes = [.font: largeTitle, .foregroundColor: inkColor]
+        appearance.titleTextAttributes = [.font: title, .foregroundColor: inkColor]
 
         let scrolled = appearance.copy()
         scrolled.configureWithDefaultBackground()

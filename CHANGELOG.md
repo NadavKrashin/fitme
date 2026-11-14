@@ -85,3 +85,6 @@ User-visible changes per production release. Add entries under **Unreleased** as
   swings.
 - FitMe asks before sending anything to Claude, explains what goes to Anthropic, and works without it. Settings → AI
   turns Claude on or off and links to the privacy policy and help.
+- A short welcome on first launch explains FitMe, asks about Claude and your location one at a time, and takes you
+  straight to photographing your closet. An empty Today or Closet offers the camera and your photo library.
+- Titles grow with your text size setting, and VoiceOver skips decorative icons.

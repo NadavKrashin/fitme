@@ -3,6 +3,8 @@ import SwiftUI
 /// Asked once, before anything is sent to Claude: what goes to Anthropic, for what, and that FitMe works without it.
 struct AIConsentView: View {
     let onAnswer: (Bool) -> Void
+    /// Room for a row's icon, growing with the text size so large icons don't overlap the text.
+    @ScaledMetric(relativeTo: .title3) private var iconWidth: CGFloat = 28
 
     var body: some View {
         ScrollView {
@@ -64,7 +66,7 @@ struct AIConsentView: View {
             Image(systemName: symbol)
                 .font(.title3)
                 .foregroundStyle(Theme.terracotta)
-                .frame(width: 28)
+                .frame(width: iconWidth)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.headline).foregroundStyle(Theme.ink)

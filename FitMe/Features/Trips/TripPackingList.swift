@@ -102,6 +102,7 @@ private struct CheckRow<Label: View>: View {
                     .font(.title3)
                     .foregroundStyle(isChecked ? Theme.sageInk : Theme.line)
                     .contentTransition(.symbolEffect(.replace))
+                    .accessibilityHidden(true)
             }
             .padding(.vertical, 6)
             .contentShape(.rect)
@@ -302,6 +303,7 @@ struct DebriefView: View {
                                                 .foregroundStyle(isWorn ? Theme.sageInk : Theme.inkMuted)
                                                 .background(Theme.card, in: .circle)
                                                 .padding(4)
+                                                .accessibilityHidden(true)
                                         }
                                     Text(item.name)
                                         .font(.caption)

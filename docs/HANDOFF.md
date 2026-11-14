@@ -397,6 +397,18 @@ whether the Color chips fit next to large accessibility text sizes.
   sizes on the sheet.
 - **Waiting on Nadav:** a support email if GitHub issues isn't the contact he wants.
 
+## Launch M3: a first run for new users (2026-11-14)
+
+- **Built:** four-step onboarding (welcome, AI question, location on a tap, start your closet → camera or
+  library), `AppNavigation` (tab selection and cross-tab "add clothes" requests), empty-closet actions on Today and
+  Closet, Dynamic Type for serif titles and nav titles, scaled icon columns, decorative icons hidden from VoiceOver.
+- **Verified:** 180 app tests (4 new onboarding tests); in the simulator on a fresh install: no permission prompt
+  over the welcome, each step advances, "Take photos" lands in Closet with the camera open, Today and Closet empty
+  states, the largest accessibility text size (titles scale, icons don't overlap), and dark mode on onboarding.
+- **Not verified yet:** the system location prompt from "Use my location" (the simulator's alerts can't be tapped;
+  location was pre-granted), the first weather fetch after a fresh install failed once and worked on Retry (cause
+  unknown), VoiceOver read-through on a device, dark mode on Inbox, Find online and item edit.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and

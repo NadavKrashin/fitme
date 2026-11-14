@@ -5,6 +5,22 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: A first run that asks one thing at a time
+
+- **Decision:**
+  - Onboarding (`OnboardingView`, four steps): what FitMe does → the AI question (the consent sheet, now a step) →
+    the weather, asking for location only on "Use my location" → "Start your closet", which opens the camera or the
+    photo library in Closet (`AppNavigation.addClothes`). Shown once; anyone with clothes or an AI answer skips it.
+  - Today waits for onboarding before loading the weather and calendar, and with an empty closet shows "Outfits
+    start with your clothes" with the same two actions instead of empty controls. Closet's empty card has them too.
+  - `Theme.title` now maps each size to the nearest text style (headline, title 3, title 2, title, large title) in
+    the serif design, so titles scale with Dynamic Type; navigation bar titles scale at launch via `UIFontMetrics`.
+  - Crash and hang reports come from Xcode Organizer and TestFlight; no SDK, so the privacy answers stay "no
+    third-party SDKs".
+- **Why:** a fresh install showed the location prompt on top of the AI question before the person knew what FitMe
+  was, and an empty Today said "add photos from the Closet tab" with no way to. At the largest text size titles
+  stayed fixed while body text grew, inverting the hierarchy.
+
 ### 2026-11-14: Ask once, before anything reaches Claude
 
 - **Decision:**

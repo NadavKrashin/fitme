@@ -7,6 +7,8 @@ struct FitMeApp: App {
     private let container: ModelContainer
     @State private var capture: CaptureModel
     @State private var consent: AIConsentModel
+    @State private var onboarding: OnboardingModel
+    @State private var navigation = AppNavigation()
 
     init() {
         Theme.applyNavigationBarAppearance()
@@ -19,6 +21,12 @@ struct FitMeApp: App {
         }
         self.container = container
         _consent = State(initialValue: AIConsentModel(store: dependencies.aiConsent))
+        // People who used FitMe before onboarding existed skip it.
+        let hasClothes = ((try? container.mainContext.fetchCount(FetchDescriptor<ItemRecord>())) ?? 0) > 0
+        _onboarding = State(initialValue: OnboardingModel(
+            store: UserDefaultsOnboarding(),
+            alreadySetUp: hasClothes || dependencies.aiConsent.read() != .notAsked
+        ))
         _capture = State(initialValue: CaptureModel(
             processor: dependencies.photoProcessor,
             tagger: dependencies.tagger,
@@ -33,6 +41,8 @@ struct FitMeApp: App {
                 .environment(\.dependencies, dependencies)
                 .environment(capture)
                 .environment(consent)
+                .environment(onboarding)
+                .environment(navigation)
                 .task { await capture.resumePending() }
         }
         .modelContainer(container)

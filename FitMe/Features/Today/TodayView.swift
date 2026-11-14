@@ -55,6 +55,7 @@ struct OutfitsWithItemView: View {
 /// "Outfits with this item".
 private struct OutfitPlanner: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(OnboardingModel.self) private var onboarding
     @Bindable var model: TodayModel
     /// Today's screen also points to the trip in progress (whose outfits come from the bag) and reads the calendar.
     var isToday = false
@@ -95,15 +96,18 @@ private struct OutfitPlanner: View {
                     wornTodayCard(recordsByID: recordsByID)
                 }
                 WeatherCard(state: model.weather) { Task { await model.loadWeather() } }
-                if isToday {
-                    CalendarHintsCard(model: model)
-                }
-                occasionChips
-                conditionsCard
-
-                SectionTitle(text: "Suggestions")
                 if closet.isEmpty {
-                    emptyCard("Your closet is empty. Add photos of your clothes from the Closet tab.")
+                    StartClosetCard()
+                } else {
+                    if isToday {
+                        CalendarHintsCard(model: model)
+                    }
+                    occasionChips
+                    conditionsCard
+                    SectionTitle(text: "Suggestions")
+                }
+                if closet.isEmpty {
+                    EmptyView()
                 } else if model.suggestions.isEmpty {
                     emptyCard("Nothing in your closet suits this occasion and weather yet.")
                 } else {
@@ -128,13 +132,14 @@ private struct OutfitPlanner: View {
         .sheet(item: $selection) {
             OutfitDetailView(outfit: $0.outfit, occasion: $0.occasion, swapping: $0.swapping)
         }
-        .task {
-            if model.weather == .idle {
+        // After onboarding, which asks for location when its reason is on screen.
+        .task(id: onboarding.isDone) {
+            if onboarding.isDone, model.weather == .idle {
                 await model.loadWeather()
             }
         }
-        .task {
-            if isToday {
+        .task(id: onboarding.isDone) {
+            if onboarding.isDone, isToday {
                 await model.loadCalendarHints()
             }
         }
@@ -344,6 +349,7 @@ private struct TripInProgressCard: View {
                     .foregroundStyle(Theme.onTerracotta)
                     .frame(width: 48, height: 48)
                     .background(Theme.terracotta, in: .circle)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Day \(day + 1) of \(details.days.count) in \(place)")
                         .font(Theme.title(17))
@@ -356,6 +362,7 @@ private struct TripInProgressCard: View {
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Theme.inkMuted)
+                    .accessibilityHidden(true)
             }
             .card()
         }
@@ -425,6 +432,8 @@ private struct WeatherCard: View {
     TodayView()
         .environment(\.dependencies, .preview())
         .environment(PreviewData.captureModel)
+        .environment(PreviewData.onboardingDone)
+        .environment(AppNavigation())
         .modelContainer(PreviewData.container)
 }
 #endif

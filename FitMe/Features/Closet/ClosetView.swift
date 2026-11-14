@@ -6,6 +6,7 @@ import SwiftUI
 
 struct ClosetView: View {
     @Environment(CaptureModel.self) private var capture
+    @Environment(AppNavigation.self) private var navigation
     @Environment(\.dependencies) private var dependencies
     @Query(sort: \ItemRecord.name) private var records: [ItemRecord]
     @Query private var drafts: [CaptureDraft]
@@ -38,6 +39,13 @@ struct ClosetView: View {
                             Text(emptyHint)
                                 .font(.callout)
                                 .foregroundStyle(Theme.inkMuted)
+                            HStack(spacing: 10) {
+                                Button("Take photos") { isShowingCamera = true }
+                                    .buttonStyle(.pill(.accent))
+                                Button("Choose from library") { isPickingPhotos = true }
+                                    .buttonStyle(.pill(.quiet))
+                            }
+                            .padding(.top, 4)
                         }
                         .card(padding: 22)
                     } else {
@@ -110,6 +118,8 @@ struct ClosetView: View {
                 Task { await capture.importPhotos(selection.map(Self.loader)) }
             }
             .sheet(isPresented: $isShowingInbox) { InboxView() }
+            .onAppear(perform: openRequestedSource)
+            .onChange(of: navigation.addRequest) { openRequestedSource() }
         }
     }
 
@@ -130,12 +140,14 @@ struct ClosetView: View {
                     .foregroundStyle(Theme.onTerracotta)
                     .frame(width: 44, height: 44)
                     .background(Theme.terracotta, in: .circle)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Inbox").font(Theme.title(17)).foregroundStyle(Theme.ink)
                     Text(summary).font(.footnote).foregroundStyle(Theme.inkMuted)
                 }
                 Spacer()
                 Image(systemName: "chevron.right").foregroundStyle(Theme.inkMuted)
+                    .accessibilityHidden(true)
             }
             .card(padding: 14)
         }
@@ -203,11 +215,21 @@ struct ClosetView: View {
             .map { ($0.key, $0.value) }
     }
 
+    /// Onboarding and Today's empty state ask for the camera or the library from another tab.
+    private func openRequestedSource() {
+        switch navigation.addRequest {
+        case .camera: isShowingCamera = true
+        case .library: isPickingPhotos = true
+        case nil: return
+        }
+        navigation.addRequest = nil
+    }
+
     private var emptyHint: String {
         switch AppEnvironment.current {
         case .staging:
-            "Tap + to add photos of your clothes, or load the demo closet from Settings. \(InboxView.photoTip)"
-        case .production: "Tap + to add photos of your clothes. \(InboxView.photoTip)"
+            "Photograph your clothes or choose photos, or load the demo closet from Settings. \(InboxView.photoTip)"
+        case .production: "Photograph your clothes one after another, or choose photos. \(InboxView.photoTip)"
         }
     }
 
@@ -272,6 +294,7 @@ struct ClosetView: View {
     ClosetView()
         .environment(\.dependencies, .preview())
         .environment(PreviewData.captureModel)
+        .environment(AppNavigation())
         .modelContainer(PreviewData.container)
 }
 #endif
