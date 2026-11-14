@@ -166,6 +166,13 @@ public struct Item: Identifiable, Codable, Hashable, Sendable {
         hasher.combine(id)
     }
 
+    /// Part of a suit, by its name ("suit jacket", "suit trousers"); not a tracksuit, swimsuit or jumpsuit.
+    public var isSuitPiece: Bool {
+        let words = "\(name) \(subcategory ?? "")".lowercased()
+        let lookalikes = ["tracksuit", "swimsuit", "jumpsuit", "sweatsuit", "boilersuit"]
+        return words.contains("suit") && !lookalikes.contains(where: words.contains)
+    }
+
     public var primaryColor: ItemColor? {
         colors.first
     }

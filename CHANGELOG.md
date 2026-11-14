@@ -67,3 +67,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - Rain matters: suggestions bring a jacket that keeps water out, and boots in cold rain. Trips in the rain pack rain
   gear when you have it.
 - A ♥ counts for more, so liked outfits come back sooner.
+- Dress codes are respected: formal means a dress shirt, tailored trousers, a jacket and dress shoes (a suit jacket
+  only with its own trousers); work stays business casual, with no shorts, light-wash jeans or gym gear.

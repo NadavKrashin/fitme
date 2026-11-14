@@ -334,9 +334,10 @@ found 14 problems. Fixed so far, each with failing tests first:
   knitwear at 0°.
 - **Fix 4, rain:** cover is scored for jacket and shoes; trips pack rain gear when the closet has it.
 - **Side fixes:** packing counts bottom wears in coverage; likes add their full 8 points (display clamps).
+- **Fixes 6–7, dress codes:** formal needs a dress shirt, tailored trousers, a tailored jacket and dress shoes; work is
+  business casual; smart casual and dates skip gym and hiking gear; suit jackets stay with their trousers.
 
-**Still open, in order:** formal pairs sweaters with suit trousers (fix 6); work allows light jeans and sneakers,
-smart casual a floral camp shirt (7); beach picks hiking pants and boots, sport doesn't tell running from hiking (8);
+**Still open, in order:** beach picks hiking pants and boots, sport doesn't tell running from hiking (8);
 style tags don't affect the score (9); Today dresses for one temperature, not the day's range (10); the tagging rubric
 calls a tee warmth 2 while the engine treats it as 1 (11); no fabric field (12); rotation is weak (13); the stylist
 doesn't get dress code, warmth or style (14).

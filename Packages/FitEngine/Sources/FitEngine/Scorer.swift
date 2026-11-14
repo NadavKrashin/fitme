@@ -54,7 +54,7 @@ public struct OutfitScorer: Sendable {
             formality: Self.formalityCohesion(core),
             occasion: Self.occasionFit(core, occasion: context.occasion),
             weather: partial ? Self.partialWeatherFit(outfit, weather: context.weather)
-                : Self.weatherFit(outfit, weather: context.weather),
+                : Self.weatherFit(outfit, context: context),
             shoes: Self.shoePairing(outfit, occasion: context.occasion),
             fit: Self.fitBalance(outfit),
             statement: Self.statementBudget(core),
@@ -172,12 +172,12 @@ public struct OutfitScorer: Sendable {
         return max(0, 1 - abs(mean - occasion.targetFormality) / 2)
     }
 
-    public static func weatherFit(_ outfit: Outfit, weather: Weather) -> Double {
+    public static func weatherFit(_ outfit: Outfit, context: OutfitContext) -> Double {
+        let weather = context.weather
         let target = weather.upperWarmthTarget
-        let warmth = Rules.upperWarmth(of: outfit)
-        let distance = warmth < target.lowerBound
-            ? target.lowerBound - warmth
-            : max(0, warmth - target.upperBound)
+        let distance = Rules.upperWarmth(of: outfit) < target.lowerBound
+            ? target.lowerBound - Rules.upperWarmth(of: outfit)
+            : max(0, Rules.dressedWarmth(of: outfit, context: context) - target.upperBound)
         var score = distance == 0 ? 1 : (distance == 1 ? 0.6 : 0.2)
         if weather.isRainy {
             score *= rainCover(outfit, feelsLike: weather.feelsLikeC)

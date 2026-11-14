@@ -8,8 +8,9 @@ struct RulesTests {
     }
 
     @Test func formalOccasionNeedsDressShoes() {
-        let withBoots = Fixtures.outfit("t11", "b07", "s02")
-        let withDressShoes = Fixtures.outfit("t11", "b07", "s06")
+        // Formal wears a tailored jacket; the black blazer is in both, so only the shoes differ.
+        let withBoots = Fixtures.outfit("t11", "m05", "b07", "s02")
+        let withDressShoes = Fixtures.outfit("t11", "m05", "b07", "s06")
         #expect(Rules.violations(of: withBoots, context: Fixtures.context(.formal)).contains(.occasionMismatch))
         #expect(Rules.isValid(withDressShoes, context: Fixtures.context(.formal)))
     }

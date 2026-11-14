@@ -13,6 +13,8 @@ public enum Violation: Equatable, Sendable {
     case tooManyLayers
     /// A layer the day doesn't call for: dry, and warm enough without it.
     case unneededLayer
+    /// A suit jacket with trousers that aren't its own.
+    case splitSuit
 }
 
 /// Hard constraints. Anything that passes here is ranked by `OutfitScorer`.
@@ -22,7 +24,9 @@ public enum Rules {
         guard item.isAvailable, item.category.isCore else { return false }
         let range = context.occasion.formalityRange
         let f = Double(item.formality)
-        guard f >= range.lowerBound - 1, f <= range.upperBound + 1 else { return false }
+        guard f >= range.lowerBound - 1, f <= range.upperBound + 1,
+              suitsDressCode(item, occasion: context.occasion)
+        else { return false }
 
         if let style = context.occasion.requiredStyle,
            !item.styleTags.contains(style),
@@ -34,7 +38,8 @@ public enum Rules {
         let t = weather.feelsLikeC
         switch item.category {
         case .midLayer:
-            return weather.allowsLayers && t < 22
+            // Formal wears its tailored jacket in any weather.
+            return context.occasion == .formal || (weather.allowsLayers && t < 22)
         case .outerwear:
             if t >= 22 {
                 return weather.isRainy && item.waterResistant && item.warmth <= 2
@@ -99,26 +104,34 @@ public enum Rules {
             }
         }
 
+        result += dressCodeViolations(of: outfit, occasion: context.occasion, partial: partial)
         if !partial {
-            result += weatherViolations(of: outfit, weather: context.weather)
+            result += weatherViolations(of: outfit, context: context)
         }
         return result
     }
 
-    private static func weatherViolations(of outfit: Outfit, weather: Weather) -> [Violation] {
+    private static func weatherViolations(of outfit: Outfit, context: OutfitContext) -> [Violation] {
+        let weather = context.weather
         let target = weather.upperWarmthTarget
-        let warmth = upperWarmth(of: outfit)
         var result: [Violation] = []
-        if warmth < target.lowerBound - 1 {
+        if upperWarmth(of: outfit) < target.lowerBound - 1 {
             result.append(.tooCold)
         }
-        if warmth > target.upperBound + 1 {
+        if dressedWarmth(of: outfit, context: context) > target.upperBound + 1 {
             result.append(.tooWarm)
         }
-        if hasUnneededLayer(outfit, weather: weather) {
+        let jacket = dressCodeJacket(in: outfit, occasion: context.occasion)
+        if hasUnneededLayer(Outfit(items: outfit.items.filter { $0 != jacket }), weather: weather) {
             result.append(.unneededLayer)
         }
         return result
+    }
+
+    /// Upper-body warmth as worn, judged against the heat: a formal event's tailored jacket doesn't count, since the
+    /// dress code asks for it whatever the weather.
+    static func dressedWarmth(of outfit: Outfit, context: OutfitContext) -> Int {
+        upperWarmth(of: outfit) - (dressCodeJacket(in: outfit, occasion: context.occasion)?.warmth ?? 0)
     }
 
     public static func isValid(_ outfit: Outfit, context: OutfitContext) -> Bool {

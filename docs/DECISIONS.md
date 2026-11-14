@@ -5,6 +5,23 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Dress codes for formal, work, smart casual and dates
+
+- **Decision** (`DressCode.swift`):
+  - Formal: every top, bottom, layer and pair of shoes is formality 4+, and the outfit wears a tailored jacket
+    (formality 4+) in any weather. The jacket doesn't count against the heat or as an unneeded layer.
+  - Work is business casual: no sporty or outdoor tops, bottoms or shoes; tops formality 2+ and not graphic or
+    statement; no shorts and no light- or mid-wash jeans (dark denim passes); shoes formality 2+.
+  - Smart casual and dates: no sporty or outdoor tops, bottoms or shoes, and no graphic tees.
+  - A suit jacket (found by name, not tracksuits or swimsuits) only goes with suit trousers of the same color
+    (`Violation.splitSuit`).
+- **Why:** the analysis found a rust knit polo with suit trousers for formal, a polo under a suit jacket, light-wash
+  jeans with sneakers for work, and a floral camp shirt with dark jeans and chelsea boots for work.
+- **Sources:** [Resident, men's formal dress codes](https://resident.com/resource-guide/2026/02/09/mens-guide-to-formal-dress-codes),
+  [Opumo, men's dress codes](https://opumo.com/magazine/mens-dress-codes),
+  [The Black Tux, cocktail attire](https://theblacktux.com/blogs/resources/what-is-cocktail-attire-an-essential-men-s-dress-code-guide),
+  [Berle, dress code guide](https://berle.com/blogs/announcements/ultimate-guide-mens-dress-codes).
+
 ### 2026-11-14: Color judged by stylist pairings (supersedes "Neutrals first, color by mood")
 
 - **Decision:**
