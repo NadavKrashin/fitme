@@ -1,0 +1,48 @@
+# FitMe's Claude proxy. Deploy with `npm run deploy:staging` / `npm run deploy:production` after `wrangler login`,
+# and set the secrets per environment:
+#   npx wrangler secret put ANTHROPIC_API_KEY --env production
+#   npx wrangler secret put CHALLENGE_SECRET --env production   (any long random string)
+name = "fitme-claude-proxy"
+main = "src/worker.ts"
+compatibility_date = "2025-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+rules = [{ type = "Text", globs = ["**/*.pem"], fallthrough = true }]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DeviceLedgerObject", "DailyLedgerObject"]
+
+[env.staging]
+name = "fitme-claude-proxy-staging"
+durable_objects.bindings = [
+  { name = "DEVICES", class_name = "DeviceLedgerObject" },
+  { name = "DAILY", class_name = "DailyLedgerObject" },
+]
+
+[env.staging.vars]
+# Staging builds, and Debug builds run from Xcode (App Attest "development").
+APP_IDS = "4ARX779852.io.github.nadavkrashin.fitme.staging"
+ATTEST_ENVIRONMENTS = "production,development"
+ALLOWED_MODELS = "claude-opus-5-5"
+ALLOWANCE = '{"tag":200,"stylist":60,"bag":20}'
+# The Simulator has no App Attest; it gets a small allowance by install ID.
+UNATTESTED_ALLOWANCE = '{"tag":20,"stylist":10,"bag":5}'
+DAILY_TOKEN_CAP = "2000000"
+AI_PAUSED = "false"
+
+[env.production]
+name = "fitme-claude-proxy"
+durable_objects.bindings = [
+  { name = "DEVICES", class_name = "DeviceLedgerObject" },
+  { name = "DAILY", class_name = "DailyLedgerObject" },
+]
+
+[env.production.vars]
+APP_IDS = "4ARX779852.io.github.nadavkrashin.fitme"
+ATTEST_ENVIRONMENTS = "production"
+ALLOWED_MODELS = "claude-opus-5-5"
+ALLOWANCE = '{"tag":200,"stylist":60,"bag":20}'
+UNATTESTED_ALLOWANCE = ""
+DAILY_TOKEN_CAP = "20000000"
+AI_PAUSED = "false"
