@@ -5,6 +5,20 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-14: Fabric
+
+- **Decision:**
+  - Items have an optional `fabric` (`Fabric`: cotton, linen, wool, cashmere, flannel, corduroy, denim, silk, leather,
+    suede, canvas, fleece, technical, other). Unknown changes nothing, so items tagged before keep working.
+  - Comfort: linen feels thin below 16° even under a layer (0.7, 0.4 below 10°); flannel, corduroy, cashmere and
+    fleece feel heavy from 24° (0.7, 0.4 from 28°); wool from 27° (0.7).
+  - Rain: suede shoes cost 0.6 and canvas 0.85 on top of the cover score.
+  - Formal leaves out denim, canvas, fleece and technical fabric.
+  - Tagging asks for fabric (a shop listing's Material line wins); the edit screen has a Fabric picker; every demo
+    item has one. Named `Fabric`, not `Material`, which SwiftUI already uses.
+- **Why:** the analysis found a linen shirt under a puffer at 0° and suede loafers on a rainy date; warmth alone
+  can't tell linen from flannel or suede from leather.
+
 ### 2026-11-14: One warmth scale for tagging and the engine
 
 - **Decision:** the tagging rubric's warmth examples now match the scale the engine's rules and the demo closet use:

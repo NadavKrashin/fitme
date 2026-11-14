@@ -76,3 +76,5 @@ User-visible changes per production release. Add entries under **Unreleased** as
   evening. The weather card shows the range from now until 11 pm.
 - New photos are tagged on the same warmth scale the outfit rules use, so a tee is light and a denim jacket a light
   layer.
+- Items record their fabric (tagged from the photo or shop listing, editable): no linen in the cold, no corduroy in
+  the heat, no suede in the rain, no denim at a formal event.

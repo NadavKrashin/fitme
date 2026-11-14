@@ -87,6 +87,12 @@ extension Fit {
     }
 }
 
+extension Fabric {
+    var title: String {
+        rawValue.capitalized
+    }
+}
+
 extension StyleTag {
     var title: String {
         rawValue.capitalized

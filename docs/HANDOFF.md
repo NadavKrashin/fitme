@@ -343,9 +343,14 @@ found 14 problems. Fixed so far, each with failing tests first:
 
 - **Fix 10, day range:** Today passes the rest-of-day span; base for the warm end, a layer for the cool end.
 
-**Still open, in order:** the tagging rubric
-calls a tee warmth 2 while the engine treats it as 1 (11); no fabric field (12); rotation is weak (13); the stylist
-doesn't get dress code, warmth or style (14).
+- **Fix 11, warmth scale:** the tagging rubric now uses the engine's scale. Items tagged earlier keep their old
+  warmth (tees may be 2): worth a look in the closet, or a re-tag tool later.
+
+- **Fix 12, fabric:** an optional `Fabric` on items, tagged and editable; demo items have one. Items tagged
+  earlier have none until edited or re-tagged.
+
+**Still open, in order:** rotation is weak (13); the stylist doesn't get dress code, warmth or
+style (14).
 
 **Testing note:** Xcode, open on the Mac for 8 days, holds a file lock on `FitMe.xcodeproj`, and `xcodebuild` waits
 on it forever. App tests ran from a scratch copy of the project generated with XcodeGen (`--project` into the

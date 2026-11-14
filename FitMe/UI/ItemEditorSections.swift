@@ -45,6 +45,10 @@ struct ItemEditorSections: View {
                 Picker("Warmth", selection: $item.warmth) {
                     ForEach(1 ... 5, id: \.self) { Text("\($0) · \(ScaleLabels.warmth($0))").tag($0) }
                 }
+                Picker("Fabric", selection: $item.fabric) {
+                    Text("Unknown").tag(Fabric?.none)
+                    ForEach(Fabric.allCases, id: \.self) { Text($0.title).tag(Optional($0)) }
+                }
                 Toggle("Water resistant", isOn: $item.waterResistant)
             }
 

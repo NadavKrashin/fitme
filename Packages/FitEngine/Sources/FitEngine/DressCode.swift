@@ -11,15 +11,10 @@ extension Rules {
         let isCore = [ItemCategory.top, .bottom, .onePiece, .shoes].contains(item.category)
         switch context.occasion {
         case .formal:
+            guard item.fabric?.isCasualOnly != true else { return false }
             return item.category == .outerwear || item.formality >= 4
         case .work:
-            guard !(isCore && isGear) else { return false }
-            switch item.category {
-            case .top: return item.formality >= 2 && item.pattern != .graphic && !item.isStatement
-            case .bottom: return !isShorts(item) && !isLightDenim(item)
-            case .shoes: return item.formality >= 2
-            default: return true
-            }
+            return !(isCore && isGear) && suitsBusinessCasual(item)
         case .smartCasual, .date:
             return !(isCore && isGear) && !(item.category == .top && item.pattern == .graphic)
         case .sport:
@@ -32,6 +27,17 @@ extension Rules {
                 && !(warm && item.category == .shoes && item.warmth >= 4)
         case .casual, .hike, .travel:
             return true
+        }
+    }
+
+    /// Collared shirts and fine knits (no graphic or statement tops), long trousers that aren't light-wash jeans, and
+    /// shoes a step up from flip-flops and trainers.
+    private static func suitsBusinessCasual(_ item: Item) -> Bool {
+        switch item.category {
+        case .top: item.formality >= 2 && item.pattern != .graphic && !item.isStatement
+        case .bottom: !isShorts(item) && !isLightDenim(item)
+        case .shoes: item.formality >= 2
+        default: true
         }
     }
 

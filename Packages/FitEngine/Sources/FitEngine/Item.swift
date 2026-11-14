@@ -39,6 +39,28 @@ public enum Fit: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// What a piece is made of, as far as it changes how and when it's worn.
+public enum Fabric: String, Codable, CaseIterable, Sendable {
+    case cotton, linen, wool, cashmere, flannel, corduroy, denim, silk, leather, suede, canvas, fleece, technical, other
+
+    /// How comfortable the fabric is at a feels-like temperature, beyond its weight: linen is summer cloth, thin in
+    /// the cold even under a layer; flannel, corduroy, cashmere and fleece are cool-weather cloth, heavy in the heat;
+    /// wool is fine until it's properly hot.
+    func seasonalFit(feelsLike t: Double) -> Double {
+        switch self {
+        case .linen: t < 10 ? 0.4 : (t < 16 ? 0.7 : 1)
+        case .flannel, .corduroy, .cashmere, .fleece: t >= 28 ? 0.4 : (t >= 24 ? 0.7 : 1)
+        case .wool: t >= 27 ? 0.7 : 1
+        default: 1
+        }
+    }
+
+    /// Fabrics no formal outfit is made of.
+    var isCasualOnly: Bool {
+        [.denim, .canvas, .fleece, .technical].contains(self)
+    }
+}
+
 public enum StyleTag: String, Codable, CaseIterable, Sendable {
     case minimal, classic, street, sporty, preppy, boho, edgy, romantic, outdoor, swim
 }
@@ -92,6 +114,8 @@ public struct Item: Identifiable, Codable, Hashable, Sendable {
     public var isStatement: Bool
     public var styleTags: Set<StyleTag>
     public var waterResistant: Bool
+    /// Unknown for items tagged before fabric was recorded; unknown fabric changes nothing.
+    public var fabric: Fabric?
     /// False while the item is in the laundry or otherwise unavailable.
     public var isAvailable: Bool
     public var wearCount: Int
@@ -110,6 +134,7 @@ public struct Item: Identifiable, Codable, Hashable, Sendable {
         isStatement: Bool = false,
         styleTags: Set<StyleTag> = [],
         waterResistant: Bool = false,
+        fabric: Fabric? = nil,
         isAvailable: Bool = true,
         wearCount: Int = 0,
         lastWorn: Date? = nil
@@ -126,6 +151,7 @@ public struct Item: Identifiable, Codable, Hashable, Sendable {
         self.isStatement = isStatement
         self.styleTags = styleTags
         self.waterResistant = waterResistant
+        self.fabric = fabric
         self.isAvailable = isAvailable
         self.wearCount = wearCount
         self.lastWorn = lastWorn
@@ -133,7 +159,7 @@ public struct Item: Identifiable, Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, category, subcategory, colors, pattern, formality, warmth, fit
-        case isStatement, styleTags, waterResistant, isAvailable, wearCount, lastWorn
+        case isStatement, styleTags, waterResistant, fabric, isAvailable, wearCount, lastWorn
     }
 
     /// Optional fields fall back to defaults so hand-written fixtures and AI tagging output stay short.
@@ -152,6 +178,7 @@ public struct Item: Identifiable, Codable, Hashable, Sendable {
             isStatement: c.decodeIfPresent(Bool.self, forKey: .isStatement) ?? false,
             styleTags: c.decodeIfPresent(Set<StyleTag>.self, forKey: .styleTags) ?? [],
             waterResistant: c.decodeIfPresent(Bool.self, forKey: .waterResistant) ?? false,
+            fabric: c.decodeIfPresent(Fabric.self, forKey: .fabric),
             isAvailable: c.decodeIfPresent(Bool.self, forKey: .isAvailable) ?? true,
             wearCount: c.decodeIfPresent(Int.self, forKey: .wearCount) ?? 0,
             lastWorn: c.decodeIfPresent(Date.self, forKey: .lastWorn)

@@ -17,6 +17,8 @@ final class ItemRecord {
     var isStatement: Bool
     var styleTags: [StyleTag]
     var waterResistant: Bool
+    /// Nil for items tagged before fabric was recorded.
+    var fabric: Fabric?
     var isAvailable: Bool
     var wearCount: Int
     var lastWorn: Date?
@@ -44,6 +46,7 @@ final class ItemRecord {
         isStatement = item.isStatement
         styleTags = item.styleTags.sorted { $0.rawValue < $1.rawValue }
         waterResistant = item.waterResistant
+        fabric = item.fabric
         isAvailable = item.isAvailable
         wearCount = item.wearCount
         lastWorn = item.lastWorn
@@ -65,6 +68,7 @@ final class ItemRecord {
         isStatement = item.isStatement
         styleTags = item.styleTags.sorted { $0.rawValue < $1.rawValue }
         waterResistant = item.waterResistant
+        fabric = item.fabric
         isAvailable = item.isAvailable
     }
 
@@ -103,6 +107,7 @@ final class ItemRecord {
             isStatement: isStatement,
             styleTags: Set(styleTags),
             waterResistant: waterResistant,
+            fabric: fabric,
             isAvailable: isAvailable,
             wearCount: wearCount,
             lastWorn: lastWorn

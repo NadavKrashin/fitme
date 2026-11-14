@@ -6,7 +6,7 @@ import Testing
 struct TaggingServiceTests {
     private static let validJSON = """
     {"name":"Navy chinos","category":"bottom","subcategory":"chinos","pattern":"solid","formality":3,"warmth":2,
-     "fit":"regular","isStatement":false,"styleTags":["classic"],"waterResistant":false,
+     "fit":"regular","isStatement":false,"styleTags":["classic"],"waterResistant":false,"fabric":"cotton",
      "itemBox":{"x0":120,"y0":80,"x1":880,"y1":960}}
     """
 
@@ -18,6 +18,7 @@ struct TaggingServiceTests {
         #expect(properties["category"]?["enum"] as? [String] == ItemCategory.allCases.map(\.rawValue))
         #expect(properties["pattern"]?["enum"] as? [String] == ItemPattern.allCases.map(\.rawValue))
         #expect(properties["fit"]?["enum"] as? [String] == Fit.allCases.map(\.rawValue))
+        #expect(properties["fabric"]?["enum"] as? [String] == Fabric.allCases.map(\.rawValue))
         #expect(properties["formality"]?["enum"] as? [Int] == [1, 2, 3, 4, 5])
         #expect(Set(schema["required"] as? [String] ?? []) == Set(properties.keys))
         #expect(schema["additionalProperties"] as? Bool == false)
@@ -50,6 +51,16 @@ struct TaggingServiceTests {
         #expect(item.name == "Navy chinos")
         #expect(item.subcategory == "chinos")
         #expect(item.formality == 3)
+        #expect(item.fabric == .cotton)
+    }
+
+    /// Drafts waiting in the inbox were saved before fabric was tagged.
+    @Test func tagsSavedBeforeFabricStillDecode() throws {
+        let json = Self.validJSON
+            .replacingOccurrences(of: #","fabric":"cotton""#, with: "")
+            .replacingOccurrences(of: #","itemBox":{"x0":120,"y0":80,"x1":880,"y1":960}"#, with: "")
+        let tags = try JSONDecoder().decode(ItemTags.self, from: Data(json.utf8))
+        #expect(tags.fabric == nil)
     }
 
     @Test(arguments: [

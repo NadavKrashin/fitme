@@ -203,12 +203,19 @@ public struct OutfitScorer: Sendable {
 
     /// On a rainy day: a water-resistant jacket matters most, and in cold rain so do shoes that keep feet dry.
     static func rainCover(_ outfit: Outfit, feelsLike: Double) -> Double {
-        switch (outfit.outerwear?.waterResistant == true, outfit.shoes?.waterResistant == true) {
+        let cover: Double = switch (outfit.outerwear?.waterResistant == true, outfit.shoes?.waterResistant == true) {
         case (true, true): 1
         case (true, false): feelsLike < 15 ? 0.75 : 0.9
         case (false, true): 0.6
         case (false, false): 0.35
         }
+        // Suede stains and canvas soaks through.
+        let shoes: Double = switch outfit.shoes?.fabric {
+        case .suede: 0.6
+        case .canvas: 0.85
+        default: 1
+        }
+        return cover * shoes
     }
 
     /// How well the least suitable piece suits the temperature: one piece dressed for another season (shorts with a
@@ -224,11 +231,12 @@ public struct OutfitScorer: Sendable {
     static func pieceFit(_ item: Item, feelsLike t: Double, layered: Bool) -> Double {
         guard let band = comfortBand(item, layered: layered) else { return 1 }
         let distance = t < band.lowerBound ? band.lowerBound - t : max(0, t - band.upperBound)
-        switch distance {
-        case 0: return 1
-        case ...4: return 0.7
-        default: return 0.4
+        let weight = switch distance {
+        case 0: 1.0
+        case ...4: 0.7
+        default: 0.4
         }
+        return weight * (item.fabric?.seasonalFit(feelsLike: t) ?? 1)
     }
 
     /// The feels-like range a piece is comfortable in, by its weight, after temperature dressing guides. Layers are

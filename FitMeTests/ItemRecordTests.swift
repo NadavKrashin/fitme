@@ -18,6 +18,7 @@ struct ItemRecordTests {
             isStatement: true,
             styleTags: [.classic, .preppy],
             waterResistant: true,
+            fabric: .cotton,
             isAvailable: false,
             wearCount: 7,
             lastWorn: Date(timeIntervalSince1970: 1_790_000_000)
@@ -39,8 +40,24 @@ struct ItemRecordTests {
         #expect(roundTripped.isStatement == item.isStatement)
         #expect(roundTripped.styleTags == item.styleTags)
         #expect(roundTripped.waterResistant == item.waterResistant)
+        #expect(roundTripped.fabric == item.fabric)
         #expect(roundTripped.isAvailable == item.isAvailable)
         #expect(roundTripped.wearCount == item.wearCount)
         #expect(roundTripped.lastWorn == item.lastWorn)
+    }
+
+    @Test func editingCopiesTheFabric() {
+        let record = ItemRecord(item: Item(
+            id: "x2",
+            name: "Shirt",
+            category: .top,
+            colors: [],
+            formality: 2,
+            warmth: 1
+        ))
+        var edited = record.item
+        edited.fabric = .linen
+        record.update(from: edited)
+        #expect(record.item.fabric == .linen)
     }
 }
