@@ -9,18 +9,18 @@ struct AppDependencies: Sendable {
     /// How this build reaches Claude: Settings asks for an API key only for `.ownKey`.
     let claudeAccess: ClaudeAccessKind
     /// Whether the user allowed sending data to Claude; every Claude request checks it.
-    let aiConsent: any AIConsentStoring
+    var aiConsent: any AIConsentStoring
     let outfitGenerator: OutfitGenerator
     let photoProcessor: any PhotoProcessing
     let tagger: any TaggingService
-    let weather: any WeatherProviding
+    var weather: any WeatherProviding
     let stylist: any OutfitStylist
     let places: any PlaceSearching
     let tripWeather: any TripWeatherProviding
     let capsuleReviewer: any CapsuleReviewing
     let tripPlanner: TripPlanner
     let closetAnalyzer: ClosetAnalyzer
-    let calendar: any CalendarReading
+    var calendar: any CalendarReading
     let camera: any PhotoCapturing
     let thumbnails: ThumbnailCache
 

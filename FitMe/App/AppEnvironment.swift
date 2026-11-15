@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// The deployment environment this build belongs to, fixed at compile time by the build configuration.
 ///
@@ -19,6 +20,21 @@ enum AppEnvironment: String, Sendable {
         case .staging: "Staging"
         case .production: "Production"
         }
+    }
+
+    /// App Store screenshot mode (`-FitMeScreenshots`, Staging only; see `ScreenshotStage`): loads the demo closet
+    /// and a packed sample trip, and returns services with steady weather and an empty calendar. Release builds
+    /// return `dependencies` unchanged.
+    @MainActor
+    static func stagingScreenshots(_ dependencies: AppDependencies, container: ModelContainer) -> AppDependencies {
+        #if STAGING
+        guard ScreenshotStage.isActive else { return dependencies }
+        ScreenshotStage.loadCloset(into: container.mainContext)
+        Task { await ScreenshotStage.packSampleTrip(into: container.mainContext) }
+        return ScreenshotStage.dependencies(dependencies)
+        #else
+        return dependencies
+        #endif
     }
 
     /// FitMe's Claude proxy for this build (`FITME_PROXY_URL` in project.yml), or nil when none is configured yet.

@@ -102,6 +102,20 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.tests
 
+  # App Store screenshots (make screenshots). Not part of `make test`: it drives the UI for a minute.
+  FitMeScreenshots:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: FitMeScreenshots
+    dependencies:
+      - target: FitMe
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.screenshots
+        TEST_TARGET_NAME: FitMe
+
 schemes:
   FitMe:
     build:
@@ -131,3 +145,12 @@ schemes:
       config: Staging
     archive:
       config: Staging
+  FitMeScreenshots:
+    build:
+      targets:
+        FitMe: all
+        FitMeScreenshots: [test]
+    test:
+      config: Debug
+      targets:
+        - FitMeScreenshots

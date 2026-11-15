@@ -56,9 +56,11 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 - [x] Crash and hang reports: Xcode Organizer and TestFlight feedback, no code and no third-party SDK.
 
 ### M4: Store presence
-- [ ] Listing: subtitle, description, keywords, category (Lifestyle), support and privacy URLs.
-- [ ] Screenshots (6.9" iPhone) from a real closet, and the age rating questionnaire.
-- [ ] Review notes: how to try the AI without a closet (photograph any shirt), and what the proxy limits are.
+- [x] Listing: subtitle, description, keywords, categories (Lifestyle, Travel), URLs, in
+      [store/APP_STORE_LISTING.md](store/APP_STORE_LISTING.md); lengths checked by `scripts/check-listing.py`.
+- [x] Screenshots (6.9" iPhone, 1320 × 2868) from the demo closet via `make screenshots`; age rating answers noted
+      (Find online's browser means "unrestricted web access").
+- [x] Review notes: how to try it with any clothing photo, consent, the proxy's allowance, optional permissions.
 
 ### M5: External TestFlight beta
 - [ ] 10–20 people via a public TestFlight link, for two weeks.
@@ -69,6 +71,8 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 - [ ] `make release VERSION=1.0.0`, approve, submit for review, release.
 
 ## Only Nadav can do these
+- Enter the listing, screenshots, App Privacy answers and age rating in App Store Connect (texts ready in
+  `docs/store/` and `docs/APP_PRIVACY.md`).
 - Create the Cloudflare account and give the agent a scoped API token (or deploy with `wrangler` yourself).
 - Create a production Anthropic API key with a monthly spend limit set in the Anthropic Console.
 - In App Store Connect: App Privacy answers, age rating, EU trader status (Digital Services Act), listing text approval,

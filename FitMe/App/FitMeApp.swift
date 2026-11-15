@@ -3,7 +3,7 @@ import SwiftUI
 
 @main
 struct FitMeApp: App {
-    private let dependencies = AppDependencies.live()
+    private let dependencies: AppDependencies
     private let container: ModelContainer
     @State private var capture: CaptureModel
     @State private var consent: AIConsentModel
@@ -20,6 +20,8 @@ struct FitMeApp: App {
             fatalError("Couldn't open the closet store: \(error)")
         }
         self.container = container
+        let dependencies = AppEnvironment.stagingScreenshots(AppDependencies.live(), container: container)
+        self.dependencies = dependencies
         _consent = State(initialValue: AIConsentModel(store: dependencies.aiConsent))
         // People who used FitMe before onboarding existed skip it.
         let hasClothes = ((try? container.mainContext.fetchCount(FetchDescriptor<ItemRecord>())) ?? 0) > 0

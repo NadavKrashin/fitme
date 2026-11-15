@@ -5,6 +5,19 @@ entries (supersede them instead).
 
 ---
 
+### 2026-11-15: Store screenshots from a UI test; packing plans with the rain gear it could pack
+
+- **Decision:**
+  - `make screenshots` runs the `FitMeScreenshots` UI test on the 6.9-inch simulator with `-FitMeScreenshots`, which
+    (Staging only, through `AppEnvironment.stagingScreenshots`) loads the demo closet, packs a sample Lisbon trip,
+    and uses steady weather and an empty calendar (`DemoData/ScreenshotStage`). PNGs land in `docs/store/screenshots`.
+  - Packing runs its greedy loop twice: first asking rainy days for the rain gear the closet has, then with the gear
+    that actually fit in the bag, so days whose gear the limits kept out still get their own top. Pruning and the
+    day plan use that second plan.
+- **Why:** the first screenshot run showed "1 outfit repeats a top" on the sample trip. A rainy smart-casual evening
+  wanted the trench, the two-jacket limit kept it out, so the packer counted that evening as unfillable and packed
+  one top too few; the day plan then dressed it without rain gear and repeated a top.
+
 ### 2026-11-14: A first run that asks one thing at a time
 
 - **Decision:**

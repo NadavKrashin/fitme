@@ -144,3 +144,34 @@ struct PackingHistoryTests {
         #expect(result.items.count(where: { $0.category == .outerwear }) <= 1)
     }
 }
+
+/// Rain gear the bag can't hold mustn't cost a fresh top: the packer plans that day without it and still packs a
+/// top for every slot.
+struct RainGearLimitTests {
+    @Test func aDayDressedWithoutRainGearStillGetsItsOwnTop() {
+        let shirts = (1 ... 4).map { makeItem("shirt\($0)", .top, ["#F7F7F5"], formality: 3, warmth: 2) }
+        var trench = makeItem("trench", .outerwear, ["#C9B08A"], formality: 4, warmth: 3)
+        trench.waterResistant = true
+        let closet = shirts + [
+            makeItem("chinos", .bottom, ["#27324A"], formality: 3, warmth: 2),
+            makeItem("trousers", .bottom, ["#8E8E8E"], formality: 3, warmth: 2),
+            makeItem("loafers", .shoes, ["#6B4226"], formality: 3, warmth: 2),
+            trench,
+        ]
+        let dry = Weather(feelsLikeC: 20, precipitationChance: 0.1)
+        let wet = Weather(feelsLikeC: 20, precipitationChance: 0.7)
+        let trip = [
+            TripDay(date: Fixtures.startDate, weather: dry, occasions: [.casual]),
+            TripDay(date: Fixtures.startDate.addingTimeInterval(86400), weather: wet, occasions: [.smartCasual]),
+            TripDay(date: Fixtures.startDate.addingTimeInterval(2 * 86400), weather: dry, occasions: [.casual]),
+        ]
+        var options = PackingOptions()
+        options.maxOuterwear = 0 // the trench can't come
+
+        let result = PackingOptimizer(options: options).pack(closet: closet, trip: trip)
+
+        #expect(result.uncovered.isEmpty, "\(result.summary)")
+        #expect(!result.assignments.contains { $0.exceedsWearLimit }, "\(result.summary)")
+        #expect(result.items.count(where: { $0.category == .top }) == 3, "\(result.summary)")
+    }
+}

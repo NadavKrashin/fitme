@@ -88,3 +88,4 @@ User-visible changes per production release. Add entries under **Unreleased** as
 - A short welcome on first launch explains FitMe, asks about Claude and your location one at a time, and takes you
   straight to photographing your closet. An empty Today or Closet offers the camera and your photo library.
 - Titles grow with your text size setting, and VoiceOver skips decorative icons.
+- Trip packing no longer repeats a top when the bag has no room for the rain jacket a rainy day would want.

@@ -409,6 +409,20 @@ whether the Color chips fit next to large accessibility text sizes.
   location was pre-granted), the first weather fetch after a fresh install failed once and worked on Retry (cause
   unknown), VoiceOver read-through on a device, dark mode on Inbox, Find online and item edit.
 
+## Launch M4: store presence (2026-11-15)
+
+- **Built:** `docs/store/APP_STORE_LISTING.md` (name, subtitle, promotional text, description, keywords,
+  categories, URLs, age rating notes, review notes) with `scripts/check-listing.py`; five 6.9-inch screenshots in
+  `docs/store/screenshots/` from `make screenshots` (UI test target `FitMeScreenshots`, screenshot mode in
+  `DemoData/ScreenshotStage`).
+- **Fixed on the way:** packing repeated a top when the bag couldn't hold a rainy day's rain jacket (failing test
+  first, `RainGearLimitTests`); the sample trip now packs 15 pieces with no repeats.
+- **Verified:** listing lengths (script), screenshots 1320 × 2868 and reviewed by eye, 116 engine tests, app tests.
+- **Not verified yet:** `make screenshots` through `FitMe.xcodeproj` itself (run from the scratch project copy
+  because of the Xcode lock); the listing and screenshots inside App Store Connect.
+- **Waiting on Nadav:** paste the listing, upload the screenshots, answer App Privacy and the age rating in App Store
+  Connect.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and

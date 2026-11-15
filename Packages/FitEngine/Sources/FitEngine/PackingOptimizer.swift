@@ -27,14 +27,24 @@ public struct PackingOptimizer: Sendable {
     }
 
     public func pack(closet: [Item], trip: [TripDay], profile: StyleProfile? = nil) -> PackingResult {
-        let plan = TripPlan(trip: trip, laundryEveryNDays: options.laundryEveryNDays, profile: profile)
-            .requiringRainGear(from: closet)
+        let base = TripPlan(trip: trip, laundryEveryNDays: options.laundryEveryNDays, profile: profile)
         let candidates = closet
-            .filter { item in plan.groups.contains { Rules.isEligible(item, for: $0.context) } }
+            .filter { item in base.groups.contains { Rules.isEligible(item, for: $0.context) } }
             .sorted { $0.id < $1.id }
 
-        var capsule: [Item] = []
-        var states: GroupStates = plan.groups.map { _ in [:] }
+        // First aim for the rain gear the closet has; then plan with what made it into the bag (the limits may
+        // keep some out) and keep packing for those days, so every slot still gets its own top.
+        var capsule = grow([], plan: base.requiringRainGear(from: closet), candidates: candidates)
+        let wearable = base.requiringRainGear(from: capsule)
+        capsule = grow(capsule, plan: wearable, candidates: candidates)
+        capsule = pruned(capsule, plan: wearable)
+        return assemble(capsule: capsule, trip: trip, plan: wearable)
+    }
+
+    /// Greedy marginal gain from `capsule` until every slot is covered or nothing more helps.
+    private func grow(_ start: [Item], plan: TripPlan, candidates: [Item]) -> [Item] {
+        var capsule = start
+        var states = recompute(capsule: capsule, groups: plan.groups)
         var exhausted = Set<Int>()
 
         for _ in 0 ..< Self.maxIterations {
@@ -64,10 +74,7 @@ public struct PackingOptimizer: Sendable {
                 exhausted.insert(neediest)
             }
         }
-
-        capsule = pruned(capsule, plan: plan)
-        // If the limits kept rain gear out of the bag, the days still get the best outfits it allows.
-        return assemble(capsule: capsule, trip: trip, plan: plan.requiringRainGear(from: capsule))
+        return capsule
     }
 
     /// The day-by-day plan for a capsule chosen elsewhere, e.g. after the user added or removed items by hand.
