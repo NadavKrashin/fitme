@@ -71,6 +71,8 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 - [ ] `make release VERSION=1.0.0`, approve, submit for review, release.
 
 ## Only Nadav can do these
+
+Step by step: [OWNER_CHECKLIST.md](OWNER_CHECKLIST.md).
 - Enter the listing, screenshots, App Privacy answers and age rating in App Store Connect (texts ready in
   `docs/store/` and `docs/APP_PRIVACY.md`).
 - Create the Cloudflare account and give the agent a scoped API token (or deploy with `wrangler` yourself).
