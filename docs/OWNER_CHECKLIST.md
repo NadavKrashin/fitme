@@ -19,10 +19,11 @@ to the agent. Details per milestone are in [LAUNCH_PLAN.md](LAUNCH_PLAN.md).
 
 ## 3. Cloudflare account and the Claude proxy (15 minutes)
 
-1. Sign up at https://dash.cloudflare.com/sign-up (the free plan is enough).
+1. Sign up at https://dash.cloudflare.com/sign-up (the free plan is enough), then open **Workers & Pages** in the
+   dashboard once. That creates your `workers.dev` subdomain; without it, deploys fail with error 10063.
 2. In Terminal:
    ```bash
-   cd ~/Documents/Code/Personal/FitMe/server/claude-proxy && npm ci
+   cd ~/Code/Personal/FitMe/server/claude-proxy && npm ci
    ```
    ```bash
    npx wrangler login
