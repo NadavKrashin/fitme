@@ -36,7 +36,7 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 - [x] Tests: fake proxy in app tests; Worker unit tests; staging Worker separate from production.
 - [x] Deployed (2026-11-20): Staging https://fitme-claude-proxy-staging.krashin23.workers.dev, Production
       https://fitme-claude-proxy.krashin23.workers.dev; `FITME_PROXY_URL` set per configuration and the App Attest
-      entitlement added. Production still needs its `ANTHROPIC_API_KEY` secret (Nadav pastes it).
+      entitlement added. Both secrets are set in both environments.
 
 ### M2: Privacy and consent
 - [x] AI consent screen (what's sent: the photo and the item's tags; to whom: Anthropic; why), stored choice,
@@ -59,7 +59,7 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 ### M4: Store presence
 - [x] Listing: subtitle, description, keywords, categories (Lifestyle, Travel), URLs, in
       [store/APP_STORE_LISTING.md](store/APP_STORE_LISTING.md); lengths checked by `scripts/check-listing.py`.
-- [x] Screenshots (6.9" iPhone, 1320 × 2868) from the demo closet via `make screenshots`; age rating answers noted
+- [x] Screenshots (6.3" 1206 × 2622 and 6.9" 1320 × 2868) from the demo closet via `make screenshots`; age rating answers noted
       (Find online's browser means "unrestricted web access").
 - [x] Review notes: how to try it with any clothing photo, consent, the proxy's allowance, optional permissions.
 

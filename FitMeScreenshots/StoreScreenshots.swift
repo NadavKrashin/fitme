@@ -3,17 +3,13 @@ import XCTest
 /// Captures the App Store screenshots: launches the app in screenshot mode (demo closet, a packed Lisbon trip, steady
 /// weather) and saves each screen as a PNG in `SCREENSHOT_DIR` (set by `make screenshots`).
 final class StoreScreenshots: XCTestCase {
-    private var app: XCUIApplication!
-
-    override func setUp() {
-        continueAfterFailure = false
-        app = XCUIApplication()
-        app.launchArguments = ["-FitMeScreenshots"]
-        app.launch()
-    }
-
     @MainActor
     func testStoreScreenshots() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-FitMeScreenshots"]
+        app.launch()
+
         // 1. Today: an outfit for the weather.
         XCTAssert(app.staticTexts["Suggestions"].waitForExistence(timeout: 30))
         app.swipeUp(velocity: .slow)
@@ -45,6 +41,7 @@ final class StoreScreenshots: XCTestCase {
         save("5-insights")
     }
 
+    @MainActor
     private func save(_ name: String) {
         let png = XCUIScreen.main.screenshot().pngRepresentation
         let attachment = XCTAttachment(data: png, uniformTypeIdentifier: "public.png")

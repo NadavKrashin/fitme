@@ -418,16 +418,16 @@ whether the Color chips fit next to large accessibility text sizes.
 - **Fixed on the way:** packing repeated a top when the bag couldn't hold a rainy day's rain jacket (failing test
   first, `RainGearLimitTests`); the sample trip now packs 15 pieces with no repeats.
 - **Verified:** listing lengths (script), screenshots 1320 × 2868 and reviewed by eye, 116 engine tests, app tests.
-- **Not verified yet:** `make screenshots` through `FitMe.xcodeproj` itself (run from the scratch project copy
-  because of the Xcode lock); the listing and screenshots inside App Store Connect.
+- **Screenshots:** two sets now (6.3-inch 1206 × 2622, which App Store Connect required, and 6.9-inch), from
+  `make screenshots` on the real project; the first 6.9-only upload was rejected with "File dimensions are invalid".
+- **Not verified yet:** the listing and screenshots accepted inside App Store Connect.
 - **Waiting on Nadav:** paste the listing, upload the screenshots, answer App Privacy and the age rating in App Store
   Connect.
 
 ## Claude proxy deployed (2026-11-20)
 
 - **Live:** Staging https://fitme-claude-proxy-staging.krashin23.workers.dev (both secrets set) and Production
-  https://fitme-claude-proxy.krashin23.workers.dev (`CHALLENGE_SECRET` set; **`ANTHROPIC_API_KEY` not yet**: Nadav
-  pastes it with `npx wrangler secret put ANTHROPIC_API_KEY --env production` in `server/claude-proxy`).
+  https://fitme-claude-proxy.krashin23.workers.dev (both secrets set).
 - **App:** `FITME_PROXY_URL` points Debug and Staging at the Staging Worker and Release at Production; the App Attest
   entitlement (`com.apple.developer.devicecheck.appattest-environment`, development for Debug, production otherwise)
   is in `FitMe/FitMe.entitlements`, generated from project.yml. Staging builds no longer use the API key in Settings.

@@ -57,10 +57,16 @@ Anthropic, only after you allow it, and FitForMe works without it: you can tag c
 **Privacy policy URL:** https://nadavkrashin.github.io/fitme/privacy.html
 **Copyright:** 2026 Nadav Krashin
 
-## Screenshots (6.9-inch iPhone, 1320 × 2868)
+## Screenshots
 
-In [screenshots/](screenshots/), regenerated with `make screenshots` (demo closet, a packed Lisbon trip, steady
-weather; see `ScreenshotStage`). Upload in order:
+Two sets, regenerated with `make screenshots` (demo closet, a packed Lisbon trip, steady weather; see
+`ScreenshotStage`). Upload the set whose size matches the slot App Store Connect shows; each slot rejects other
+sizes with "File dimensions are invalid".
+
+- **6.3-inch iPhone (1206 × 2622), required:** [screenshots/6.3-inch/](screenshots/6.3-inch/)
+- **6.9-inch iPhone (1320 × 2868), optional:** [screenshots/6.9-inch/](screenshots/6.9-inch/)
+
+Order:
 
 1. `1-today.png`: an outfit for today's weather.
 2. `2-outfit.png`: every piece, with Swap.

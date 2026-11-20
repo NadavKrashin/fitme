@@ -73,8 +73,8 @@ At https://appstoreconnect.apple.com → **FitForMe**. All texts are in
 
 ## 5. App Store Connect: the 1.0 version page (15 minutes)
 
-1. **iOS App → 1.0 Prepare for Submission:** upload the five PNGs from `docs/store/screenshots/` to the 6.9-inch
-   iPhone slot, in order 1–5.
+1. **iOS App → 1.0 Prepare for Submission:** upload the five PNGs from `docs/store/screenshots/6.3-inch/` to the
+   6.3-inch iPhone slot (and, if it's shown, `6.9-inch/` to the 6.9-inch slot), in order 1–5.
 2. Paste promotional text, description, keywords, support URL and marketing URL from the listing file.
 3. **App Review Information:** no sign-in required; paste the review notes; add your contact details.
 4. Leave **Build** empty for now; it comes in step 7.

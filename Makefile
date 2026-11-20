@@ -51,16 +51,8 @@ verify-release: project ## Build Release and fail if any demo data made it into 
 		build CODE_SIGNING_ALLOWED=NO | xcbeautify
 	scripts/verify-release.sh "$(DERIVED)/Build/Products/Release-iphonesimulator/FitMe.app"
 
-SCREENSHOT_SIMULATOR ?= iPhone 18 Pro Max
-SCREENSHOT_DIR := $(CURDIR)/docs/store/screenshots
-
-screenshots: project ## App Store screenshots (6.9-inch iPhone) into docs/store/screenshots
-	mkdir -p "$(SCREENSHOT_DIR)"
-	xcrun simctl boot "$(SCREENSHOT_SIMULATOR)" 2>/dev/null || true
-	xcrun simctl status_bar "$(SCREENSHOT_SIMULATOR)" override --time 9:41 --batteryState charged \
-		--batteryLevel 100 --wifiBars 3 --cellularBars 4
-	$(PIPEFAIL) TEST_RUNNER_SCREENSHOT_DIR="$(SCREENSHOT_DIR)" $(XCODEBUILD) -scheme FitMeScreenshots \
-		-destination 'platform=iOS Simulator,name=$(SCREENSHOT_SIMULATOR)' test | xcbeautify
+screenshots: project ## App Store screenshots (6.3- and 6.9-inch iPhone) into docs/store/screenshots
+	scripts/screenshots.sh
 
 icons: ## Re-render app icons
 	swift scripts/make-app-icons.swift
