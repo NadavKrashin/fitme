@@ -3,7 +3,7 @@
 **Read this first.** It's the single source of truth for "where are we and what's next". Whoever ends a work
 session (person or agent) updates it before the final commit.
 
-_Last updated: 2026-11-14._
+_Last updated: 2026-11-20._
 
 ## Current state
 
@@ -447,7 +447,10 @@ whether the Color chips fit next to large accessibility text sizes.
   Apple's ITMS-90725 warning says uploads need the iOS 27 SDK (Xcode 27) from April 2027. Switch the runner image or
   pin Xcode 27 in `.github/workflows/pipeline.yml` once GitHub's runners have it stable. Local builds already use
   Xcode 27.2.
-- **Not verified yet:** a real Claude request through the proxy from an iPhone (build 51 or 54); Beta App Review.
+- **Verified on a device (2026-11-20):** Nadav tagged photos on the Staging app (FitMe β, from TestFlight) on his
+  iPhone: App Attest, the Staging Worker and the Anthropic call all work end to end.
+- **Not verified yet:** the same on the production app (FitForMe 0.9.0, build 54, against the Production Worker);
+  Beta App Review.
 
 ## Next steps, in order
 
