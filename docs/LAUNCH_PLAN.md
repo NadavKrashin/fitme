@@ -34,8 +34,9 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 - [x] App: `ClaudeClient` talks to the proxy in Release and Staging; the API-key field stays only in Debug.
 - [x] Friendly states for "allowance used up", "AI paused" and offline; manual tagging always available.
 - [x] Tests: fake proxy in app tests; Worker unit tests; staging Worker separate from production.
-- [ ] Deploy (needs Nadav's Cloudflare account), then set `FITME_PROXY_URL` and the App Attest entitlement. See
-      [RELEASE_PROCESS.md](RELEASE_PROCESS.md) → "Claude proxy".
+- [x] Deployed (2026-11-20): Staging https://fitme-claude-proxy-staging.krashin23.workers.dev, Production
+      https://fitme-claude-proxy.krashin23.workers.dev; `FITME_PROXY_URL` set per configuration and the App Attest
+      entitlement added. Production still needs its `ANTHROPIC_API_KEY` secret (Nadav pastes it).
 
 ### M2: Privacy and consent
 - [x] AI consent screen (what's sent: the photo and the item's tags; to whom: Anthropic; why), stored choice,

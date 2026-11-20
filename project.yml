@@ -44,6 +44,11 @@ targets:
           - Info.plist
     dependencies:
       - package: FitEngine
+    # App Attest proves Claude requests come from a genuine install (see server/claude-proxy).
+    entitlements:
+      path: FitMe/FitMe.entitlements
+      properties:
+        com.apple.developer.devicecheck.appattest-environment: $(APP_ATTEST_ENVIRONMENT)
     settings:
       base:
         PRODUCT_NAME: FitMe
@@ -68,23 +73,22 @@ targets:
           PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.staging
           APP_DISPLAY_NAME: FitMe β
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG STAGING
-          # Claude proxy (server/claude-proxy). Empty until deployed: Debug and Staging then use your own API key.
-          FITME_PROXY_URL: ""
+          # Claude proxy (server/claude-proxy): the Staging Worker, which also accepts the Simulator by install ID.
+          FITME_PROXY_URL: https://fitme-claude-proxy-staging.krashin23.workers.dev
           APP_ATTEST_ENVIRONMENT: development
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-Staging
         Staging:
           PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme.staging
           APP_DISPLAY_NAME: FitMe β
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: STAGING
-          FITME_PROXY_URL: ""
+          FITME_PROXY_URL: https://fitme-claude-proxy-staging.krashin23.workers.dev
           APP_ATTEST_ENVIRONMENT: production
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-Staging
         Release:
           PRODUCT_BUNDLE_IDENTIFIER: io.github.nadavkrashin.fitme
           APP_DISPLAY_NAME: FitMe
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
-          # Required before the first public release: without it, Claude features say they aren't set up.
-          FITME_PROXY_URL: ""
+          FITME_PROXY_URL: https://fitme-claude-proxy.krashin23.workers.dev
           APP_ATTEST_ENVIRONMENT: production
           ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
           # Demo data never ships to production; CI verifies this (make verify-release).

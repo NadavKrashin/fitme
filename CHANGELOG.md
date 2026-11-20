@@ -89,3 +89,4 @@ User-visible changes per production release. Add entries under **Unreleased** as
   straight to photographing your closet. An empty Today or Closet offers the camera and your photo library.
 - Titles grow with your text size setting, and VoiceOver skips decorative icons.
 - Trip packing no longer repeats a top when the bag has no room for the rain jacket a rainy day would want.
+- Claude is included: tagging and the stylist work without an API key of your own, within a monthly allowance.

@@ -423,6 +423,20 @@ whether the Color chips fit next to large accessibility text sizes.
 - **Waiting on Nadav:** paste the listing, upload the screenshots, answer App Privacy and the age rating in App Store
   Connect.
 
+## Claude proxy deployed (2026-11-20)
+
+- **Live:** Staging https://fitme-claude-proxy-staging.krashin23.workers.dev (both secrets set) and Production
+  https://fitme-claude-proxy.krashin23.workers.dev (`CHALLENGE_SECRET` set; **`ANTHROPIC_API_KEY` not yet**: Nadav
+  pastes it with `npx wrangler secret put ANTHROPIC_API_KEY --env production` in `server/claude-proxy`).
+- **App:** `FITME_PROXY_URL` points Debug and Staging at the Staging Worker and Release at Production; the App Attest
+  entitlement (`com.apple.developer.devicecheck.appattest-environment`, development for Debug, production otherwise)
+  is in `FitMe/FitMe.entitlements`, generated from project.yml. Staging builds no longer use the API key in Settings.
+- **Verified:** both Workers serve challenges over HTTPS and refuse an unattested message (401
+  `attestation_required`); lint, 30 proxy, 116 engine and all app tests pass on the real project.
+- **Not verified yet:** the CI deploy signing with the new entitlement (the App ID may need the App Attest
+  capability ticked); App Attest and a real Claude call through the proxy on a device; the Simulator's install-ID
+  path against the live Staging Worker.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and
