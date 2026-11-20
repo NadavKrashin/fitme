@@ -441,10 +441,13 @@ whether the Color chips fit next to large accessibility text sizes.
 
 - Staging build 51 (first with the proxy and App Attest) signed and uploaded: the App Attest entitlement works with
   cloud signing, no portal change needed.
-- `make release VERSION=0.9.0` pushed tag `v0.9.0`; its run (44770950661) passed checks and waits for Nadav's
-  approval of the production deploy.
-- **Not verified yet:** a real Claude request through the proxy from an iPhone (build 51); the production build in
-  TestFlight; Beta App Review.
+- `make release VERSION=0.9.0` pushed tag `v0.9.0`; Nadav approved the production deploy, and **Release build 54
+  (0.9.0)** was uploaded to FitForMe in TestFlight.
+- **Follow-up, due before April 2027:** CI builds with Xcode 26.6 (the newest stable on the `macos-26` runner);
+  Apple's ITMS-90725 warning says uploads need the iOS 27 SDK (Xcode 27) from April 2027. Switch the runner image or
+  pin Xcode 27 in `.github/workflows/pipeline.yml` once GitHub's runners have it stable. Local builds already use
+  Xcode 27.2.
+- **Not verified yet:** a real Claude request through the proxy from an iPhone (build 51 or 54); Beta App Review.
 
 ## Next steps, in order
 

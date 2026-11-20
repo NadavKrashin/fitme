@@ -64,7 +64,7 @@ per user. Written 2026-11-14; tick items off as they land and log choices in [DE
 - [x] Review notes: how to try it with any clothing photo, consent, the proxy's allowance, optional permissions.
 
 ### M5: External TestFlight beta
-- [x] 0.9.0 tagged (2026-11-20); production deploy awaiting approval.
+- [x] 0.9.0 tagged and approved (2026-11-20): Release build 54 in TestFlight under FitForMe.
 - [ ] 10–20 people via a public TestFlight link, for two weeks.
 - [ ] Measure: Claude cost per user per month, suggestions rated "I'd wear that", crashes.
 - [ ] Set the allowance and model choices from those numbers.
