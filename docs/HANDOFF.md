@@ -437,6 +437,15 @@ whether the Color chips fit next to large accessibility text sizes.
   capability ticked); App Attest and a real Claude call through the proxy on a device; the Simulator's install-ID
   path against the live Staging Worker.
 
+## Beta 0.9.0 cut (2026-11-20)
+
+- Staging build 51 (first with the proxy and App Attest) signed and uploaded: the App Attest entitlement works with
+  cloud signing, no portal change needed.
+- `make release VERSION=0.9.0` pushed tag `v0.9.0`; its run (44770950661) passed checks and waits for Nadav's
+  approval of the production deploy.
+- **Not verified yet:** a real Claude request through the proxy from an iPhone (build 51); the production build in
+  TestFlight; Beta App Review.
+
 ## Next steps, in order
 
 0. **Try Find online on real items** on the phone with the API key: J.Crew, Uniqlo, Levi's and COS especially, and
