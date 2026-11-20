@@ -5,6 +5,8 @@ User-visible changes per production release. Add entries under **Unreleased** as
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-20
+
 - First app build: Today (outfit suggestions by occasion and weather), Closet, and Settings (Claude API key).
 - Staging builds can load a demo closet.
 - Add clothes from your photo library. Each photo is cut out, color-matched and tagged by Claude, then waits in an
