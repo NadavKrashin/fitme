@@ -3,7 +3,7 @@
 **Read this first.** It's the single source of truth for "where are we and what's next". Whoever ends a work
 session (person or agent) updates it before the final commit.
 
-_Last updated: 2026-11-20._
+_Last updated: 2026-11-21._
 
 ## Current state
 
@@ -449,8 +449,8 @@ whether the Color chips fit next to large accessibility text sizes.
   Xcode 27.2.
 - **Verified on a device (2026-11-20):** Nadav tagged photos on the Staging app (FitMe β, from TestFlight) on his
   iPhone: App Attest, the Staging Worker and the Anthropic call all work end to end.
-- **Not verified yet:** the same on the production app (FitForMe 0.9.0, build 54, against the Production Worker);
-  Beta App Review.
+- **Beta App Review approved (2026-11-21)** for FitForMe 0.9.0 (build 54): external testers can be invited.
+- **Not verified yet:** tagging on the production app (FitForMe 0.9.0, build 54, against the Production Worker).
 
 ## Next steps, in order
 
